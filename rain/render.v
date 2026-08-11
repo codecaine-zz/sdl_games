@@ -117,10 +117,10 @@ fn render_rain_game(renderer &sdl.Renderer, mut game RainGame) {
 	// 7. Render Rain Drops
 	sdl.set_render_draw_color(renderer, theme.drop_color.r, theme.drop_color.g, theme.drop_color.b, theme.drop_color.a)
 	
-	// Cap visible rendering iterations to keep 60 FPS even when 500k drops exist
-	render_limit := if game.drops.len > 15000 { 15000 } else { game.drops.len }
+	// Adaptive rendering stride to maintain locked 60 FPS under heavy drop counts
+	step := if game.drops.len > 50000 { game.drops.len / 6000 } else if game.drops.len > 12000 { 2 } else { 1 }
 
-	for i in 0 .. render_limit {
+	for i := 0; i < game.drops.len; i += step {
 		d := game.drops[i]
 		if !d.active { continue }
 
@@ -133,7 +133,7 @@ fn render_rain_game(renderer &sdl.Renderer, mut game RainGame) {
 		tail_y := y1 - int(d.length)
 
 		sdl.render_draw_line(renderer, x1, y1, tail_x, tail_y)
-		if d.thickness > 1.5 {
+		if d.thickness > 1.5 && step < 3 {
 			sdl.render_draw_line(renderer, x1 + 1, y1, tail_x + 1, tail_y)
 		}
 	}
@@ -183,5 +183,5 @@ fn render_rain_game(renderer &sdl.Renderer, mut game RainGame) {
 	draw_text(renderer, 20, game.screen_h - 82, 'CONTROLS & SHORTCUTS:', 1, Color{r: 0, g: 220, b: 255})
 	draw_text(renderer, 20, game.screen_h - 68, '[1-5] Rain Intensity Presets (Drizzle -> Typhoon -> M4 Armageddon)', 1, Color{r: 220, g: 230, b: 250})
 	draw_text(renderer, 20, game.screen_h - 54, '[WASD/Arrows] Wind Force | [TAB] Weather Theme | [M] Sound | [B] Mode', 1, Color{r: 220, g: 230, b: 250})
-	draw_text(renderer, 20, game.screen_h - 40, '[PgUp/PgDn] Adjust Allocated RAM (64MB -> 32GB) | [Up/Dn] Particles', 1, Color{r: 255, g: 220, b: 100})
+	draw_text(renderer, 20, game.screen_h - 40, '[[] / []] or [- / +] Adjust Allocated RAM (64MB -> 32GB) | [Up/Dn] Drops', 1, Color{r: 255, g: 220, b: 100})
 }

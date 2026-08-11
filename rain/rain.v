@@ -246,8 +246,8 @@ fn (mut game RainGame) touch_ram_buffers() {
 	for i in 0 .. game.ram_buffers.len {
 		mut buf := unsafe { game.ram_buffers[i] }
 		if buf.len > 1024 {
-			// Write & read across memory stride
-			idx := (int(game.total_processed) * 64) % (buf.len - 16)
+			// Write & read across memory stride using u64 modulo to prevent negative integer overflow panic
+			idx := int((game.total_processed * 64) % u64(buf.len - 16))
 			buf[idx] = u8((buf[idx] + 1) % 256)
 		}
 	}

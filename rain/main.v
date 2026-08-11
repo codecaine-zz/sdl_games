@@ -124,7 +124,7 @@ fn main() {
 	}
 	defer { sdl.destroy_window(app.window) }
 
-	app.renderer = sdl.create_renderer(app.window, -1, u32(sdl.RendererFlags.accelerated) | u32(sdl.RendererFlags.presentvsync))
+	app.renderer = sdl.create_renderer(app.window, -1, u32(int(sdl.RendererFlags.accelerated) | int(sdl.RendererFlags.presentvsync)))
 	if unsafe { app.renderer == nil } {
 		app.renderer = sdl.create_renderer(app.window, -1, 0)
 	}
@@ -210,10 +210,10 @@ fn main() {
 					} else if sym == int(sdl.KeyCode.down) {
 						new_p := app.game.max_drops - 5000
 						app.game.set_particle_count(new_p)
-					} else if sym == int(sdl.KeyCode.pageup) {
+					} else if sym == int(sdl.KeyCode.pageup) || sym == int(sdl.KeyCode.rightbracket) || sym == int(sdl.KeyCode.equals) {
 						new_ram := app.game.ram_allocated_mb + 1024
 						app.game.allocate_ram_benchmark(new_ram)
-					} else if sym == int(sdl.KeyCode.pagedown) {
+					} else if sym == int(sdl.KeyCode.pagedown) || sym == int(sdl.KeyCode.leftbracket) || sym == int(sdl.KeyCode.minus) {
 						new_ram := app.game.ram_allocated_mb - 1024
 						app.game.allocate_ram_benchmark(new_ram)
 					} else if sym == int(sdl.KeyCode.left) {
@@ -241,9 +241,11 @@ fn main() {
 		app.btn_theme.draw(app.renderer, app.mouse_x, app.mouse_y)
 		app.btn_mode.draw(app.renderer, app.mouse_x, app.mouse_y)
 		app.btn_preset.draw(app.renderer, app.mouse_x, app.mouse_y)
-		app.btn_sound.draw(app.renderer, app.mouse_x, app.mouse_y)
-
 		sdl.render_present(app.renderer)
-		sdl.delay(16)
+
+		frame_time := sdl.get_ticks() - now
+		if frame_time < 16 {
+			sdl.delay(u32(16 - frame_time))
+		}
 	}
 }
