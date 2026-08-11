@@ -10,6 +10,7 @@ import missilecommand
 import donkeykong
 import towerdefense
 import shinobi
+import rain
 
 fn capture_game_snapshot(game_name string, render_fn fn(&sdl.Renderer)) {
 	surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
@@ -93,5 +94,12 @@ fn main() {
 	g_sh.state = .playing
 	capture_game_snapshot("shinobi", fn [mut g_sh] (r &sdl.Renderer) {
 		shinobi.render_shinobi_game(r, mut g_sh)
+	})
+
+	// 10. Rain Simulator & M4 Benchmark
+	mut g_rain := rain.new_rain_game()
+	g_rain.update(0.016)
+	capture_game_snapshot("rain", fn [mut g_rain] (r &sdl.Renderer) {
+		rain.render_rain_game(r, mut g_rain)
 	})
 }

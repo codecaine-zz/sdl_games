@@ -40,6 +40,7 @@ v install sdl
 | **Hyper Pong** | `pong/` | 1P vs Adaptive AI & 2P Local modes, ball speed motion trails, angle spin reflections, score tracking. | `W`/`S` P1 paddle, `Up`/`Down` P2 paddle, `M` mode, `R` reset | [Preview](#14-hyper-pong) |
 | **Ragdoll Physics** | `ragdoll/` | 2D Verlet physics sandbox, skeletal constraints, interactive tools (Gravity Gun, Tether Ropes, Slice Cutter, Bombs), 3 arenas. | `Mouse Drag`/`Click` tools, `1-3` arenas, `Q-I` tool shortcuts, `G` gravity flip | [Preview](#15-ragdoll-physics) |
 | **Cyber Centipede Pro** | `centipede/` | Advanced Atari Centipede recreation, multi-segment chain physics, Poison Mushrooms, Fleas, Spiders, Scorpions, 6 stackable power-ups, Armored Mega-Centipede Boss waves. | `WASD`/`Arrows` move, `Space` fire, `R` reset, `P` pause, `O` sound | [Preview](#16-cyber-centipede-pro) |
+| **Monsoon Overdrive** | `rain/` | Realistic rain simulator & M4 hardware benchmark game. Up to 1,000,000 active particles, up to 32GB RAM stress allocation, 2D fluid heightfield puddle wave dynamics, interactive umbrella shield, weather themes, procedural PCM audio. | `Mouse` umbrella, `1-5` presets, `WASD`/`Arrows` wind, `PgUp`/`PgDn` RAM stress, `Up`/`Dn` drops, `B` mode, `Tab` theme | [Preview](#17-monsoon-overdrive) |
 
 ---
 
@@ -141,6 +142,12 @@ v run centipede
 ```
 ![Cyber Centipede Pro Screenshot](screenshots/centipede.png)
 
+### 17. Monsoon Overdrive (Rain Simulator & M4 Benchmark)
+```bash
+v run rain
+```
+![Monsoon Overdrive Screenshot](screenshots/rain.png)
+
 
 ---
 
@@ -165,6 +172,7 @@ v run tetris
 v run pong
 v run ragdoll
 v run centipede
+v run rain
 ```
 
 ---
@@ -181,6 +189,7 @@ v test lolo/
 v test racer/
 v test ragdoll/
 v test centipede/
+v test rain/
 ```
 
 ---
@@ -205,6 +214,7 @@ sdl_games/
 ├── pong/                   # Hyper Pong Game
 ├── ragdoll/                # Ragdoll Physics Sandbox
 ├── centipede/              # Cyber Centipede Pro Arcade Game
-├── screenshots/            # Showcase screenshots of all 16 games
+├── rain/                   # Monsoon Overdrive Realistic Rain & M4 Benchmark Game
+├── screenshots/            # Showcase screenshots of all 17 games
 └── README.md
 ```
