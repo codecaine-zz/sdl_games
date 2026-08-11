@@ -1,0 +1,128 @@
+module main
+
+import math
+import sdl
+
+fn render_lunarlander_game(renderer &sdl.Renderer, mut g LunarLanderGame) {
+	// Deep space black background
+	sdl.set_render_draw_color(renderer, 5, 5, 12, 255)
+	sdl.render_clear(renderer)
+
+	// 1. Draw Mountain Terrain Line
+	sdl.set_render_draw_color(renderer, 150, 160, 180, 255)
+	for i in 0 .. g.terrain_points.len - 1 {
+		p1 := g.terrain_points[i]
+		p2 := g.terrain_points[i + 1]
+		sdl.render_draw_line(renderer, int(p1.x), int(p1.y), int(p2.x), int(p2.y))
+	}
+
+	// 2. Draw Landing Pads with Multipliers
+	for pad in g.pads {
+		sdl.set_render_draw_color(renderer, 0, 255, 100, 255)
+		p_line := sdl.Rect{ x: int(pad.start_x), y: int(pad.y), w: int(pad.end_x - pad.start_x), h: 4 }
+		sdl.render_fill_rect(renderer, &p_line)
+
+		// Multiplier Label
+		draw_text(renderer, int(pad.start_x) + 8, int(pad.y) + 8, "${pad.multiplier}X", 1, Color{ r: 0, g: 255, b: 100, a: 255 })
+	}
+
+	// 3. Draw Particles
+	for p in g.particles {
+		alpha := u8(p.life / p.max_life * 255.0)
+		sdl.set_render_draw_color(renderer, p.color.r, p.color.g, p.color.b, alpha)
+		rect := sdl.Rect{ x: int(p.x) - 1, y: int(p.y) - 1, w: 3, h: 3 }
+		sdl.render_fill_rect(renderer, &rect)
+	}
+
+	// 4. Draw Vector Lander Ship
+	if g.state == .playing || g.state == .touchdown || g.state == .paused {
+		draw_lunar_lander(renderer, g.x, g.y, g.angle)
+	}
+
+	// 5. Draw Telemetry HUD
+	draw_text(renderer, 20, 15, "SCORE: ${g.score}", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
+	draw_text(renderer, 320, 15, "HIGH: ${g.high_score}", 2, Color{ r: 255, g: 215, b: 0, a: 255 })
+	draw_text(renderer, 650, 15, "SHIPS: ${g.lives}", 2, Color{ r: 0, g: 255, b: 255, a: 255 })
+
+	// Telemetry Metrics
+	v_speed := int(g.vy)
+	h_speed := int(g.vx)
+	v_color := if g.vy > 65.0 { Color{ r: 255, g: 50, b: 50, a: 255 } } else { Color{ r: 0, g: 255, b: 100, a: 255 } }
+
+	draw_text(renderer, 20, 45, "HORIZ SPEED: ${h_speed} M/S", 1, Color{ r: 200, g: 200, b: 200, a: 255 })
+	draw_text(renderer, 20, 60, "VERT SPEED:  ${v_speed} M/S", 1, v_color)
+
+	// Fuel Bar
+	draw_text(renderer, 600, 45, "FUEL", 1, Color{ r: 200, g: 200, b: 200, a: 255 })
+	fuel_w := int((g.fuel / g.max_fuel) * 120.0)
+	if fuel_w > 0 {
+		f_color := if g.fuel < 25.0 { Color{ r: 255, g: 50, b: 50, a: 255 } } else { Color{ r: 0, g: 200, b: 255, a: 255 } }
+		sdl.set_render_draw_color(renderer, f_color.r, f_color.g, f_color.b, 255)
+		f_bar := sdl.Rect{ x: 650, y: 45, w: fuel_w, h: 12 }
+		sdl.render_fill_rect(renderer, &f_bar)
+	}
+
+	// 6. Overlay Menus
+	if g.state == .menu {
+		draw_text_centered(renderer, 400, 180, "LUNAR LANDER", 4, Color{ r: 0, g: 200, b: 255, a: 255 })
+		draw_text_centered(renderer, 400, 240, "VECTOR THRUST GRAVITY SIMULATOR", 2, Color{ r: 255, g: 215, b: 0, a: 255 })
+		draw_text_centered(renderer, 400, 340, "PRESS SPACE TO START", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
+		draw_text_centered(renderer, 400, 400, "CONTROLS: A/D OR ARROWS ROTATE | SPACE THRUST", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
+		draw_text_centered(renderer, 400, 420, "LAND SOFTLY ON GREEN PADS (< 65 M/S VERT SPEED)", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
+	} else if g.state == .touchdown {
+		draw_text_centered(renderer, 400, 220, "SUCCESSFUL TOUCHDOWN!", 3, Color{ r: 0, g: 255, b: 100, a: 255 })
+		draw_text_centered(renderer, 400, 270, "+${g.touchdown_pts} POINTS BONUS", 2, Color{ r: 255, g: 215, b: 0, a: 255 })
+		draw_text_centered(renderer, 400, 340, "PRESS SPACE TO NEXT LANDING", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
+	} else if g.state == .crashed {
+		draw_text_centered(renderer, 400, 220, "LANDER DESTROYED - HARD IMPACT!", 3, Color{ r: 255, g: 50, b: 50, a: 255 })
+		draw_text_centered(renderer, 400, 310, "PRESS SPACE TO TRY AGAIN", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
+	} else if g.state == .game_over {
+		draw_text_centered(renderer, 400, 220, "GAME OVER - ALL LANDERS LOST", 4, Color{ r: 255, g: 50, b: 50, a: 255 })
+		draw_text_centered(renderer, 400, 310, "FINAL SCORE: ${g.score}", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
+		draw_text_centered(renderer, 400, 370, "PRESS SPACE OR R TO RESTART", 2, Color{ r: 0, g: 255, b: 100, a: 255 })
+	} else if g.state == .paused {
+		draw_text_centered(renderer, 400, 280, "- PAUSED -", 3, Color{ r: 255, g: 255, b: 0, a: 255 })
+	}
+
+	sdl.render_present(renderer)
+}
+
+fn draw_lunar_lander(renderer &sdl.Renderer, x f32, y f32, angle f32) {
+	// Octagonal Capsule Body + Legs
+	cos_a := f32(math.cos(angle))
+	sin_a := f32(math.sin(angle))
+
+	// Local relative vertices
+	pts := [
+		Point{ x: -10, y: -10 },
+		Point{ x: 10, y: -10 },
+		Point{ x: 14, y: 0 },
+		Point{ x: 10, y: 10 },
+		Point{ x: -10, y: 10 },
+		Point{ x: -14, y: 0 },
+	]
+
+	sdl.set_render_draw_color(renderer, 220, 220, 230, 255)
+	for i in 0 .. pts.len {
+		p1 := pts[i]
+		p2 := pts[(i + 1) % pts.len]
+
+		// Rotate and translate
+		rx1 := x + (p1.x * cos_a - p1.y * sin_a)
+		ry1 := y + (p1.x * sin_a + p1.y * cos_a)
+		rx2 := x + (p2.x * cos_a - p2.y * sin_a)
+		ry2 := y + (p2.x * sin_a + p2.y * cos_a)
+
+		sdl.render_draw_line(renderer, int(rx1), int(ry1), int(rx2), int(ry2))
+	}
+
+	// Landing Legs
+	sdl.set_render_draw_color(renderer, 180, 180, 180, 255)
+	leg_l_x := x + (-12.0 * cos_a - 16.0 * sin_a)
+	leg_l_y := y + (-12.0 * sin_a + 16.0 * cos_a)
+	leg_r_x := x + (12.0 * cos_a - 16.0 * sin_a)
+	leg_r_y := y + (12.0 * sin_a + 16.0 * cos_a)
+
+	sdl.render_draw_line(renderer, int(x), int(y), int(leg_l_x), int(leg_l_y))
+	sdl.render_draw_line(renderer, int(x), int(y), int(leg_r_x), int(leg_r_y))
+}

@@ -1,0 +1,120 @@
+module main
+
+import sdl
+
+fn main() {
+	sdl.init(sdl.init_video | sdl.init_audio)
+	defer { sdl.quit() }
+
+	window := sdl.create_window(
+		'Cyber Defense Tower Defense'.str,
+		sdl.windowpos_centered,
+		sdl.windowpos_centered,
+		800,
+		600,
+		u32(sdl.WindowFlags.shown)
+	)
+	if unsafe { window == nil } { return }
+	defer { sdl.destroy_window(window) }
+
+	renderer := sdl.create_renderer(window, -1, u32(sdl.RendererFlags.accelerated) | u32(sdl.RendererFlags.presentvsync))
+	if unsafe { renderer == nil } { return }
+	defer { sdl.destroy_renderer(renderer) }
+
+	mut game := new_towerdefense_game()
+
+	mut running := true
+	mut event := sdl.Event{}
+	mut last_ticks := sdl.get_ticks()
+
+	for running {
+		for sdl.poll_event(&event) != 0 {
+			match unsafe { event.@type } {
+				.quit { running = false }
+				.mousebuttondown {
+					if event.button.button == u8(sdl.button_left) {
+						if game.state == .menu || game.state == .game_over || game.state == .victory {
+							game.reset_game()
+						} else {
+							mx := event.button.x
+							my := event.button.y
+							gx := (mx - offset_x) / tile_size
+							gy := (my - offset_y) / tile_size
+
+							if gx >= 0 && gx < grid_cols && gy >= 0 && gy < grid_rows {
+								game.selected_gx = gx
+								game.selected_gy = gy
+								game.place_turret(gx, gy, game.selected_type)
+							}
+						}
+					}
+				}
+				.keydown {
+					sym := event.key.keysym.sym
+					// 1. Select Turret Type: 1, 2, 3, Keypad 1/2/3, L, C, F
+					if sym == int(sdl.KeyCode._1) || sym == int(sdl.KeyCode.kp_1) || sym == int(sdl.KeyCode.l) {
+						game.selected_type = .laser
+					} else if sym == int(sdl.KeyCode._2) || sym == int(sdl.KeyCode.kp_2) || sym == int(sdl.KeyCode.c) {
+						game.selected_type = .cannon
+					} else if sym == int(sdl.KeyCode._3) || sym == int(sdl.KeyCode.kp_3) || sym == int(sdl.KeyCode.f) {
+						game.selected_type = .frost
+					}
+					// 2. Navigation: Arrow Keys & WASD
+					else if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) {
+						if game.selected_gx > 0 { game.selected_gx-- }
+					} else if sym == int(sdl.KeyCode.right) || sym == int(sdl.KeyCode.d) {
+						if game.selected_gx < grid_cols - 1 { game.selected_gx++ }
+					} else if sym == int(sdl.KeyCode.up) || sym == int(sdl.KeyCode.w) {
+						if game.selected_gy > 0 { game.selected_gy-- }
+					} else if sym == int(sdl.KeyCode.down) || sym == int(sdl.KeyCode.s) {
+						if game.selected_gy < grid_rows - 1 { game.selected_gy++ }
+					}
+					// 3. Action / Build: SPACE, ENTER, KP_ENTER, B
+					else if sym == int(sdl.KeyCode.space) || sym == int(sdl.KeyCode.@return) || sym == int(sdl.KeyCode.kp_enter) || sym == int(sdl.KeyCode.b) {
+						if game.state == .menu || game.state == .game_over || game.state == .victory {
+							game.reset_game()
+						} else if game.state == .playing {
+							game.place_turret(game.selected_gx, game.selected_gy, game.selected_type)
+						}
+					}
+					// 4. Upgrade Turret: U
+					else if sym == int(sdl.KeyCode.u) {
+						game.upgrade_turret(game.selected_gx, game.selected_gy)
+					}
+					// 5. Sell Turret: X, DELETE, BACKSPACE
+					else if sym == int(sdl.KeyCode.x) || sym == int(sdl.KeyCode.delete) || sym == int(sdl.KeyCode.backspace) {
+						game.sell_turret(game.selected_gx, game.selected_gy)
+					}
+					// 6. Pause Game: P
+					else if sym == int(sdl.KeyCode.p) {
+						if game.state == .playing { game.state = .paused }
+						else if game.state == .paused { game.state = .playing }
+					}
+					// 7. Restart Game: R
+					else if sym == int(sdl.KeyCode.r) {
+						game.reset_game()
+					}
+					// 8. Toggle Mute: M
+					else if sym == int(sdl.KeyCode.m) {
+						game.sound_mgr.toggle_sound()
+					}
+					// 9. Quit Game: ESCAPE
+					else if sym == int(sdl.KeyCode.escape) {
+						running = false
+					}
+				}
+				else {}
+			}
+		}
+
+		current_ticks := sdl.get_ticks()
+		dt := f32(current_ticks - last_ticks) / 1000.0
+		last_ticks = current_ticks
+
+		capped_dt := if dt > 0.05 { f32(0.05) } else { dt }
+		game.update(capped_dt)
+		render_towerdefense_game(renderer, mut game)
+
+		sdl.delay(16)
+	}
+}
