@@ -4,9 +4,8 @@ import math
 import sdl
 
 fn draw_pool_game(renderer &sdl.Renderer, g &PoolGame) {
-	// Deep pub lounge background
-	sdl.set_render_draw_color(renderer, 15, 18, 26, 255)
-	sdl.render_clear(renderer)
+	// VIP Billiard Lounge with hardwood floor & overhead pendant lamp illumination
+	draw_room_background(renderer, g)
 
 	draw_table_wood_rim(renderer, g)
 	draw_table_felt(renderer, g)
@@ -18,61 +17,163 @@ fn draw_pool_game(renderer &sdl.Renderer, g &PoolGame) {
 	draw_celebration(renderer, g)
 }
 
+fn draw_room_background(renderer &sdl.Renderer, g &PoolGame) {
+	// Deep retro pool hall background with subtle wooden floor planks
+	for y := 0; y < 600; y += 4 {
+		shade := u8(12 + (y * 8) / 600)
+		sdl.set_render_draw_color(renderer, shade + 2, shade, shade + 6, 255)
+		rect := sdl.Rect{ x: 0, y: y, w: 800, h: 4 }
+		sdl.render_fill_rect(renderer, &rect)
+	}
+
+	// Floor plank lines
+	for y := 0; y < 600; y += 50 {
+		sdl.set_render_draw_color(renderer, 8, 7, 12, 255)
+		sdl.render_draw_line(renderer, 0, y, 800, y)
+	}
+
+	// Overhead table pendant lamp spotlight cone (illuminating table center)
+	cx := int(g.table_x + g.table_w / 2.0)
+	cy := int(g.table_y + g.table_h / 2.0)
+
+	// Translucent warm overhead glow
+	for r := 260; r > 100; r -= 20 {
+		alpha := u8((260 - r) / 8)
+		sdl.set_render_draw_color(renderer, 255, 245, 200, alpha)
+		draw_circle_wire(renderer, cx, cy, r, Color{ r: 255, g: 245, b: 200, a: alpha })
+	}
+}
+
 fn draw_table_wood_rim(renderer &sdl.Renderer, g &PoolGame) {
-	// Polished Mahogany Table Border
 	tx := int(g.table_x)
 	ty := int(g.table_y)
 	tw := int(g.table_w)
 	th := int(g.table_h)
 
-	sdl.set_render_draw_color(renderer, 70, 38, 20, 255)
+	// Polished Mahogany Outer Cushion Frame
+	sdl.set_render_draw_color(renderer, 58, 28, 16, 255)
 	rim_rect := sdl.Rect{ x: tx, y: ty, w: tw, h: th }
 	sdl.render_fill_rect(renderer, &rim_rect)
 
-	// Wood grain bevel
-	sdl.set_render_draw_color(renderer, 105, 58, 30, 255)
-	inner_rim := sdl.Rect{ x: tx + 6, y: ty + 6, w: tw - 12, h: th - 12 }
-	sdl.render_draw_rect(renderer, &inner_rim)
+	// Wood Grain Bevel Layer
+	sdl.set_render_draw_color(renderer, 85, 42, 24, 255)
+	inner_rim1 := sdl.Rect{ x: tx + 4, y: ty + 4, w: tw - 8, h: th - 8 }
+	sdl.render_draw_rect(renderer, &inner_rim1)
 
-	// Sights / Diamonds along rails (3 along short rails, 6 along long rails)
-	sdl.set_render_draw_color(renderer, 230, 220, 190, 255)
-	// Top & Bottom rail diamonds
+	sdl.set_render_draw_color(renderer, 35, 16, 10, 255)
+	inner_rim2 := sdl.Rect{ x: tx + 8, y: ty + 8, w: tw - 16, h: th - 16 }
+	sdl.render_draw_rect(renderer, &inner_rim2)
+
+	// Inlaid Mother-of-Pearl Diamond Sights (3 along short rails, 6 along long rails)
+	// Top & Bottom Rails
 	for i := 1; i <= 6; i++ {
 		dx := tx + int(f64(tw) * (f64(i) / 7.0))
-		d1 := sdl.Rect{ x: dx - 2, y: ty + 10, w: 4, h: 4 }
-		d2 := sdl.Rect{ x: dx - 2, y: ty + th - 14, w: 4, h: 4 }
-		sdl.render_fill_rect(renderer, &d1)
-		sdl.render_fill_rect(renderer, &d2)
+		draw_pearl_diamond(renderer, dx, ty + 10)
+		draw_pearl_diamond(renderer, dx, ty + th - 14)
 	}
-	// Left & Right rail diamonds
+	// Left & Right Rails
 	for i := 1; i <= 3; i++ {
 		dy := ty + int(f64(th) * (f64(i) / 4.0))
-		d1 := sdl.Rect{ x: tx + 10, y: dy - 2, w: 4, h: 4 }
-		d2 := sdl.Rect{ x: tx + tw - 14, y: dy - 2, w: 4, h: 4 }
-		sdl.render_fill_rect(renderer, &d1)
-		sdl.render_fill_rect(renderer, &d2)
+		draw_pearl_diamond(renderer, tx + 10, dy)
+		draw_pearl_diamond(renderer, tx + tw - 14, dy)
 	}
+
+	// Brass Corner Castings & Pocket Rim Plates
+	draw_brass_corner_plate(renderer, tx, ty, 32, 32, 0)
+	draw_brass_corner_plate(renderer, tx + tw - 32, ty, 32, 32, 1)
+	draw_brass_corner_plate(renderer, tx, ty + th - 32, 32, 32, 2)
+	draw_brass_corner_plate(renderer, tx + tw - 32, ty + th - 32, 32, 32, 3)
+
+	// Middle Pocket Brass Castings
+	draw_brass_side_plate(renderer, tx + tw / 2 - 16, ty, 32, 14)
+	draw_brass_side_plate(renderer, tx + tw / 2 - 16, ty + th - 14, 32, 14)
+}
+
+fn draw_pearl_diamond(renderer &sdl.Renderer, x int, y int) {
+	// Diamond Shape Mother of Pearl Inlay
+	sdl.set_render_draw_color(renderer, 245, 242, 230, 255)
+	sdl.render_draw_line(renderer, x, y - 3, x + 3, y)
+	sdl.render_draw_line(renderer, x + 3, y, x, y + 3)
+	sdl.render_draw_line(renderer, x, y + 3, x - 3, y)
+	sdl.render_draw_line(renderer, x - 3, y, x, y - 3)
+
+	sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+	sdl.render_draw_point(renderer, x, y)
+	sdl.render_draw_point(renderer, x, y - 1)
+}
+
+fn draw_brass_corner_plate(renderer &sdl.Renderer, x int, y int, w int, h int, _corner int) {
+	sdl.set_render_draw_color(renderer, 185, 150, 55, 255)
+	rect := sdl.Rect{ x: x, y: y, w: w, h: h }
+	sdl.render_fill_rect(renderer, &rect)
+
+	sdl.set_render_draw_color(renderer, 240, 215, 115, 255)
+	sdl.render_draw_line(renderer, x, y, x + w, y)
+	sdl.render_draw_line(renderer, x, y, x, y + h)
+
+	sdl.set_render_draw_color(renderer, 90, 60, 20, 255)
+	sdl.render_draw_line(renderer, x, y + h - 1, x + w, y + h - 1)
+	sdl.render_draw_line(renderer, x + w - 1, y, x + w - 1, y + h)
+
+	// Rivet
+	sdl.set_render_draw_color(renderer, 40, 25, 10, 255)
+	sdl.render_draw_point(renderer, x + w / 2, y + h / 2)
+}
+
+fn draw_brass_side_plate(renderer &sdl.Renderer, x int, y int, w int, h int) {
+	sdl.set_render_draw_color(renderer, 185, 150, 55, 255)
+	rect := sdl.Rect{ x: x, y: y, w: w, h: h }
+	sdl.render_fill_rect(renderer, &rect)
+
+	sdl.set_render_draw_color(renderer, 240, 215, 115, 255)
+	sdl.render_draw_rect(renderer, &rect)
 }
 
 fn draw_table_felt(renderer &sdl.Renderer, g &PoolGame) {
-	// Green Tournament Felt Playfield
 	fx := int(g.table_x + g.cushion_thick)
 	fy := int(g.table_y + g.cushion_thick)
 	fw := int(g.table_w - g.cushion_thick * 2.0)
 	fh := int(g.table_h - g.cushion_thick * 2.0)
 
-	sdl.set_render_draw_color(renderer, 18, 120, 68, 255)
-	felt_rect := sdl.Rect{ x: fx, y: fy, w: fw, h: fh }
-	sdl.render_fill_rect(renderer, &felt_rect)
+	// Tournament Green Woolen Baize (Gradient with spotlight center)
+	for y := 0; y < fh; y += 4 {
+		// Vignette factor: darker at table boundaries, rich emerald in center
+		norm_y := f64(y) / f64(fh) - 0.5
+		vignette := math.max(0.0, 1.0 - (norm_y * norm_y * 1.8))
 
-	// Head string line & spot
-	sdl.set_render_draw_color(renderer, 30, 145, 85, 200)
+		r := u8(14.0 + vignette * 10.0)
+		gr := u8(105.0 + vignette * 35.0)
+		b := u8(55.0 + vignette * 25.0)
+
+		sdl.set_render_draw_color(renderer, r, gr, b, 255)
+		f_strip := sdl.Rect{ x: fx, y: fy + y, w: fw, h: 4 }
+		sdl.render_fill_rect(renderer, &f_strip)
+	}
+
+	// Cushion Nose Edge Shadow (Under rail drop bevel)
+	sdl.set_render_draw_color(renderer, 8, 45, 25, 180)
+	sdl.render_draw_line(renderer, fx, fy, fx + fw, fy)
+	sdl.render_draw_line(renderer, fx, fy + 1, fx + fw, fy + 1)
+	sdl.render_draw_line(renderer, fx, fy, fx, fy + fh)
+	sdl.render_draw_line(renderer, fx + 1, fy, fx + 1, fy + fh)
+
+	// Head String Line & Head Spot
+	sdl.set_render_draw_color(renderer, 45, 175, 105, 140)
 	hx := int(g.table_x + g.table_w * 0.28)
-	sdl.render_draw_line(renderer, hx, fy, hx, fy + fh)
+	sdl.render_draw_line(renderer, hx, fy + 2, hx, fy + fh - 2)
 
-	// Head spot
-	spot := sdl.Rect{ x: hx - 2, y: fy + fh / 2 - 2, w: 4, h: 4 }
+	// Head Spot & Foot Spot
+	draw_felt_spot(renderer, hx, fy + fh / 2)
+	fx_spot := int(g.table_x + g.table_w * 0.72)
+	draw_felt_spot(renderer, fx_spot, fy + fh / 2)
+}
+
+fn draw_felt_spot(renderer &sdl.Renderer, x int, y int) {
+	sdl.set_render_draw_color(renderer, 240, 245, 255, 220)
+	spot := sdl.Rect{ x: x - 2, y: y - 2, w: 4, h: 4 }
 	sdl.render_fill_rect(renderer, &spot)
+	sdl.set_render_draw_color(renderer, 10, 60, 30, 255)
+	sdl.render_draw_point(renderer, x, y)
 }
 
 fn draw_pockets(renderer &sdl.Renderer, g &PoolGame) {
@@ -81,12 +182,14 @@ fn draw_pockets(renderer &sdl.Renderer, g &PoolGame) {
 		py := int(p.y)
 		r := int(p.radius)
 
-		// Dark interior leather drop hole
-		sdl.set_render_draw_color(renderer, 8, 10, 15, 255)
-		draw_filled_circle(renderer, px, py, r, Color{ r: 8, g: 10, b: 15 })
+		// Deep Dark Pocket Interior Drop Hole
+		draw_filled_circle(renderer, px, py, r + 2, Color{ r: 6, g: 8, b: 12 })
 
-		// Brass pocket rim corner
-		draw_circle_wire(renderer, px, py, r, Color{ r: 180, g: 150, b: 60 })
+		// Leather Drop Netting Ring
+		draw_circle_wire(renderer, px, py, r, Color{ r: 35, g: 25, b: 20 })
+
+		// Polished Brass Pocket Bevel Outer Ring
+		draw_circle_wire(renderer, px, py, r + 1, Color{ r: 210, g: 175, b: 70 })
 	}
 }
 
@@ -98,53 +201,88 @@ fn draw_balls(renderer &sdl.Renderer, g &PoolGame) {
 		by := int(b.y)
 		r := int(b.radius)
 
-		// Ball drop shadow
+		// Dynamic Multi-Layer Contact Shadow on Felt
 		sdl.set_render_draw_color(renderer, 0, 0, 0, 80)
-		shadow := sdl.Rect{ x: bx - r + 2, y: by - r + 3, w: r * 2, h: r * 2 }
-		sdl.render_fill_rect(renderer, &shadow)
+		s_outer := sdl.Rect{ x: bx - r + 3, y: by - r + 5, w: r * 2, h: r * 2 }
+		sdl.render_fill_rect(renderer, &s_outer)
+		sdl.set_render_draw_color(renderer, 0, 0, 0, 140)
+		s_inner := sdl.Rect{ x: bx - r + 4, y: by - r + 6, w: r * 2 - 4, h: r * 2 - 4 }
+		sdl.render_fill_rect(renderer, &s_inner)
 
-		// Ball base color
+		// Base Ball Color Palette
 		c := get_ball_color(b.id)
-		draw_filled_circle(renderer, bx, by, r, c)
 
-		// If stripe ball (9-15), draw white stripe band across middle
-		if !b.is_solid && !b.is_cue && !b.is_eight {
-			sdl.set_render_draw_color(renderer, 245, 245, 255, 255)
-			stripe_rect := sdl.Rect{ x: bx - r, y: by - 4, w: r * 2, h: 8 }
-			sdl.render_fill_rect(renderer, &stripe_rect)
+		// 16-Bit Radial Spherical Shading
+		for dy := -r; dy <= r; dy++ {
+			for dx := -r; dx <= r; dx++ {
+				dist_sq := dx * dx + dy * dy
+				if dist_sq <= r * r {
+					// Light from top-left (-r/3, -r/3)
+					lx := dx + (r / 3)
+					ly := dy + (r / 3)
+					light_dist := math.sqrt(f64(lx * lx + ly * ly))
+					norm_light := math.max(0.0, 1.0 - (light_dist / f64(r * 2)))
+
+					// Stepped shading factor
+					shade_step := int(norm_light * 6.0)
+					factor := 0.45 + (f64(shade_step) / 6.0) * 0.85
+
+					// Determine if this pixel is inside the stripe zone for striped balls (9-15)
+					is_stripe_ball := (!b.is_solid && !b.is_cue && !b.is_eight)
+					mut pixel_color := c
+
+					if is_stripe_ball {
+						// Horizontal stripe belt across middle (-4 .. +4)
+						if dy < -4 || dy > 4 {
+							// Polar cap: Ivory White
+							pixel_color = Color{ r: 245, g: 242, b: 235 }
+						}
+					}
+
+					mut pr := u8(math.min(255.0, f64(pixel_color.r) * factor))
+					mut pg := u8(math.min(255.0, f64(pixel_color.g) * factor))
+					mut pb := u8(math.min(255.0, f64(pixel_color.b) * factor))
+
+					// Specular glossy highlight glint
+					if lx * lx + ly * ly <= (r * r) / 10 {
+						pr = 255
+						pg = 255
+						pb = 255
+					}
+
+					sdl.set_render_draw_color(renderer, pr, pg, pb, 255)
+					sdl.render_draw_point(renderer, bx + dx, by + dy)
+				}
+			}
 		}
 
-		// Number circle badge (except cue ball)
+		// Number Badge Circle (Except Cue Ball)
 		if !b.is_cue {
 			badge_r := 5
-			draw_filled_circle(renderer, bx, by, badge_r, Color{ r: 250, g: 250, b: 255 })
+			draw_filled_circle(renderer, bx, by, badge_r, Color{ r: 252, g: 250, b: 245 })
 			num_str := '${b.id}'
-			draw_text_centered(renderer, bx, by - 3, num_str, 1, Color{ r: 10, g: 10, b: 15 })
+			// Crisp 16-bit number label
+			draw_text_centered(renderer, bx, by - 3, num_str, 1, Color{ r: 10, g: 12, b: 16 })
+		} else {
+			// Red dot on cue ball for spin indicator
+			sdl.set_render_draw_color(renderer, 220, 40, 40, 255)
+			sdl.render_draw_point(renderer, bx + 1, by)
 		}
-
-		// 3D Specular Highlight
-		pr := u8(math.min(255.0, f64(c.r) + 80.0))
-		pg := u8(math.min(255.0, f64(c.g) + 80.0))
-		pb := u8(math.min(255.0, f64(c.b) + 80.0))
-		sdl.set_render_draw_color(renderer, pr, pg, pb, 200)
-		sdl.render_draw_point(renderer, bx - 3, by - 3)
-		sdl.render_draw_point(renderer, bx - 2, by - 3)
-		sdl.render_draw_point(renderer, bx - 3, by - 2)
 	}
 }
 
 fn get_ball_color(id int) Color {
 	return match id {
-		0  { Color{ r: 245, g: 245, b: 255 } } // Cue Ball (White)
-		1, 9  { Color{ r: 245, g: 210, b: 30 } }  // Yellow
-		2, 10 { Color{ r: 35, g: 75, b: 210 } }   // Blue
-		3, 11 { Color{ r: 220, g: 45, b: 45 } }   // Red
-		4, 12 { Color{ r: 120, g: 40, b: 160 } }  // Purple
-		5, 13 { Color{ r: 240, g: 120, b: 25 } }  // Orange
-		6, 14 { Color{ r: 30, g: 140, b: 50 } }   // Green
-		7, 15 { Color{ r: 140, g: 30, b: 35 } }   // Maroon
-		8  { Color{ r: 20, g: 20, b: 25 } }   // Black 8-Ball
-		else { Color{ r: 200, g: 200, b: 200 } }
+		0      { Color{ r: 250, g: 248, b: 242 } } // Cue Ball (Ivory White)
+		1, 9   { Color{ r: 250, g: 215, b: 35 } }  // 1 & 9: Canary Yellow
+		2, 10  { Color{ r: 30, g: 85, b: 220 } }   // 2 & 10: Cobalt Blue
+		3, 11  { Color{ r: 225, g: 45, b: 45 } }   // 3 & 11: Crimson Red
+		4, 12  { Color{ r: 125, g: 40, b: 170 } }  // 4 & 12: Royal Violet
+		5, 13  { Color{ r: 245, g: 120, b: 25 } }  // 5 & 13: Tangerine Orange
+		6, 14  { Color{ r: 28, g: 145, b: 55 } }   // 6 & 14: Emerald Green
+		7, 15  { Color{ r: 145, g: 30, b: 38 } }   // 7 & 15: Deep Burgundy
+		8      { Color{ r: 20, g: 22, b: 28 } }    // 8: Ebony Black
+		else   { Color{ r: 210, g: 210, b: 210 } }
 	}
 }
 
@@ -160,7 +298,7 @@ fn draw_aiming_guideline(renderer &sdl.Renderer, g &PoolGame) {
 	cy := g.balls[0].y
 
 	// Raycast forward to find first object ball hit or cushion
-	mut ray_len := 400.0
+	mut ray_len := 420.0
 	mut hit_ball_idx := -1
 
 	for idx, b in g.balls {
@@ -169,13 +307,11 @@ fn draw_aiming_guideline(renderer &sdl.Renderer, g &PoolGame) {
 		dx := b.x - cx
 		dy := b.y - cy
 
-		// Projection along aim line
 		aim_dir_x := math.cos(g.aim_angle)
 		aim_dir_y := math.sin(g.aim_angle)
 		dot := dx * aim_dir_x + dy * aim_dir_y
 
 		if dot > 0.0 && dot < ray_len {
-			// Perpendicular distance to line
 			perp_dist := math.abs(dx * aim_dir_y - dy * aim_dir_x)
 			if perp_dist < 22.0 {
 				ray_len = dot - math.sqrt(484.0 - perp_dist * perp_dist)
@@ -187,13 +323,22 @@ fn draw_aiming_guideline(renderer &sdl.Renderer, g &PoolGame) {
 	end_x := cx + math.cos(g.aim_angle) * ray_len
 	end_y := cy + math.sin(g.aim_angle) * ray_len
 
-	// Primary Cue Line (Translucent White)
-	sdl.set_render_draw_color(renderer, 255, 255, 255, 180)
-	sdl.render_draw_line(renderer, int(cx), int(cy), int(end_x), int(end_y))
+	// Dotted Glowing Aiming Line
+	dots := int(ray_len / 12.0)
+	for i := 0; i <= dots; i++ {
+		t := f64(i) / f64(dots)
+		dx := cx + (end_x - cx) * t
+		dy := cy + (end_y - cy) * t
 
-	// Ghost Ball Projection at impact point
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 200)
+		sdl.render_draw_point(renderer, int(dx), int(dy))
+		sdl.render_draw_point(renderer, int(dx + 1), int(dy))
+	}
+
+	// Ghost Ball Projection at Impact Point
 	if hit_ball_idx != -1 {
-		draw_circle_wire(renderer, int(end_x), int(end_y), 11, Color{ r: 255, g: 255, b: 255 })
+		draw_circle_wire(renderer, int(end_x), int(end_y), 11, Color{ r: 255, g: 255, b: 255, a: 220 })
+		draw_circle_wire(renderer, int(end_x), int(end_y), 12, Color{ r: 0, g: 230, b: 255, a: 180 })
 
 		// Deflection trajectory vector for object ball
 		tb := g.balls[hit_ball_idx]
@@ -203,11 +348,17 @@ fn draw_aiming_guideline(renderer &sdl.Renderer, g &PoolGame) {
 		if obj_dist > 0.001 {
 			nx := obj_dir_x / obj_dist
 			ny := obj_dir_y / obj_dist
-			deflect_x := tb.x + nx * 60.0
-			deflect_y := tb.y + ny * 60.0
+			deflect_x := tb.x + nx * 70.0
+			deflect_y := tb.y + ny * 70.0
 
-			sdl.set_render_draw_color(renderer, 255, 215, 0, 220)
+			// Golden object ball rebound vector
+			sdl.set_render_draw_color(renderer, 255, 215, 0, 240)
 			sdl.render_draw_line(renderer, int(tb.x), int(tb.y), int(deflect_x), int(deflect_y))
+			sdl.render_draw_line(renderer, int(tb.x + 1), int(tb.y), int(deflect_x + 1), int(deflect_y))
+
+			// Arrowhead
+			sdl.render_draw_line(renderer, int(deflect_x), int(deflect_y), int(deflect_x - nx * 8.0 + ny * 4.0), int(deflect_y - ny * 8.0 - nx * 4.0))
+			sdl.render_draw_line(renderer, int(deflect_x), int(deflect_y), int(deflect_x - nx * 8.0 - ny * 4.0), int(deflect_y - ny * 8.0 + nx * 4.0))
 		}
 	}
 }
@@ -223,104 +374,147 @@ fn draw_cue_stick(renderer &sdl.Renderer, g &PoolGame) {
 	cx := g.balls[0].x
 	cy := g.balls[0].y
 
-	// Pull-back offset based on power
-	pull_offset := 18.0 + g.cue_power * 40.0
-	cue_len := 180.0
+	// Pull-back offset based on shot power
+	pull_offset := 20.0 + g.cue_power * 45.0
+	cue_len := 200.0
 
 	tip_x := cx - math.cos(g.aim_angle) * pull_offset
 	tip_y := cy - math.sin(g.aim_angle) * pull_offset
 	butt_x := tip_x - math.cos(g.aim_angle) * cue_len
 	butt_y := tip_y - math.sin(g.aim_angle) * cue_len
 
-	// Cue Shaft (Maple Wood)
-	sdl.set_render_draw_color(renderer, 220, 185, 140, 255)
+	// 16-Bit Tapered Maple Cue Stick
+
+	// Cue Shaft (Hard Rock Maple)
+	sdl.set_render_draw_color(renderer, 225, 195, 150, 255)
 	sdl.render_draw_line(renderer, int(tip_x), int(tip_y), int(butt_x), int(butt_y))
 	sdl.render_draw_line(renderer, int(tip_x + 1), int(tip_y), int(butt_x + 1), int(butt_y))
 
-	// Cue Leather Tip (Blue chalk)
-	sdl.set_render_draw_color(renderer, 40, 140, 220, 255)
-	sdl.render_draw_line(renderer, int(tip_x), int(tip_y), int(tip_x - math.cos(g.aim_angle) * 4.0), int(tip_y - math.sin(g.aim_angle) * 4.0))
+	// Brass Ferrule
+	ferrule_x := tip_x - math.cos(g.aim_angle) * 8.0
+	ferrule_y := tip_y - math.sin(g.aim_angle) * 8.0
+	sdl.set_render_draw_color(renderer, 240, 210, 80, 255)
+	sdl.render_draw_line(renderer, int(tip_x), int(tip_y), int(ferrule_x), int(ferrule_y))
 
-	// Cue Butt Grip (Black/Mahogany)
-	sdl.set_render_draw_color(renderer, 30, 25, 20, 255)
-	grip_start_x := butt_x + math.cos(g.aim_angle) * 60.0
-	grip_start_y := butt_y + math.sin(g.aim_angle) * 60.0
+	// Blue Chalk Tip
+	sdl.set_render_draw_color(renderer, 30, 140, 230, 255)
+	sdl.render_draw_line(renderer, int(tip_x), int(tip_y), int(tip_x - math.cos(g.aim_angle) * 3.0), int(tip_y - math.sin(g.aim_angle) * 3.0))
+
+	// Irish Linen Grip Wrap (Textured Black & White Speckle)
+	grip_len := 70.0
+	grip_start_x := butt_x + math.cos(g.aim_angle) * grip_len
+	grip_start_y := butt_y + math.sin(g.aim_angle) * grip_len
+
+	sdl.set_render_draw_color(renderer, 32, 28, 25, 255)
 	sdl.render_draw_line(renderer, int(grip_start_x), int(grip_start_y), int(butt_x), int(butt_y))
+	sdl.set_render_draw_color(renderer, 180, 175, 160, 255)
+	sdl.render_draw_point(renderer, int((grip_start_x + butt_x) / 2), int((grip_start_y + butt_y) / 2))
+
+	// Cue Butt Cap (White Phenolic)
+	sdl.set_render_draw_color(renderer, 245, 245, 250, 255)
+	sdl.render_draw_point(renderer, int(butt_x), int(butt_y))
 }
 
 fn draw_pool_hud(renderer &sdl.Renderer, g &PoolGame) {
-	// Top Header Banner
+	// Top Header Arcade Scoreboard
 	panel_w := 760
-	panel_h := 60
+	panel_h := 66
 	px := (800 - panel_w) / 2
-	py := 10
+	py := 8
 
-	sdl.set_render_draw_color(renderer, 10, 14, 25, 240)
-	panel_rect := sdl.Rect{ x: px, y: py, w: panel_w, h: panel_h }
-	sdl.render_fill_rect(renderer, &panel_rect)
-
-	sdl.set_render_draw_color(renderer, 0, 200, 255, 255)
-	sdl.render_draw_rect(renderer, &panel_rect)
+	// Beveled Arcade HUD Box
+	draw_pool_box(renderer, px, py, panel_w, panel_h)
 
 	mode_str := match g.typ {
-		.eight_ball { '8-BALL POOL' }
-		.nine_ball { '9-BALL POOL' }
-		.practice { 'PRACTICE / TRICK SHOT' }
+		.eight_ball  { '8-BALL TOURNAMENT POOL' }
+		.nine_ball   { '9-BALL SPEED POOL' }
+		.practice    { 'FREE PRACTICE / TRICK SHOTS' }
 	}
-	draw_text(renderer, px + 12, py + 8, mode_str, 1, Color{ r: 255, g: 215, b: 0 })
+	draw_text(renderer, px + 14, py + 8, mode_str, 1, Color{ r: 255, g: 215, b: 0 })
 
-	// Player turn indicator
+	// Active Player and Assigned Ball Group
 	p := g.players[g.current_p_idx]
 	group_str := match p.group {
-		.solids { 'SOLIDS (1-7)' }
-		.stripes { 'STRIPES (9-15)' }
-		else { 'OPEN TABLE' }
+		.solids   { 'SOLIDS (1-7)' }
+		.stripes  { 'STRIPES (9-15)' }
+		else      { 'OPEN TABLE' }
 	}
-	draw_text(renderer, px + 12, py + 26, '${p.name.to_upper()} TURN: ${group_str}', 1, Color{ r: 0, g: 255, b: 180 })
+	draw_text(renderer, px + 14, py + 26, '${p.name.to_upper()} TURN: ${group_str}', 1, Color{ r: 0, g: 255, b: 190 })
 
-	// Power Gauge (Right side of HUD)
-	bar_w := 140
+	// Power Gauge Meter (Right side of HUD)
+	bar_w := 150
 	bar_h := 16
 	bar_x := px + panel_w - bar_w - 20
-	bar_y := py + 24
+	bar_y := py + 26
 
-	draw_text(renderer, bar_x, py + 8, 'POWER (HOLD SPACE / DRAG)', 1, Color{ r: 200, g: 220, b: 255 })
+	draw_text(renderer, bar_x, py + 8, 'SHOT POWER', 1, Color{ r: 210, g: 225, b: 255 })
 	bg_rect := sdl.Rect{ x: bar_x, y: bar_y, w: bar_w, h: bar_h }
-	sdl.set_render_draw_color(renderer, 30, 35, 50, 255)
+	sdl.set_render_draw_color(renderer, 20, 24, 36, 255)
 	sdl.render_fill_rect(renderer, &bg_rect)
 
+	// Multi-tone Power Fill
 	fill_w := int(f64(bar_w) * g.cue_power)
-	fill_rect := sdl.Rect{ x: bar_x, y: bar_y, w: fill_w, h: bar_h }
-	sdl.set_render_draw_color(renderer, 255, 180, 0, 255)
-	sdl.render_fill_rect(renderer, &fill_rect)
+	for pw := 0; pw < fill_w; pw++ {
+		progress := f64(pw) / f64(bar_w)
+		col := if progress > 0.8 {
+			Color{ r: 255, g: 50, b: 60 }
+		} else if progress > 0.5 {
+			Color{ r: 255, g: 200, b: 30 }
+		} else {
+			Color{ r: 40, g: 210, b: 120 }
+		}
+		sdl.set_render_draw_color(renderer, col.r, col.g, col.b, 255)
+		sdl.render_draw_line(renderer, bar_x + pw, bar_y + 1, bar_x + pw, bar_y + bar_h - 2)
+	}
 
-	sdl.set_render_draw_color(renderer, 200, 210, 240, 255)
+	sdl.set_render_draw_color(renderer, 130, 145, 175, 255)
 	sdl.render_draw_rect(renderer, &bg_rect)
 
-	// Bottom Controls Guide
+	// Bottom Controls Guide Bar
 	help_text := '[MOUSE / ARROWS] AIM  |  [HOLD SPACE / CLICK DRAG] STRIKE  |  [1-3] MODES  |  [M] SOUND  |  [R] RE-RACK'
-	draw_text_centered(renderer, 400, 560, help_text, 1, Color{ r: 150, g: 170, b: 200 })
+	draw_text_centered(renderer, 400, 568, help_text, 1, Color{ r: 160, g: 180, b: 210 })
 
 	if g.state == .ball_in_hand {
-		draw_text_centered(renderer, 400, 490, 'BALL IN HAND: CLICK TABLE TO PLACE CUE BALL', 1, Color{ r: 255, g: 220, b: 50 })
+		draw_text_centered(renderer, 400, 500, 'BALL IN HAND: CLICK TABLE TO PLACE CUE BALL', 1, Color{ r: 255, g: 225, b: 50 })
 	}
+}
+
+fn draw_pool_box(renderer &sdl.Renderer, x int, y int, w int, h int) {
+	bg := sdl.Rect{ x: x, y: y, w: w, h: h }
+	sdl.set_render_draw_color(renderer, 14, 18, 30, 245)
+	sdl.render_fill_rect(renderer, &bg)
+
+	// Metallic Bevel Highlights
+	sdl.set_render_draw_color(renderer, 75, 90, 120, 255)
+	sdl.render_draw_line(renderer, x, y, x + w, y)
+	sdl.render_draw_line(renderer, x, y, x, y + h)
+
+	sdl.set_render_draw_color(renderer, 8, 10, 16, 255)
+	sdl.render_draw_line(renderer, x, y + h - 1, x + w, y + h - 1)
+	sdl.render_draw_line(renderer, x + w - 1, y, x + w - 1, y + h)
+
+	// Cyan accent line
+	sdl.set_render_draw_color(renderer, 0, 190, 240, 200)
+	inner := sdl.Rect{ x: x + 2, y: y + 2, w: w - 4, h: h - 4 }
+	sdl.render_draw_rect(renderer, &inner)
 }
 
 fn draw_celebration(renderer &sdl.Renderer, g &PoolGame) {
 	if g.celebration != '' {
-		box_w := 460
-		box_h := 60
+		box_w := 480
+		box_h := 64
 		bx := (800 - box_w) / 2
 		by := 250
 
-		sdl.set_render_draw_color(renderer, 15, 20, 35, 245)
-		b_rect := sdl.Rect{ x: bx, y: by, w: box_w, h: box_h }
-		sdl.render_fill_rect(renderer, &b_rect)
+		draw_pool_box(renderer, bx, by, box_w, box_h)
 
+		// Gold Border
 		sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
-		sdl.render_draw_rect(renderer, &b_rect)
+		inner := sdl.Rect{ x: bx + 4, y: by + 4, w: box_w - 8, h: box_h - 8 }
+		sdl.render_draw_rect(renderer, &inner)
 
-		draw_text_centered(renderer, 400, by + 20, g.celebration, 2, Color{ r: 255, g: 220, b: 50 })
+		draw_text_centered(renderer, 402, by + 24, g.celebration, 2, Color{ r: 35, g: 15, b: 0 })
+		draw_text_centered(renderer, 400, by + 22, g.celebration, 2, Color{ r: 255, g: 225, b: 50 })
 	}
 }
 
@@ -337,7 +531,7 @@ fn draw_filled_circle(renderer &sdl.Renderer, cx int, cy int, r int, c Color) {
 
 fn draw_circle_wire(renderer &sdl.Renderer, cx int, cy int, r int, c Color) {
 	sdl.set_render_draw_color(renderer, c.r, c.g, c.b, c.a)
-	steps := 40
+	steps := 48
 	for i := 0; i < steps; i++ {
 		a1 := f64(i) * 2.0 * math.pi / f64(steps)
 		a2 := f64(i + 1) * 2.0 * math.pi / f64(steps)

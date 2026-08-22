@@ -7,52 +7,80 @@ fn render_missilecommand_game(renderer &sdl.Renderer, mut g MissileCommandGame) 
 	sdl.set_render_draw_color(renderer, 5, 5, 12, 255)
 	sdl.render_clear(renderer)
 
-	// 1. Ground Baseline & Silos
-	sdl.set_render_draw_color(renderer, 200, 160, 40, 255)
+	// 1. 16-Bit Ground Terrain Baseline & Camo Silos
+	sdl.set_render_draw_color(renderer, 180, 140, 30, 255)
 	ground := sdl.Rect{ x: 0, y: 550, w: 800, h: 50 }
 	sdl.render_fill_rect(renderer, &ground)
+	sdl.set_render_draw_color(renderer, 220, 185, 50, 255)
+	sdl.render_draw_line(renderer, 0, 550, 799, 550)
 
-	// Silo Batteries
+	// Silo Batteries with Radar Dishes
 	for s in g.silos {
 		if s.ammo > 0 {
-			sdl.set_render_draw_color(renderer, 50, 180, 255, 255)
-			silo_box := sdl.Rect{ x: int(s.x) - 20, y: 525, w: 40, h: 25 }
+			// Reinforced Silo Bunker
+			sdl.set_render_draw_color(renderer, 45, 75, 115, 255)
+			silo_box := sdl.Rect{ x: int(s.x) - 22, y: 524, w: 44, h: 26 }
 			sdl.render_fill_rect(renderer, &silo_box)
 
+			// Bevel highlight & Radar Dish
+			sdl.set_render_draw_color(renderer, 100, 180, 255, 255)
+			sdl.render_draw_line(renderer, int(s.x) - 22, 524, int(s.x) + 21, 524)
+			sdl.render_draw_line(renderer, int(s.x) - 6, 520, int(s.x) + 6, 520)
+			sdl.render_draw_line(renderer, int(s.x), 520, int(s.x), 524)
+
 			// Ammo counter
-			draw_text(renderer, int(s.x) - 10, 505, "${s.ammo}", 1, Color{ r: 255, g: 255, b: 255, a: 255 })
+			draw_text(renderer, int(s.x) - 10, 502, '${s.ammo}', 1, Color{ r: 255, g: 255, b: 255, a: 255 })
 		}
 	}
 
-	// 2. Cities
+	// 2. 16-Bit Lit Skyscraper Cities
 	for c in g.cities {
 		if c.active {
-			sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
-			b1 := sdl.Rect{ x: int(c.x) - 18, y: 520, w: 12, h: 30 }
-			b2 := sdl.Rect{ x: int(c.x) - 4, y: 510, w: 14, h: 40 }
-			b3 := sdl.Rect{ x: int(c.x) + 12, y: 525, w: 10, h: 25 }
+			// Skyscraper 1
+			sdl.set_render_draw_color(renderer, 30, 60, 100, 255)
+			b1 := sdl.Rect{ x: int(c.x) - 18, y: 518, w: 12, h: 32 }
 			sdl.render_fill_rect(renderer, &b1)
+			sdl.set_render_draw_color(renderer, 255, 235, 120, 255)
+			sdl.render_draw_point(renderer, int(c.x) - 14, 524)
+			sdl.render_draw_point(renderer, int(c.x) - 10, 524)
+			sdl.render_draw_point(renderer, int(c.x) - 14, 532)
+			sdl.render_draw_point(renderer, int(c.x) - 10, 532)
+
+			// Skyscraper 2 (Spire)
+			sdl.set_render_draw_color(renderer, 40, 80, 130, 255)
+			b2 := sdl.Rect{ x: int(c.x) - 4, y: 506, w: 14, h: 44 }
 			sdl.render_fill_rect(renderer, &b2)
+			sdl.set_render_draw_color(renderer, 255, 235, 120, 255)
+			sdl.render_draw_point(renderer, int(c.x), 514)
+			sdl.render_draw_point(renderer, int(c.x) + 4, 514)
+			sdl.render_draw_point(renderer, int(c.x), 524)
+			sdl.render_draw_point(renderer, int(c.x) + 4, 524)
+
+			// Skyscraper 3
+			sdl.set_render_draw_color(renderer, 30, 60, 100, 255)
+			b3 := sdl.Rect{ x: int(c.x) + 12, y: 524, w: 10, h: 26 }
 			sdl.render_fill_rect(renderer, &b3)
+			sdl.set_render_draw_color(renderer, 255, 235, 120, 255)
+			sdl.render_draw_point(renderer, int(c.x) + 15, 530)
 		} else {
-			// Ruined city debris
-			sdl.set_render_draw_color(renderer, 100, 100, 100, 255)
-			debris := sdl.Rect{ x: int(c.x) - 16, y: 542, w: 34, h: 8 }
+			// Ruined city rubble
+			sdl.set_render_draw_color(renderer, 80, 75, 70, 255)
+			debris := sdl.Rect{ x: int(c.x) - 18, y: 544, w: 38, h: 6 }
 			sdl.render_fill_rect(renderer, &debris)
 		}
 	}
 
-	// 3. ICBM Trajectories (Red Lines)
+	// 3. ICBM Trajectories (Red Glow Lines)
 	for m in g.icbms {
 		if !m.active { continue }
-		sdl.set_render_draw_color(renderer, 255, 60, 60, 255)
+		sdl.set_render_draw_color(renderer, 255, 45, 45, 255)
 		sdl.render_draw_line(renderer, int(m.start_x), int(m.start_y), int(m.x), int(m.y))
 	}
 
-	// 4. Interceptor Trails (Blue Lines + Target X)
+	// 4. Interceptor Trails (Cyan Lines + Target X)
 	for m in g.interceptors {
 		if !m.active { continue }
-		sdl.set_render_draw_color(renderer, 60, 180, 255, 255)
+		sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
 		sdl.render_draw_line(renderer, int(m.start_x), int(m.start_y), int(m.x), int(m.y))
 
 		// Target X indicator
@@ -63,22 +91,29 @@ fn render_missilecommand_game(renderer &sdl.Renderer, mut g MissileCommandGame) 
 		sdl.render_draw_line(renderer, tx - 4, ty + 4, tx + 4, ty - 4)
 	}
 
-	// 5. Expanding Blast Clouds
+	// 5. 16-Bit Expanding Fireball Blast Shockwaves
 	for b in g.blasts {
 		if !b.active { continue }
 		cx := int(b.x)
 		cy := int(b.y)
 		r := int(b.radius)
 
-		// Outer expanding circle rect
-		sdl.set_render_draw_color(renderer, 255, 200, 50, 255)
+		// Outer fiery orange corona
+		sdl.set_render_draw_color(renderer, 245, 110, 25, 255)
 		outer := sdl.Rect{ x: cx - r, y: cy - r, w: r * 2, h: r * 2 }
 		sdl.render_fill_rect(renderer, &outer)
 
-		// Inner bright core
-		if r > 6 {
+		// Middle yellow heat wave
+		if r > 4 {
+			sdl.set_render_draw_color(renderer, 255, 215, 40, 255)
+			mid := sdl.Rect{ x: cx - r * 2 / 3, y: cy - r * 2 / 3, w: r * 4 / 3, h: r * 4 / 3 }
+			sdl.render_fill_rect(renderer, &mid)
+		}
+
+		// Inner white incandescent core
+		if r > 8 {
 			sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-			inner := sdl.Rect{ x: cx - r / 2, y: cy - r / 2, w: r, h: r }
+			inner := sdl.Rect{ x: cx - r / 3, y: cy - r / 3, w: r * 2 / 3, h: r * 2 / 3 }
 			sdl.render_fill_rect(renderer, &inner)
 		}
 	}

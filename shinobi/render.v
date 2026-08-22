@@ -68,41 +68,58 @@ fn render_shinobi_game(renderer &sdl.Renderer, mut g ShinobiGame) {
 		dx := int(d.x)
 		dy := int(d.y)
 
-		sdl.set_render_draw_color(renderer, 160, 40, 220, 255)
-		body := sdl.Rect{ x: dx - 14, y: dy - 10, w: 28, h: 20 }
+		// 16-Bit Drone Enemy with Rotors
+		sdl.set_render_draw_color(renderer, 140, 35, 195, 255)
+		body := sdl.Rect{ x: dx - 14, y: dy - 8, w: 28, h: 16 }
 		sdl.render_fill_rect(renderer, &body)
 
-		// Glowing Red Eye
+		// Drone Rotors
+		sdl.set_render_draw_color(renderer, 100, 180, 255, 255)
+		sdl.render_draw_line(renderer, dx - 18, dy - 10, dx - 6, dy - 10)
+		sdl.render_draw_line(renderer, dx + 6, dy - 10, dx + 18, dy - 10)
+
+		// Glowing Cyber Lens Eye
 		sdl.set_render_draw_color(renderer, 255, 0, 80, 255)
-		eye := sdl.Rect{ x: dx - 10, y: dy - 4, w: 8, h: 8 }
+		eye := sdl.Rect{ x: dx - 8, y: dy - 4, w: 16, h: 8 }
 		sdl.render_fill_rect(renderer, &eye)
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 200)
+		sdl.render_draw_point(renderer, dx - 4, dy - 2)
 	}
 
-	// 5. Draw Cyber Ninja Player
+	// 5. 16-Bit Cyber Ninja Player Sprite
 	if g.state == .playing || g.state == .paused {
 		nx := int(g.player_x)
 		ny := int(g.player_y)
 
-		// Black Ninja Suit
-		sdl.set_render_draw_color(renderer, 20, 20, 25, 255)
+		// Midnight Ninja Suit & Armor
+		sdl.set_render_draw_color(renderer, 25, 25, 35, 255)
 		suit := sdl.Rect{ x: nx - 10, y: ny - 24, w: 20, h: 24 }
 		sdl.render_fill_rect(renderer, &suit)
 
-		// Glowing Red Scarf Trail
-		sdl.set_render_draw_color(renderer, 255, 30, 60, 255)
-		scarf := sdl.Rect{ x: nx - 18, y: ny - 20, w: 10, h: 4 }
-		sdl.render_fill_rect(renderer, &scarf)
+		// Silver Shoulder Plates
+		sdl.set_render_draw_color(renderer, 160, 175, 195, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: nx - 12, y: ny - 22, w: 4, h: 6 })
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: nx + 8, y: ny - 22, w: 4, h: 6 })
 
-		// Cyan Visor Headband
-		sdl.set_render_draw_color(renderer, 0, 255, 220, 255)
-		visor := sdl.Rect{ x: nx - 6, y: ny - 22, w: 12, h: 4 }
+		// Glowing Crimson Scarf Ribbon (Wind trail)
+		sdl.set_render_draw_color(renderer, 245, 25, 65, 255)
+		scarf1 := sdl.Rect{ x: nx - 18, y: ny - 20, w: 10, h: 4 }
+		scarf2 := sdl.Rect{ x: nx - 24, y: ny - 17, w: 8, h: 3 }
+		sdl.render_fill_rect(renderer, &scarf1)
+		sdl.render_fill_rect(renderer, &scarf2)
+
+		// Glowing Cyan HUD Visor
+		sdl.set_render_draw_color(renderer, 0, 255, 230, 255)
+		visor := sdl.Rect{ x: nx - 6, y: ny - 21, w: 12, h: 4 }
 		sdl.render_fill_rect(renderer, &visor)
 
-		// Katana Arc (when slashing)
+		// 16-Bit Radiant Katana Blade Arc (when slashing)
 		if g.is_slashing {
-			sdl.set_render_draw_color(renderer, 0, 255, 255, 255)
-			arc := sdl.Rect{ x: nx + 8, y: ny - 28, w: 32, h: 32 }
-			sdl.render_draw_rect(renderer, &arc)
+			sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+			sdl.render_draw_line(renderer, nx + 6, ny - 26, nx + 32, ny - 12)
+			sdl.set_render_draw_color(renderer, 0, 230, 255, 255)
+			sdl.render_draw_line(renderer, nx + 6, ny - 25, nx + 30, ny - 10)
+			sdl.render_draw_line(renderer, nx + 8, ny - 28, nx + 34, ny - 14)
 		}
 	}
 

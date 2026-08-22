@@ -34,46 +34,54 @@ fn render_bomberman_game(renderer &sdl.Renderer, mut g BombermanGame) {
 					sdl.render_fill_rect(renderer, &left)
 				}
 				.soft_block {
-					// Soft Destructible Brick
-					sdl.set_render_draw_color(renderer, 180, 100, 50, 255)
+					// 16-Bit Destructible Brick Block with Mortar Lines
+					sdl.set_render_draw_color(renderer, 195, 95, 45, 255)
 					rect := sdl.Rect{ x: tx + 1, y: ty + 1, w: tile_size - 2, h: tile_size - 2 }
 					sdl.render_fill_rect(renderer, &rect)
 
-					sdl.set_render_draw_color(renderer, 130, 60, 30, 255)
-					line1 := sdl.Rect{ x: tx + 2, y: ty + tile_size / 2, w: tile_size - 4, h: 3 }
-					sdl.render_fill_rect(renderer, &line1)
+					// Brick Mortar Highlights & Shadows
+					sdl.set_render_draw_color(renderer, 240, 140, 80, 255)
+					sdl.render_draw_line(renderer, tx + 2, ty + 2, tx + tile_size - 3, ty + 2)
+					sdl.render_draw_line(renderer, tx + 2, ty + tile_size / 2, tx + tile_size - 3, ty + tile_size / 2)
+
+					sdl.set_render_draw_color(renderer, 120, 50, 20, 255)
+					sdl.render_draw_line(renderer, tx + tile_size / 2, ty + 2, tx + tile_size / 2, ty + tile_size / 2)
+					sdl.render_draw_line(renderer, tx + tile_size / 4, ty + tile_size / 2, tx + tile_size / 4, ty + tile_size - 2)
+					sdl.render_draw_line(renderer, tx + tile_size * 3 / 4, ty + tile_size / 2, tx + tile_size * 3 / 4, ty + tile_size - 2)
 				}
 			}
 		}
 	}
 
-	// 2. Draw Power-Ups
+	// 2. 16-Bit Power-Ups
 	for p in g.powerups {
 		if !p.active { continue }
-		px := grid_offset_x + p.grid_x * tile_size + 8
-		py := grid_offset_y + p.grid_y * tile_size + 8
+		px := grid_offset_x + p.grid_x * tile_size + 6
+		py := grid_offset_y + p.grid_y * tile_size + 6
 
 		color := match p.power_type {
-			.flame { Color{ r: 255, g: 80, b: 0, a: 255 } }
-			.bomb_cap { Color{ r: 0, g: 180, b: 255, a: 255 } }
-			.speed { Color{ r: 255, g: 220, b: 0, a: 255 } }
+			.flame { Color{ r: 255, g: 70, b: 0, a: 255 } }
+			.bomb_cap { Color{ r: 0, g: 170, b: 245, a: 255 } }
+			.speed { Color{ r: 255, g: 215, b: 0, a: 255 } }
 			else { Color{ r: 200, g: 200, b: 200, a: 255 } }
 		}
 		sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
-		rect := sdl.Rect{ x: px, y: py, w: 24, h: 24 }
+		rect := sdl.Rect{ x: px, y: py, w: 28, h: 28 }
 		sdl.render_fill_rect(renderer, &rect)
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+		sdl.render_draw_rect(renderer, &rect)
 
 		// Icon label
 		icon_text := match p.power_type {
-			.flame { "F" }
-			.bomb_cap { "B" }
-			.speed { "S" }
-			else { "+" }
+			.flame { 'F' }
+			.bomb_cap { 'B' }
+			.speed { 'S' }
+			else { '+' }
 		}
-		draw_text(renderer, px + 8, py + 4, icon_text, 2, Color{ r: 255, g: 255, b: 255, a: 255 })
+		draw_text_centered(renderer, px + 14, py + 6, icon_text, 2, Color{ r: 255, g: 255, b: 255, a: 255 })
 	}
 
-	// 3. Draw Bombs
+	// 3. 16-Bit Spherical Shaded Bombs
 	for b in g.bombs {
 		if !b.active { continue }
 		bx := grid_offset_x + b.grid_x * tile_size + 6
@@ -81,50 +89,76 @@ fn render_bomberman_game(renderer &sdl.Renderer, mut g BombermanGame) {
 
 		// Pulsing fuse glow
 		pulse := int(b.fuse_timer * 10.0) % 2 == 0
-		color := if pulse { Color{ r: 20, g: 20, b: 20, a: 255 } } else { Color{ r: 80, g: 20, b: 20, a: 255 } }
+		color := if pulse { Color{ r: 35, g: 35, b: 45, a: 255 } } else { Color{ r: 120, g: 25, b: 25, a: 255 } }
 
 		sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
-		body := sdl.Rect{ x: bx, y: by, w: 28, h: 28 }
+		body := sdl.Rect{ x: bx, y: by + 2, w: 28, h: 26 }
 		sdl.render_fill_rect(renderer, &body)
 
-		// Spark fuse
-		sdl.set_render_draw_color(renderer, 255, 200, 0, 255)
+		// Specular Bomb Highlight
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 200)
+		sdl.render_draw_point(renderer, bx + 6, by + 6)
+		sdl.render_draw_point(renderer, bx + 7, by + 6)
+
+		// Glowing Spark Fuse
+		sdl.set_render_draw_color(renderer, 255, 220, 30, 255)
 		fuse := sdl.Rect{ x: bx + 12, y: by - 4, w: 4, h: 6 }
 		sdl.render_fill_rect(renderer, &fuse)
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+		sdl.render_draw_point(renderer, bx + 13, by - 5)
 	}
 
-	// 4. Draw Flame Explosions
+	// 4. 16-Bit Multi-Tone Flame Explosions
 	for f in g.flames {
 		fx := grid_offset_x + f.grid_x * tile_size
 		fy := grid_offset_y + f.grid_y * tile_size
 
 		alpha := u8(f.timer / 0.5 * 255.0)
-		sdl.set_render_draw_color(renderer, 255, 120, 0, alpha)
+		// Outer Fiery Edge
+		sdl.set_render_draw_color(renderer, 245, 60, 20, alpha)
 		center := sdl.Rect{ x: fx + 2, y: fy + 2, w: tile_size - 4, h: tile_size - 4 }
 		sdl.render_fill_rect(renderer, &center)
 
-		sdl.set_render_draw_color(renderer, 255, 255, 100, alpha)
-		inner := sdl.Rect{ x: fx + 8, y: fy + 8, w: tile_size - 16, h: tile_size - 16 }
+		// Mid Orange Flame
+		sdl.set_render_draw_color(renderer, 255, 160, 30, alpha)
+		mid := sdl.Rect{ x: fx + 6, y: fy + 6, w: tile_size - 12, h: tile_size - 12 }
+		sdl.render_fill_rect(renderer, &mid)
+
+		// Inner Incandescent Core
+		sdl.set_render_draw_color(renderer, 255, 255, 200, alpha)
+		inner := sdl.Rect{ x: fx + 12, y: fy + 12, w: tile_size - 24, h: tile_size - 24 }
 		sdl.render_fill_rect(renderer, &inner)
 	}
 
-	// 5. Draw Players
+	// 5. 16-Bit Bomberman Player Sprite
 	for pl in g.players {
 		if !pl.active { continue }
 		px := int(pl.x)
 		py := int(pl.y)
 
-		body_color := if pl.id == 1 { Color{ r: 0, g: 150, b: 255, a: 255 } } else { Color{ r: 255, g: 50, b: 50, a: 255 } }
+		body_color := if pl.id == 1 { Color{ r: 0, g: 140, b: 245, a: 255 } } else { Color{ r: 245, g: 45, b: 45, a: 255 } }
 
-		// Player Body Circle/Square (26x26 box centered to fit perfectly within tile grid square)
+		// Player Body (Blue / Red Jumpsuit)
 		sdl.set_render_draw_color(renderer, body_color.r, body_color.g, body_color.b, body_color.a)
-		body := sdl.Rect{ x: px - 13, y: py - 13, w: 26, h: 26 }
+		body := sdl.Rect{ x: px - 11, y: py - 6, w: 22, h: 18 }
 		sdl.render_fill_rect(renderer, &body)
 
-		// White Helmet Visor
-		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-		visor := sdl.Rect{ x: px - 8, y: py - 9, w: 16, h: 8 }
-		sdl.render_fill_rect(renderer, &visor)
+		// White Head / Helmet
+		sdl.set_render_draw_color(renderer, 250, 250, 252, 255)
+		helmet := sdl.Rect{ x: px - 12, y: py - 16, w: 24, h: 14 }
+		sdl.render_fill_rect(renderer, &helmet)
+
+		// Pink Antenna Sphere on top of helmet
+		sdl.set_render_draw_color(renderer, 255, 100, 160, 255)
+		ant := sdl.Rect{ x: px - 3, y: py - 20, w: 6, h: 5 }
+		sdl.render_fill_rect(renderer, &ant)
+
+		// Black Visor Eyes
+		sdl.set_render_draw_color(renderer, 20, 25, 35, 255)
+		e1 := sdl.Rect{ x: px - 6, y: py - 11, w: 3, h: 5 }
+		e2 := sdl.Rect{ x: px + 3, y: py - 11, w: 3, h: 5 }
+		sdl.render_fill_rect(renderer, &e1)
+		sdl.render_fill_rect(renderer, &e2)
 	}
 
 	// 6. Draw HUD

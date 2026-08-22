@@ -93,39 +93,49 @@ fn draw_block(renderer &sdl.Renderer, x int, y int, size int, kind int, is_ghost
 	}
 
 	if is_ghost {
-		sdl.set_render_draw_color(renderer, c.r, c.g, c.b, 60)
+		sdl.set_render_draw_color(renderer, c.r, c.g, c.b, 50)
 		sdl.render_fill_rect(renderer, &rect)
-		sdl.set_render_draw_color(renderer, c.r, c.g, c.b, 180)
+		sdl.set_render_draw_color(renderer, c.r, c.g, c.b, 200)
 		sdl.render_draw_rect(renderer, &rect)
 		return
 	}
 
+	// 16-Bit Beveled Jewel Tetromino Block
 	// Base fill
 	sdl.set_render_draw_color(renderer, c.r, c.g, c.b, c.a)
 	sdl.render_fill_rect(renderer, &rect)
 
-	// Top/Left bevel highlight
-	top_rect := sdl.Rect{
-		x: x + 1
-		y: y + 1
-		w: size - 2
-		h: 3
+	// Top/Left 3D Highlight Bevel
+	high_r := u8(math.min(255, int(c.r) + 80))
+	high_g := u8(math.min(255, int(c.g) + 80))
+	high_b := u8(math.min(255, int(c.b) + 80))
+	sdl.set_render_draw_color(renderer, high_r, high_g, high_b, 255)
+	for t in 0 .. 3 {
+		sdl.render_draw_line(renderer, x + t, y + t, x + size - 1 - t, y + t)
+		sdl.render_draw_line(renderer, x + t, y + t, x + t, y + size - 1 - t)
 	}
-	left_rect := sdl.Rect{
-		x: x + 1
-		y: y + 1
-		w: 3
-		h: size - 2
+
+	// Bottom/Right 3D Shadow Bevel
+	shad_r := u8(math.max(0, int(c.r) - 80))
+	shad_g := u8(math.max(0, int(c.g) - 80))
+	shad_b := u8(math.max(0, int(c.b) - 80))
+	sdl.set_render_draw_color(renderer, shad_r, shad_g, shad_b, 255)
+	for t in 0 .. 3 {
+		sdl.render_draw_line(renderer, x + t, y + size - 1 - t, x + size - 1 - t, y + size - 1 - t)
+		sdl.render_draw_line(renderer, x + size - 1 - t, y + t, x + size - 1 - t, y + size - 1 - t)
 	}
-	sdl.set_render_draw_color(renderer, 255, 255, 255, 90)
-	sdl.render_fill_rect(renderer, &top_rect)
-	sdl.render_fill_rect(renderer, &left_rect)
+
+	// Inner Jewel Diamond Center Core & Specular Dot
+	inner := sdl.Rect{ x: x + 6, y: y + 6, w: size - 12, h: size - 12 }
+	sdl.set_render_draw_color(renderer, high_r, high_g, high_b, 160)
+	sdl.render_draw_rect(renderer, &inner)
+
+	sdl.set_render_draw_color(renderer, 255, 255, 255, 220)
+	sdl.render_draw_point(renderer, x + 4, y + 4)
+	sdl.render_draw_point(renderer, x + 5, y + 4)
 
 	// Outer border
-	border_r := u8(math.max(0, int(c.r) - 60))
-	border_g := u8(math.max(0, int(c.g) - 60))
-	border_b := u8(math.max(0, int(c.b) - 60))
-	sdl.set_render_draw_color(renderer, border_r, border_g, border_b, 255)
+	sdl.set_render_draw_color(renderer, 15, 18, 25, 255)
 	sdl.render_draw_rect(renderer, &rect)
 }
 

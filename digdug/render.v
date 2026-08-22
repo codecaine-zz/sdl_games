@@ -77,7 +77,7 @@ fn render_digdug_game(renderer &sdl.Renderer, mut g DigDugGame) {
 		sdl.render_draw_line(renderer, px, py, hx, hy)
 	}
 
-	// 4. Draw Enemies
+	// 4. 16-Bit Enemies (Pooka & Fygar)
 	for e in g.enemies {
 		if !e.active { continue }
 		ex := int(e.x)
@@ -85,43 +85,75 @@ fn render_digdug_game(renderer &sdl.Renderer, mut g DigDugGame) {
 		scale := 1.0 + f32(e.inflate_stage) * 0.25
 
 		if e.enemy_type == .pooka {
-			// Pooka (Red blob with yellow goggles)
-			color := if e.is_ghost { Color{ r: 255, g: 255, b: 255, a: 180 } } else { Color{ r: 255, g: 40, b: 40, a: 255 } }
+			// 16-Bit Pooka (Red sphere with yellow diving goggles)
+			color := if e.is_ghost { Color{ r: 255, g: 255, b: 255, a: 180 } } else { Color{ r: 235, g: 35, b: 40, a: 255 } }
 			sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
 			body := sdl.Rect{ x: ex - int(12.0 * scale), y: ey - int(12.0 * scale), w: int(24.0 * scale), h: int(24.0 * scale) }
 			sdl.render_fill_rect(renderer, &body)
 
-			// Goggles
-			sdl.set_render_draw_color(renderer, 255, 220, 0, 255)
-			gog := sdl.Rect{ x: ex - int(8.0 * scale), y: ey - int(6.0 * scale), w: int(16.0 * scale), h: int(8.0 * scale) }
+			// Highlight on Head
+			if !e.is_ghost {
+				sdl.set_render_draw_color(renderer, 255, 120, 130, 255)
+				sdl.render_draw_line(renderer, ex - int(8.0 * scale), ey - int(10.0 * scale), ex + int(8.0 * scale), ey - int(10.0 * scale))
+			}
+
+			// Yellow Oversized Diving Goggles with Glint
+			sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+			gog := sdl.Rect{ x: ex - int(9.0 * scale), y: ey - int(6.0 * scale), w: int(18.0 * scale), h: int(9.0 * scale) }
 			sdl.render_fill_rect(renderer, &gog)
+
+			// Goggle Lenses
+			sdl.set_render_draw_color(renderer, 20, 30, 40, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: ex - int(7.0 * scale), y: ey - int(4.0 * scale), w: int(5.0 * scale), h: int(5.0 * scale) })
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: ex + int(2.0 * scale), y: ey - int(4.0 * scale), w: int(5.0 * scale), h: int(5.0 * scale) })
 		} else {
-			// Fygar (Green Dragon)
-			color := if e.is_ghost { Color{ r: 255, g: 255, b: 255, a: 180 } } else { Color{ r: 30, g: 200, b: 50, a: 255 } }
+			// 16-Bit Fygar (Emerald Green Fire-Breathing Dragon)
+			color := if e.is_ghost { Color{ r: 255, g: 255, b: 255, a: 180 } } else { Color{ r: 35, g: 195, b: 65, a: 255 } }
 			sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
-			body := sdl.Rect{ x: ex - int(14.0 * scale), y: ey - int(12.0 * scale), w: int(28.0 * scale), h: int(24.0 * scale) }
+			body := sdl.Rect{ x: ex - int(14.0 * scale), y: ey - int(11.0 * scale), w: int(28.0 * scale), h: int(22.0 * scale) }
 			sdl.render_fill_rect(renderer, &body)
 
-			// Wings
+			// Yellow Belly Scales
+			if !e.is_ghost {
+				sdl.set_render_draw_color(renderer, 255, 230, 50, 255)
+				belly := sdl.Rect{ x: ex - int(6.0 * scale), y: ey, w: int(12.0 * scale), h: int(9.0 * scale) }
+				sdl.render_fill_rect(renderer, &belly)
+			}
+
+			// White Bat Wings
 			sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
 			wings := sdl.Rect{ x: ex - int(6.0 * scale), y: ey - int(16.0 * scale), w: int(12.0 * scale), h: int(6.0 * scale) }
 			sdl.render_fill_rect(renderer, &wings)
+
+			// Red Eyes
+			sdl.set_render_draw_color(renderer, 255, 30, 30, 255)
+			sdl.render_draw_point(renderer, ex - int(8.0 * scale), ey - int(5.0 * scale))
 		}
 	}
 
-	// 5. Draw Dig Dug Player
+	// 5. 16-Bit Dig Dug (Taizo Hori) Miner Sprite
 	if g.state == .playing || g.state == .paused {
 		px := int(g.player_x)
 		py := int(g.player_y)
 
-		// Blue & White Dig Dug Suit
-		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-		suit := sdl.Rect{ x: px - 12, y: py - 12, w: 24, h: 24 }
+		// White Miner Suit with Cyan Bevels
+		sdl.set_render_draw_color(renderer, 245, 245, 250, 255)
+		suit := sdl.Rect{ x: px - 11, y: py - 11, w: 22, h: 22 }
 		sdl.render_fill_rect(renderer, &suit)
 
-		sdl.set_render_draw_color(renderer, 0, 120, 255, 255)
+		// Cobalt Blue Hardhat with Visor
+		sdl.set_render_draw_color(renderer, 20, 110, 240, 255)
 		cap := sdl.Rect{ x: px - 10, y: py - 14, w: 20, h: 8 }
 		sdl.render_fill_rect(renderer, &cap)
+
+		// Visor Highlight
+		sdl.set_render_draw_color(renderer, 100, 200, 255, 255)
+		sdl.render_draw_line(renderer, px - 8, py - 13, px + 8, py - 13)
+
+		// Face Visor Glass
+		sdl.set_render_draw_color(renderer, 30, 40, 60, 255)
+		visor := sdl.Rect{ x: px - 5, y: py - 6, w: 10, h: 5 }
+		sdl.render_fill_rect(renderer, &visor)
 	}
 
 	// 6. Draw HUD

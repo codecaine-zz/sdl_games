@@ -202,59 +202,63 @@ fn render_single_die(renderer &sdl.Renderer, x int, y int, value int, held bool,
 	d_size := 64
 	half := d_size / 2
 
-	// Die Drop Shadow
-	sdl.set_render_draw_color(renderer, 10, 30, 20, 160)
-	sh_rect := sdl.Rect{x - half + 4, y - half + 6, d_size, d_size}
+	// Multi-layer Soft Drop Shadow
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 80)
+	sh_rect := sdl.Rect{ x: x - half + 3, y: y - half + 5, w: d_size, h: d_size }
 	sdl.render_fill_rect(renderer, &sh_rect)
 
-	// Ivory White Die Body
-	sdl.set_render_draw_color(renderer, 248, 248, 252, 255)
-	d_rect := sdl.Rect{x - half, y - half, d_size, d_size}
+	// 16-Bit Ivory Bone Die Body
+	sdl.set_render_draw_color(renderer, 252, 250, 244, 255)
+	d_rect := sdl.Rect{ x: x - half, y: y - half, w: d_size, h: d_size }
 	sdl.render_fill_rect(renderer, &d_rect)
 
-	// Shaded 3D edge
-	sdl.set_render_draw_color(renderer, 210, 212, 220, 255)
-	sdl.render_draw_line(renderer, x - half, y + half, x + half, y + half)
-	sdl.render_draw_line(renderer, x + half, y - half, x + half, y + half)
+	// Highlight & Shadow 3D Bevels
+	sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+	sdl.render_draw_line(renderer, x - half, y - half, x + half - 1, y - half)
+	sdl.render_draw_line(renderer, x - half, y - half, x - half, y + half - 1)
+
+	sdl.set_render_draw_color(renderer, 185, 188, 198, 255)
+	sdl.render_draw_line(renderer, x - half, y + half - 1, x + half - 1, y + half - 1)
+	sdl.render_draw_line(renderer, x + half - 1, y - half, x + half - 1, y + half - 1)
 
 	// Pips Rendering
-	pip_col := if value == 1 { Color{215, 35, 35, 255} } else { Color{25, 25, 30, 255} }
-	pip_r := if value == 1 { 7 } else { 5 }
+	pip_col := if value == 1 { Color{ 220, 30, 40, 255 } } else { Color{ 24, 26, 32, 255 } }
+	pip_r := if value == 1 { 8 } else { 5 }
 	offset := 16
 
 	match value {
 		1 {
-			draw_filled_circle(renderer, x, y, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x, y, pip_r, pip_col)
 		}
 		2 {
-			draw_filled_circle(renderer, x - offset, y - offset, pip_r, pip_col)
-			draw_filled_circle(renderer, x + offset, y + offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x - offset, y - offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x + offset, y + offset, pip_r, pip_col)
 		}
 		3 {
-			draw_filled_circle(renderer, x - offset, y - offset, pip_r, pip_col)
-			draw_filled_circle(renderer, x, y, pip_r, pip_col)
-			draw_filled_circle(renderer, x + offset, y + offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x - offset, y - offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x, y, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x + offset, y + offset, pip_r, pip_col)
 		}
 		4 {
-			draw_filled_circle(renderer, x - offset, y - offset, pip_r, pip_col)
-			draw_filled_circle(renderer, x + offset, y - offset, pip_r, pip_col)
-			draw_filled_circle(renderer, x - offset, y + offset, pip_r, pip_col)
-			draw_filled_circle(renderer, x + offset, y + offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x - offset, y - offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x + offset, y - offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x - offset, y + offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x + offset, y + offset, pip_r, pip_col)
 		}
 		5 {
-			draw_filled_circle(renderer, x - offset, y - offset, pip_r, pip_col)
-			draw_filled_circle(renderer, x + offset, y - offset, pip_r, pip_col)
-			draw_filled_circle(renderer, x, y, pip_r, pip_col)
-			draw_filled_circle(renderer, x - offset, y + offset, pip_r, pip_col)
-			draw_filled_circle(renderer, x + offset, y + offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x - offset, y - offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x + offset, y - offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x, y, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x - offset, y + offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x + offset, y + offset, pip_r, pip_col)
 		}
 		6 {
-			draw_filled_circle(renderer, x - offset, y - offset, pip_r, pip_col)
-			draw_filled_circle(renderer, x + offset, y - offset, pip_r, pip_col)
-			draw_filled_circle(renderer, x - offset, y, pip_r, pip_col)
-			draw_filled_circle(renderer, x + offset, y, pip_r, pip_col)
-			draw_filled_circle(renderer, x - offset, y + offset, pip_r, pip_col)
-			draw_filled_circle(renderer, x + offset, y + offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x - offset, y - offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x + offset, y - offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x - offset, y, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x + offset, y, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x - offset, y + offset, pip_r, pip_col)
+			draw_yahtzee_pip(renderer, x + offset, y + offset, pip_r, pip_col)
 		}
 		else {}
 	}
@@ -263,18 +267,27 @@ fn render_single_die(renderer &sdl.Renderer, x int, y int, value int, held bool,
 	if held {
 		sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
 		for i in 0 .. 3 {
-			r := sdl.Rect{x - half - i, y - half - i, d_size + i * 2, d_size + i * 2}
+			r := sdl.Rect{ x: x - half - i, y: y - half - i, w: d_size + i * 2, h: d_size + i * 2 }
 			sdl.render_draw_rect(renderer, &r)
 		}
 
 		// "HELD" badge
-		badge := sdl.Rect{x - 24, y - half - 16, 48, 14}
+		badge := sdl.Rect{ x: x - 24, y: y - half - 16, w: 48, h: 14 }
 		sdl.render_fill_rect(renderer, &badge)
-		draw_text_centered(renderer, x, y - half - 13, 'HELD', 1, Color{30, 20, 0, 255})
+		draw_text_centered(renderer, x, y - half - 13, 'HELD', 1, Color{ 30, 20, 0, 255 })
 	}
 
 	// Key indicator below die
-	draw_text_centered(renderer, x, y + half + 6, '[${num}]', 1, Color{180, 220, 200, 255})
+	draw_text_centered(renderer, x, y + half + 6, '[${num}]', 1, Color{ 180, 220, 200, 255 })
+}
+
+fn draw_yahtzee_pip(renderer &sdl.Renderer, cx int, cy int, r int, col Color) {
+	draw_filled_circle(renderer, cx, cy, r, col)
+	// Specular pip reflection
+	if r >= 4 {
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 200)
+		sdl.render_draw_point(renderer, cx - 1, cy - 1)
+	}
 }
 
 fn render_scorecard(renderer &sdl.Renderer, g YahtzeeGame, x int, y int, w int, h int, mouse_x int, mouse_y int) {

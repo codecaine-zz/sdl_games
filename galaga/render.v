@@ -106,24 +106,45 @@ fn render_galaga_game(renderer &sdl.Renderer, mut g GalagaGame) {
 
 fn draw_player_ship(renderer &sdl.Renderer, x f32, y f32, mini bool, color Color) {
 	scale := if mini { f32(0.6) } else { f32(1.0) }
+	px := int(x)
+	py := int(y)
+
+	// 16-Bit Galaga Fighter Starship
+	// Main Fuselage (White/Steel)
 	sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
+	fuse := sdl.Rect{ x: px - int(4.0 * scale), y: py - int(12.0 * scale), w: int(8.0 * scale) + 1, h: int(20.0 * scale) }
+	sdl.render_fill_rect(renderer, &fuse)
 
-	p1_x := int(x)
-	p1_y := int(y - 14.0 * scale)
-	p2_x := int(x - 12.0 * scale)
-	p2_y := int(y + 10.0 * scale)
-	p3_x := int(x + 12.0 * scale)
-	p3_y := int(y + 10.0 * scale)
+	// Nose Tip Needle
+	sdl.set_render_draw_color(renderer, 255, 220, 40, 255)
+	nose := sdl.Rect{ x: px - int(1.0 * scale), y: py - int(16.0 * scale), w: int(3.0 * scale), h: int(5.0 * scale) }
+	sdl.render_fill_rect(renderer, &nose)
 
-	sdl.render_draw_line(renderer, p1_x, p1_y, p2_x, p2_y)
-	sdl.render_draw_line(renderer, p2_x, p2_y, p3_x, p3_y)
-	sdl.render_draw_line(renderer, p3_x, p3_y, p1_x, p1_y)
+	// Crimson Swept Wings with Dual Laser Pods
+	sdl.set_render_draw_color(renderer, 225, 30, 40, 255)
+	wing_l := sdl.Rect{ x: px - int(15.0 * scale), y: py + int(2.0 * scale), w: int(11.0 * scale), h: int(7.0 * scale) }
+	wing_r := sdl.Rect{ x: px + int(4.0 * scale), y: py + int(2.0 * scale), w: int(11.0 * scale), h: int(7.0 * scale) }
+	sdl.render_fill_rect(renderer, &wing_l)
+	sdl.render_fill_rect(renderer, &wing_r)
 
-	sdl.set_render_draw_color(renderer, 255, 50, 50, 255)
-	rect_l := sdl.Rect{ x: int(x - 15.0 * scale), y: int(y + 2.0 * scale), w: int(4.0 * scale), h: int(8.0 * scale) }
-	rect_r := sdl.Rect{ x: int(x + 11.0 * scale), y: int(y + 2.0 * scale), w: int(4.0 * scale), h: int(8.0 * scale) }
-	sdl.render_fill_rect(renderer, &rect_l)
-	sdl.render_fill_rect(renderer, &rect_r)
+	// Wingtip Lasers (Golden)
+	sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+	laser_l := sdl.Rect{ x: px - int(15.0 * scale), y: py - int(4.0 * scale), w: int(3.0 * scale), h: int(10.0 * scale) }
+	laser_r := sdl.Rect{ x: px + int(12.0 * scale), y: py - int(4.0 * scale), w: int(3.0 * scale), h: int(10.0 * scale) }
+	sdl.render_fill_rect(renderer, &laser_l)
+	sdl.render_fill_rect(renderer, &laser_r)
+
+	// Cockpit Canopy (Cobalt Blue Glass)
+	sdl.set_render_draw_color(renderer, 0, 180, 255, 255)
+	cockpit := sdl.Rect{ x: px - int(2.0 * scale), y: py - int(4.0 * scale), w: int(5.0 * scale), h: int(7.0 * scale) }
+	sdl.render_fill_rect(renderer, &cockpit)
+
+	// Cyan Thruster Flame if full size
+	if !mini {
+		sdl.set_render_draw_color(renderer, 0, 240, 255, 220)
+		thrust := sdl.Rect{ x: px - 2, y: py + 9, w: 5, h: 6 }
+		sdl.render_fill_rect(renderer, &thrust)
+	}
 }
 
 fn draw_enemy_ship(renderer &sdl.Renderer, e Enemy) {
@@ -132,36 +153,58 @@ fn draw_enemy_ship(renderer &sdl.Renderer, e Enemy) {
 
 	match e.enemy_type {
 		.zako {
-			sdl.set_render_draw_color(renderer, 50, 150, 255, 255)
-			body := sdl.Rect{ x: px - 8, y: py - 6, w: 16, h: 12 }
+			// 16-Bit Zako (Cobalt & Golden Wing Butterfly)
+			sdl.set_render_draw_color(renderer, 35, 110, 235, 255)
+			body := sdl.Rect{ x: px - 6, y: py - 7, w: 12, h: 14 }
 			sdl.render_fill_rect(renderer, &body)
 
-			sdl.set_render_draw_color(renderer, 255, 220, 0, 255)
-			wing_l := sdl.Rect{ x: px - 14, y: py - 4, w: 6, h: 8 }
-			wing_r := sdl.Rect{ x: px + 8, y: py - 4, w: 6, h: 8 }
+			// Golden Wings
+			sdl.set_render_draw_color(renderer, 245, 205, 30, 255)
+			wing_l := sdl.Rect{ x: px - 14, y: py - 5, w: 8, h: 10 }
+			wing_r := sdl.Rect{ x: px + 6, y: py - 5, w: 8, h: 10 }
 			sdl.render_fill_rect(renderer, &wing_l)
 			sdl.render_fill_rect(renderer, &wing_r)
+
+			// Red Eyes
+			sdl.set_render_draw_color(renderer, 255, 40, 40, 255)
+			sdl.render_draw_point(renderer, px - 3, py - 4)
+			sdl.render_draw_point(renderer, px + 3, py - 4)
 		}
 		.goei {
-			sdl.set_render_draw_color(renderer, 255, 50, 50, 255)
-			body := sdl.Rect{ x: px - 9, y: py - 7, w: 18, h: 14 }
+			// 16-Bit Goei (Crimson & Amber Boss Moth)
+			sdl.set_render_draw_color(renderer, 225, 35, 45, 255)
+			body := sdl.Rect{ x: px - 8, y: py - 8, w: 16, h: 16 }
 			sdl.render_fill_rect(renderer, &body)
 
-			sdl.set_render_draw_color(renderer, 255, 200, 50, 255)
-			top_wing := sdl.Rect{ x: px - 15, y: py - 9, w: 30, h: 4 }
-			sdl.render_fill_rect(renderer, &top_wing)
+			// Amber Antennae & Wings
+			sdl.set_render_draw_color(renderer, 255, 185, 30, 255)
+			w_span := sdl.Rect{ x: px - 16, y: py - 6, w: 32, h: 7 }
+			sdl.render_fill_rect(renderer, &w_span)
+
+			// Yellow Eyes
+			sdl.set_render_draw_color(renderer, 255, 255, 100, 255)
+			sdl.render_draw_point(renderer, px - 4, py - 4)
+			sdl.render_draw_point(renderer, px + 4, py - 4)
 		}
 		.boss {
-			color := if e.hp == 2 { Color{ r: 50, g: 220, b: 50, a: 255 } } else { Color{ r: 200, g: 50, b: 200, a: 255 } }
-			sdl.set_render_draw_color(renderer, color.r, color.g, color.b, 255)
-			body := sdl.Rect{ x: px - 12, y: py - 8, w: 24, h: 16 }
+			// 16-Bit Boss Galaga (Emerald / Purple with Horn Mandibles)
+			body_col := if e.hp == 2 { Color{ r: 35, g: 215, b: 65 } } else { Color{ r: 195, g: 45, b: 215 } }
+			sdl.set_render_draw_color(renderer, body_col.r, body_col.g, body_col.b, 255)
+			body := sdl.Rect{ x: px - 12, y: py - 9, w: 24, h: 18 }
 			sdl.render_fill_rect(renderer, &body)
 
-			sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-			m1 := sdl.Rect{ x: px - 10, y: py - 12, w: 4, h: 6 }
-			m2 := sdl.Rect{ x: px + 6, y: py - 12, w: 4, h: 6 }
+			// Horn Mandibles (White / Gold)
+			sdl.set_render_draw_color(renderer, 250, 245, 220, 255)
+			m1 := sdl.Rect{ x: px - 10, y: py - 14, w: 4, h: 6 }
+			m2 := sdl.Rect{ x: px + 6, y: py - 14, w: 4, h: 6 }
 			sdl.render_fill_rect(renderer, &m1)
 			sdl.render_fill_rect(renderer, &m2)
+
+			// Center Core Power Gem
+			core_col := if e.hp == 2 { Color{ r: 255, g: 215, b: 0 } } else { Color{ r: 255, g: 40, b: 40 } }
+			sdl.set_render_draw_color(renderer, core_col.r, core_col.g, core_col.b, 255)
+			gem := sdl.Rect{ x: px - 3, y: py - 2, w: 6, h: 6 }
+			sdl.render_fill_rect(renderer, &gem)
 		}
 	}
 }

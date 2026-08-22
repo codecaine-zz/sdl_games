@@ -197,70 +197,83 @@ fn draw_enemy(renderer &sdl.Renderer, enemy Enemy) {
 	ey := int(enemy.motion.y)
 
 	color := match enemy.rank {
-		.yellow { Color{r: 250, g: 204, b: 21} }
-		.pink { Color{r: 236, g: 72, b: 153} }
-		.red { Color{r: 239, g: 68, b: 68} }
+		.yellow { Color{ r: 250, g: 204, b: 21 } }
+		.pink { Color{ r: 236, g: 72, b: 153 } }
+		.red { Color{ r: 239, g: 68, b: 68 } }
 	}
 
-	// Body
+	// 16-Bit Avian Enemy Body
 	sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
 	b_rect := sdl.Rect{
-		x: ex - 10
-		y: ey - 10
-		w: 20
-		h: 20
+		x: ex - 9
+		y: ey - 9
+		w: 18
+		h: 18
 	}
 	sdl.render_fill_rect(renderer, &b_rect)
 
-	// Eye
+	// Beak (Orange)
+	sdl.set_render_draw_color(renderer, 245, 130, 20, 255)
+	beak := sdl.Rect{ x: ex + 7, y: ey - 2, w: 6, h: 5 }
+	sdl.render_fill_rect(renderer, &beak)
+
+	// Expressive Eye
+	sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+	eye_w := sdl.Rect{ x: ex - 2, y: ey - 6, w: 6, h: 6 }
+	sdl.render_fill_rect(renderer, &eye_w)
 	sdl.set_render_draw_color(renderer, 15, 23, 42, 255)
-	eye := sdl.Rect{
-		x: ex - 4
-		y: ey - 4
-		w: 8
-		h: 5
-	}
-	sdl.render_fill_rect(renderer, &eye)
+	eye_p := sdl.Rect{ x: ex + 1, y: ey - 4, w: 3, h: 3 }
+	sdl.render_fill_rect(renderer, &eye_p)
 
 	// Parachute or Balloons
 	if enemy.state == .parachuting {
 		sdl.set_render_draw_color(renderer, 248, 250, 252, 255)
 		para := sdl.Rect{
-			x: ex - 15
+			x: ex - 16
 			y: ey - 30
-			w: 30
-			h: 10
+			w: 32
+			h: 12
 		}
 		sdl.render_fill_rect(renderer, &para)
 	} else if enemy.state == .flying || enemy.state == .pumping {
 		if enemy.balloons >= 1 {
-			draw_balloon(renderer, ex - 9, ey - 25, color)
+			draw_balloon(renderer, ex - 10, ey - 25, color)
 		}
 		if enemy.balloons >= 2 {
-			draw_balloon(renderer, ex + 9, ey - 25, color)
+			draw_balloon(renderer, ex + 10, ey - 25, color)
 		}
 	}
 }
 
 fn draw_balloon(renderer &sdl.Renderer, x int, y int, color Color) {
+	// 16-Bit Shaded Balloon Oval
 	sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
 	b_rect := sdl.Rect{
-		x: x - 7
-		y: y - 8
-		w: 14
-		h: 16
+		x: x - 8
+		y: y - 10
+		w: 16
+		h: 18
 	}
 	sdl.render_fill_rect(renderer, &b_rect)
 
-	// Highlight shine dot
-	sdl.set_render_draw_color(renderer, 255, 255, 255, 200)
+	// Highlight Bevel Tone
+	sdl.set_render_draw_color(renderer, u8(math.min(255, int(color.r) + 70)), u8(math.min(255, int(color.g) + 70)), u8(math.min(255, int(color.b) + 70)), 255)
+	sdl.render_draw_line(renderer, x - 6, y - 8, x + 6, y - 8)
+
+	// Glossy Specular Shine Dot
+	sdl.set_render_draw_color(renderer, 255, 255, 255, 230)
 	shine := sdl.Rect{
-		x: x - 3
-		y: y - 5
+		x: x - 4
+		y: y - 6
 		w: 3
-		h: 4
+		h: 3
 	}
 	sdl.render_fill_rect(renderer, &shine)
+
+	// Balloon Knot
+	sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
+	knot := sdl.Rect{ x: x - 2, y: y + 8, w: 4, h: 2 }
+	sdl.render_fill_rect(renderer, &knot)
 }
 
 fn draw_giant_fish(renderer &sdl.Renderer, fish GiantFish) {

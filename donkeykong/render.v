@@ -79,39 +79,53 @@ fn render_donkeykong_game(renderer &sdl.Renderer, mut g DonkeyKongGame) {
 	sdl.render_fill_rect(renderer, &b_ring1)
 	sdl.render_fill_rect(renderer, &b_ring2)
 
-	// 5. Draw Donkey Kong Ape at Top (X 140, Y 100)
-	sdl.set_render_draw_color(renderer, 140, 70, 20, 255)
+	// 5. 16-Bit Donkey Kong Ape at Top
+	sdl.set_render_draw_color(renderer, 130, 60, 15, 255)
 	dk_body := sdl.Rect{ x: 130, y: 90, w: 46, h: 48 }
 	sdl.render_fill_rect(renderer, &dk_body)
 
-	// Arms (Beat chest if dk_anim_timer > 0)
+	// Chest Fur (Tan/Peach)
+	sdl.set_render_draw_color(renderer, 235, 185, 135, 255)
+	chest := sdl.Rect{ x: 140, y: 104, w: 26, h: 28 }
+	sdl.render_fill_rect(renderer, &chest)
+
+	// DK Arms (Animated chest beating)
+	sdl.set_render_draw_color(renderer, 130, 60, 15, 255)
 	if g.dk_anim_timer > 0 {
-		arm_l := sdl.Rect{ x: 118, y: 80, w: 14, h: 24 }
-		arm_r := sdl.Rect{ x: 174, y: 80, w: 14, h: 24 }
+		arm_l := sdl.Rect{ x: 118, y: 80, w: 16, h: 26 }
+		arm_r := sdl.Rect{ x: 172, y: 80, w: 16, h: 26 }
 		sdl.render_fill_rect(renderer, &arm_l)
 		sdl.render_fill_rect(renderer, &arm_r)
 	} else {
-		arm_l := sdl.Rect{ x: 122, y: 102, w: 10, h: 28 }
-		arm_r := sdl.Rect{ x: 174, y: 102, w: 10, h: 28 }
+		arm_l := sdl.Rect{ x: 120, y: 100, w: 12, h: 30 }
+		arm_r := sdl.Rect{ x: 174, y: 100, w: 12, h: 30 }
 		sdl.render_fill_rect(renderer, &arm_l)
 		sdl.render_fill_rect(renderer, &arm_r)
 	}
 
-	sdl.set_render_draw_color(renderer, 240, 180, 140, 255)
-	dk_face := sdl.Rect{ x: 143, y: 96, w: 20, h: 16 }
+	// DK Face & Snout
+	sdl.set_render_draw_color(renderer, 235, 185, 135, 255)
+	dk_face := sdl.Rect{ x: 142, y: 94, w: 22, h: 14 }
 	sdl.render_fill_rect(renderer, &dk_face)
+	sdl.set_render_draw_color(renderer, 20, 10, 5, 255)
+	sdl.render_draw_point(renderer, 148, 98)
+	sdl.render_draw_point(renderer, 156, 98)
 
-	// 6. Draw Pauline Damsel at Top (X 350, Y 60)
-	sdl.set_render_draw_color(renderer, 255, 100, 180, 255)
+	// 6. 16-Bit Pauline Damsel in Distress
+	sdl.set_render_draw_color(renderer, 245, 60, 140, 255)
 	p_dress := sdl.Rect{ x: 350, y: 65, w: 18, h: 24 }
 	sdl.render_fill_rect(renderer, &p_dress)
 
-	sdl.set_render_draw_color(renderer, 255, 220, 180, 255)
-	p_head := sdl.Rect{ x: 353, y: 55, w: 12, h: 10 }
+	// Blonde Hair & Face
+	sdl.set_render_draw_color(renderer, 255, 220, 50, 255)
+	hair := sdl.Rect{ x: 351, y: 52, w: 16, h: 10 }
+	sdl.render_fill_rect(renderer, &hair)
+	sdl.set_render_draw_color(renderer, 255, 200, 170, 255)
+	p_head := sdl.Rect{ x: 354, y: 56, w: 10, h: 8 }
 	sdl.render_fill_rect(renderer, &p_head)
 
-	// Help Bubble!
-	draw_text(renderer, 380, 50, "HELP!", 1, Color{ r: 255, g: 100, b: 180, a: 255 })
+	// Help Bubble
+	draw_text(renderer, 380, 50, 'HELP!', 1, Color{ r: 255, g: 100, b: 180, a: 255 })
 
 	// 7. Draw Hammer Items on Platforms
 	for h in g.hammers {
@@ -122,36 +136,29 @@ fn render_donkeykong_game(renderer &sdl.Renderer, mut g DonkeyKongGame) {
 		sdl.set_render_draw_color(renderer, 180, 120, 40, 255)
 		handle := sdl.Rect{ x: hx - 2, y: hy - 4, w: 4, h: 14 }
 		sdl.render_fill_rect(renderer, &handle)
-		// Mallet head
+		// Steel Mallet head
 		sdl.set_render_draw_color(renderer, 220, 220, 230, 255)
 		head := sdl.Rect{ x: hx - 8, y: hy - 12, w: 16, h: 10 }
 		sdl.render_fill_rect(renderer, &head)
+		sdl.set_render_draw_color(renderer, 140, 145, 160, 255)
+		sdl.render_draw_rect(renderer, &head)
 	}
 
-	// 8. Draw Rolling Barrels (Brown normal & Blue special)
+	// 8. 16-Bit Rolling Barrels (Brown timber & Blue flame barrel)
 	for b in g.barrels {
 		if !b.active { continue }
 		bx := int(b.x)
 		by := int(b.y)
-		if b.b_type == .blue {
-			// Blue Barrel
-			sdl.set_render_draw_color(renderer, 20, 180, 240, 255)
-			barrel_rect := sdl.Rect{ x: bx - 10, y: by - 10, w: 20, h: 20 }
-			sdl.render_fill_rect(renderer, &barrel_rect)
+		b_col := if b.b_type == .blue { Color{ r: 20, g: 160, b: 235 } } else { Color{ r: 175, g: 90, b: 25 } }
+		sdl.set_render_draw_color(renderer, b_col.r, b_col.g, b_col.b, 255)
+		barrel_rect := sdl.Rect{ x: bx - 10, y: by - 10, w: 20, h: 20 }
+		sdl.render_fill_rect(renderer, &barrel_rect)
 
-			sdl.set_render_draw_color(renderer, 240, 240, 250, 255)
-			ring := sdl.Rect{ x: bx - 10, y: by - 3, w: 20, h: 6 }
-			sdl.render_fill_rect(renderer, &ring)
-		} else {
-			// Normal Brown Barrel
-			sdl.set_render_draw_color(renderer, 180, 100, 30, 255)
-			barrel_rect := sdl.Rect{ x: bx - 10, y: by - 10, w: 20, h: 20 }
-			sdl.render_fill_rect(renderer, &barrel_rect)
-
-			sdl.set_render_draw_color(renderer, 240, 200, 50, 255)
-			ring := sdl.Rect{ x: bx - 10, y: by - 3, w: 20, h: 6 }
-			sdl.render_fill_rect(renderer, &ring)
-		}
+		// Gold/White Steel Hoops
+		ring_col := if b.b_type == .blue { Color{ r: 230, g: 245, b: 255 } } else { Color{ r: 245, g: 205, b: 40 } }
+		sdl.set_render_draw_color(renderer, ring_col.r, ring_col.g, ring_col.b, 255)
+		sdl.render_draw_line(renderer, bx - 10, by - 5, bx + 9, by - 5)
+		sdl.render_draw_line(renderer, bx - 10, by + 5, bx + 9, by + 5)
 	}
 
 	// 9. Draw Fireball (Firebug) Enemies
@@ -161,7 +168,7 @@ fn render_donkeykong_game(renderer &sdl.Renderer, mut g DonkeyKongGame) {
 		fy := int(f.y)
 		f_tick := (int(f.anim_timer * 10.0)) % 2 == 0
 
-		sdl.set_render_draw_color(renderer, 255, 100, 0, 255)
+		sdl.set_render_draw_color(renderer, 255, 90, 0, 255)
 		f_body := sdl.Rect{ x: fx - 9, y: fy - 10, w: 18, h: 18 }
 		sdl.render_fill_rect(renderer, &f_body)
 
@@ -178,7 +185,7 @@ fn render_donkeykong_game(renderer &sdl.Renderer, mut g DonkeyKongGame) {
 		sdl.render_fill_rect(renderer, &eye_r)
 	}
 
-	// 10. Draw Player Jumpman
+	// 10. 16-Bit Jumpman Mario Sprite
 	if g.state == .playing || g.state == .victory || g.state == .paused {
 		px := int(g.player_x)
 		py := int(g.player_y)
@@ -186,23 +193,33 @@ fn render_donkeykong_game(renderer &sdl.Renderer, mut g DonkeyKongGame) {
 		body_color := if g.hammer_timer > 0 {
 			if (sdl.get_ticks() / 100) % 2 == 0 { Color{ r: 255, g: 220, b: 0, a: 255 } } else { Color{ r: 255, g: 100, b: 0, a: 255 } }
 		} else {
-			Color{ r: 255, g: 40, b: 40, a: 255 }
+			Color{ r: 240, g: 30, b: 35, a: 255 }
 		}
-		sdl.set_render_draw_color(renderer, body_color.r, body_color.g, body_color.b, body_color.a)
-		body := sdl.Rect{ x: px - 9, y: py - 10, w: 18, h: 18 }
-		sdl.render_fill_rect(renderer, &body)
 
-		// Overalls
-		sdl.set_render_draw_color(renderer, 30, 80, 220, 255)
+		// Red Cap & Shirt
+		sdl.set_render_draw_color(renderer, body_color.r, body_color.g, body_color.b, body_color.a)
+		cap := sdl.Rect{ x: px - 8, y: py - 14, w: 16, h: 6 }
+		sdl.render_fill_rect(renderer, &cap)
+		shirt := sdl.Rect{ x: px - 8, y: py - 8, w: 16, h: 14 }
+		sdl.render_fill_rect(renderer, &shirt)
+
+		// Blue Overalls with Yellow Buttons
+		sdl.set_render_draw_color(renderer, 30, 75, 215, 255)
 		overalls := sdl.Rect{ x: px - 7, y: py - 2, w: 14, h: 10 }
 		sdl.render_fill_rect(renderer, &overalls)
+		sdl.set_render_draw_color(renderer, 255, 220, 30, 255)
+		sdl.render_draw_point(renderer, px - 4, py)
+		sdl.render_draw_point(renderer, px + 3, py)
 
-		// Face
-		sdl.set_render_draw_color(renderer, 255, 200, 160, 255)
-		face := sdl.Rect{ x: px - 4, y: py - 8, w: 8, h: 5 }
+		// Face & Mustache
+		sdl.set_render_draw_color(renderer, 255, 205, 165, 255)
+		face := sdl.Rect{ x: px - 5, y: py - 9, w: 10, h: 6 }
 		sdl.render_fill_rect(renderer, &face)
+		sdl.set_render_draw_color(renderer, 20, 15, 10, 255)
+		mustache := sdl.Rect{ x: px - 3, y: py - 5, w: 7, h: 2 }
+		sdl.render_fill_rect(renderer, &mustache)
 
-		// Swinging Hammer visualization
+		// Swinging Hammer
 		if g.hammer_timer > 0 {
 			hammer_up := (sdl.get_ticks() / 150) % 2 == 0
 			sdl.set_render_draw_color(renderer, 220, 220, 230, 255)

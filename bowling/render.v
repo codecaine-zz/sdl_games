@@ -4,12 +4,12 @@ import math
 import sdl
 
 fn draw_bowling_game(renderer &sdl.Renderer, g &BowlingGame) {
-	// Background
-	sdl.set_render_draw_color(renderer, 15, 20, 32, 255)
-	sdl.render_clear(renderer)
+	// Deep retro bowling alley lounge atmosphere
+	draw_room_background(renderer)
 
 	draw_lane(renderer, g)
 	draw_gutters(renderer, g)
+	draw_pin_deck(renderer, g)
 	draw_pins(renderer, g)
 	draw_ball(renderer, g)
 	draw_particles(renderer, g)
@@ -19,55 +19,149 @@ fn draw_bowling_game(renderer &sdl.Renderer, g &BowlingGame) {
 	draw_celebration_banner(renderer, g)
 }
 
+fn draw_room_background(renderer &sdl.Renderer) {
+	// Retro 90s Bowling Lounge: Dark midnight purple-blue with subtle floor gradient
+	for y := 0; y < 680; y += 4 {
+		shade := u8(14 + (y * 12) / 680)
+		sdl.set_render_draw_color(renderer, shade, shade - 2, shade + 8, 255)
+		rect := sdl.Rect{ x: 0, y: y, w: 800, h: 4 }
+		sdl.render_fill_rect(renderer, &rect)
+	}
+
+	// Side wall carpets with classic arcade geometric pattern
+	draw_arcade_carpet(renderer, 0, 100, 130, 580)
+	draw_arcade_carpet(renderer, 670, 100, 130, 580)
+}
+
+fn draw_arcade_carpet(renderer &sdl.Renderer, x int, y int, w int, h int) {
+	bg := sdl.Rect{ x: x, y: y, w: w, h: h }
+	sdl.set_render_draw_color(renderer, 22, 18, 38, 255)
+	sdl.render_fill_rect(renderer, &bg)
+
+	// Retro carpet neon triangles and squiggles
+	for cy := y + 10; cy < y + h; cy += 40 {
+		for cx := x + 15; cx < x + w - 15; cx += 45 {
+			// Cyan diamond
+			sdl.set_render_draw_color(renderer, 45, 180, 220, 120)
+			sdl.render_draw_line(renderer, cx, cy - 6, cx + 6, cy)
+			sdl.render_draw_line(renderer, cx + 6, cy, cx, cy + 6)
+			sdl.render_draw_line(renderer, cx, cy + 6, cx - 6, cy)
+			sdl.render_draw_line(renderer, cx - 6, cy, cx, cy - 6)
+
+			// Magenta dot
+			sdl.set_render_draw_color(renderer, 230, 60, 160, 140)
+			dot := sdl.Rect{ x: cx + 18, y: cy - 2, w: 3, h: 3 }
+			sdl.render_fill_rect(renderer, &dot)
+		}
+	}
+
+	// Bevel divider rail
+	sdl.set_render_draw_color(renderer, 50, 45, 75, 255)
+	if x == 0 {
+		sdl.render_draw_line(renderer, x + w - 1, y, x + w - 1, y + h)
+	} else {
+		sdl.render_draw_line(renderer, x, y, x, y + h)
+	}
+}
+
 fn draw_lane(renderer &sdl.Renderer, g &BowlingGame) {
 	lane_w := int(g.lane_right - g.lane_left)
 	lane_h := int(g.lane_bottom - g.lane_top)
 
-	// Wood Plank Boards
+	// 39 High-Gloss Maple Wood Planks
 	plank_count := 39
 	plank_w := f64(lane_w) / f64(plank_count)
 
 	for i := 0; i < plank_count; i++ {
-		shade := if i % 2 == 0 { u8(220) } else { u8(205) }
-		mut r := shade
-		mut gr := u8(f64(shade) * 0.78)
-		mut b := u8(f64(shade) * 0.45)
+		// Alternating rich golden maple wood tones
+		is_darker := (i % 3 == 0)
+		is_lighter := (i % 3 == 1)
+
+		mut r := if is_lighter { u8(235) } else if is_darker { u8(200) } else { u8(218) }
+		mut gr := if is_lighter { u8(185) } else if is_darker { u8(150) } else { u8(168) }
+		mut b := if is_lighter { u8(115) } else if is_darker { u8(85) } else { u8(100) }
 
 		px := int(g.lane_left + f64(i) * plank_w)
+		pw := int(plank_w) + 1
+
+		// Plank body
+		sdl.set_render_draw_color(renderer, r, gr, b, 255)
 		rect := sdl.Rect{
 			x: px
 			y: int(g.lane_top)
-			w: int(plank_w) + 1
+			w: pw
 			h: lane_h
 		}
-		sdl.set_render_draw_color(renderer, r, gr, b, 255)
 		sdl.render_fill_rect(renderer, &rect)
+
+		// Plank vertical grain seam highlight & shadow
+		sdl.set_render_draw_color(renderer, u8(math.max(0, int(r) - 35)), u8(math.max(0, int(gr) - 30)), u8(math.max(0, int(b) - 20)), 200)
+		sdl.render_draw_line(renderer, px, int(g.lane_top), px, int(g.lane_bottom))
+
+		// Subtle plank wood knots and grain variation
+		if i % 4 == 0 {
+			sdl.set_render_draw_color(renderer, r - 15, gr - 15, b - 10, 80)
+			for knot_y := int(g.lane_top) + ((i * 37) % 150); knot_y < int(g.lane_bottom); knot_y += 180 {
+				sdl.render_draw_line(renderer, px + 1, knot_y, px + pw - 2, knot_y + 12)
+			}
+		}
 	}
 
-	// Oil Pattern Sheen (From Foul Line to oil_end_y)
+	// Varnished Oil Pattern Sheen (Translucent gloss with light gradient)
 	oil_y := int(g.oil_end_y)
 	oil_h := int(g.lane_bottom - g.oil_end_y)
-	sdl.set_render_draw_color(renderer, 255, 255, 255, 25)
-	oil_rect := sdl.Rect{
-		x: int(g.lane_left)
-		y: oil_y
-		w: lane_w
-		h: oil_h
+
+	// Gloss sheen gradient
+	for y := oil_y; y < int(g.lane_bottom); y += 6 {
+		progress := f64(y - oil_y) / f64(oil_h)
+		alpha := u8(20.0 + progress * 25.0)
+		sdl.set_render_draw_color(renderer, 255, 255, 255, alpha)
+		sheen_rect := sdl.Rect{
+			x: int(g.lane_left)
+			y: y
+			w: lane_w
+			h: 6
+		}
+		sdl.render_fill_rect(renderer, &sheen_rect)
 	}
-	sdl.render_fill_rect(renderer, &oil_rect)
 
-	// Oil Pattern Transition Line
-	sdl.set_render_draw_color(renderer, 190, 140, 80, 120)
+	// Oil Pattern Transition Line with subtle highlight
+	sdl.set_render_draw_color(renderer, 255, 240, 200, 90)
 	sdl.render_draw_line(renderer, int(g.lane_left), oil_y, int(g.lane_right), oil_y)
+	sdl.set_render_draw_color(renderer, 140, 90, 40, 150)
+	sdl.render_draw_line(renderer, int(g.lane_left), oil_y + 1, int(g.lane_right), oil_y + 1)
 
-	// Aiming Guide Arrows (Row of 7 Arrows)
+	// Aiming Guide Locator Dots (Row of 7 Dots before arrows)
+	dots_y := int(g.lane_bottom - 130.0)
+	for i := 1; i <= 7; i++ {
+		dx := int(g.lane_left + f64(i) * (f64(lane_w) / 8.0))
+		sdl.set_render_draw_color(renderer, 60, 30, 10, 255)
+		dot_rect := sdl.Rect{ x: dx - 2, y: dots_y - 2, w: 4, h: 4 }
+		sdl.render_fill_rect(renderer, &dot_rect)
+		sdl.set_render_draw_color(renderer, 120, 70, 30, 255)
+		sdl.render_draw_point(renderer, dx - 1, dots_y - 1)
+	}
+
+	// 16-Bit Aiming Guide Arrows (Row of 7 Chevron Arrows)
 	arrow_y := int(g.lane_bottom - 220.0)
 	for i := 1; i <= 7; i++ {
 		ax := int(g.lane_left + f64(i) * (f64(lane_w) / 8.0))
-		sdl.set_render_draw_color(renderer, 80, 45, 20, 255)
-		// Small triangle arrow
-		for dy := 0; dy < 12; dy++ {
+		// Outer arrow dark mahogany border
+		for dy := 0; dy < 14; dy++ {
 			span := dy / 2
+			sdl.set_render_draw_color(renderer, 55, 28, 12, 255)
+			line := sdl.Rect{
+				x: ax - span - 1
+				y: arrow_y + dy
+				w: (span * 2) + 3
+				h: 1
+			}
+			sdl.render_fill_rect(renderer, &line)
+		}
+		// Inner arrow warm amber inlay
+		for dy := 2; dy < 12; dy++ {
+			span := (dy - 2) / 2
+			sdl.set_render_draw_color(renderer, 160, 85, 30, 255)
 			line := sdl.Rect{
 				x: ax - span
 				y: arrow_y + dy
@@ -78,45 +172,92 @@ fn draw_lane(renderer &sdl.Renderer, g &BowlingGame) {
 		}
 	}
 
-	// 1-3 & 1-2 Strike Pocket Target Indicators on Backend
+	// Strike Pocket Target Indicators (1-3 and 1-2 pocket guide crosshairs)
 	pocket_y := int(240.0)
-	// 1-3 Pocket (Righty strike target: 407px)
-	sdl.set_render_draw_color(renderer, 255, 180, 0, 160)
+	// Righty 1-3 Pocket (407px)
+	sdl.set_render_draw_color(renderer, 255, 200, 50, 220)
 	sdl.render_draw_line(renderer, 407, pocket_y - 8, 407, pocket_y + 8)
 	sdl.render_draw_line(renderer, 403, pocket_y, 411, pocket_y)
+	// Lefty 1-2 Pocket (393px)
+	sdl.set_render_draw_color(renderer, 255, 200, 50, 140)
+	sdl.render_draw_line(renderer, 393, pocket_y - 8, 393, pocket_y + 8)
+	sdl.render_draw_line(renderer, 389, pocket_y, 397, pocket_y)
 
-	// Foul Line
-	sdl.set_render_draw_color(renderer, 200, 30, 30, 255)
+	// Foul Line with Beveled Edge
+	foul_y := int(g.lane_bottom - 10.0)
+	sdl.set_render_draw_color(renderer, 220, 30, 30, 255)
 	foul_rect := sdl.Rect{
 		x: int(g.lane_left)
-		y: int(g.lane_bottom - 10.0)
+		y: foul_y
 		w: lane_w
-		h: 4
+		h: 5
 	}
 	sdl.render_fill_rect(renderer, &foul_rect)
+	// Foul line gold border
+	sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+	sdl.render_draw_line(renderer, int(g.lane_left), foul_y, int(g.lane_right), foul_y)
+	sdl.set_render_draw_color(renderer, 140, 10, 10, 255)
+	sdl.render_draw_line(renderer, int(g.lane_left), foul_y + 5, int(g.lane_right), foul_y + 5)
 }
 
 fn draw_gutters(renderer &sdl.Renderer, g &BowlingGame) {
-	lane_h := int(g.lane_bottom - g.lane_top)
+	gw := 35
 
-	// Left Gutter
-	sdl.set_render_draw_color(renderer, 25, 28, 35, 255)
-	gutter_l := sdl.Rect{
-		x: int(g.lane_left - 35.0)
-		y: int(g.lane_top)
-		w: 35
-		h: lane_h
-	}
-	sdl.render_fill_rect(renderer, &gutter_l)
+	// Left Gutter - Deep curved channel with shadow gradient
+	for x := 0; x < gw; x++ {
+		// Curved drop depth: darker in center, highlighted outer edge
+		norm := f64(x) / f64(gw)
+		depth := math.sin(norm * math.pi)
+		base_gray := u8(22.0 - depth * 14.0)
 
-	// Right Gutter
-	gutter_r := sdl.Rect{
-		x: int(g.lane_right)
-		y: int(g.lane_top)
-		w: 35
-		h: lane_h
+		sdl.set_render_draw_color(renderer, base_gray, base_gray + 2, base_gray + 6, 255)
+		sdl.render_draw_line(renderer, int(g.lane_left - f64(gw) + f64(x)), int(g.lane_top), int(g.lane_left - f64(gw) + f64(x)), int(g.lane_bottom))
 	}
-	sdl.render_fill_rect(renderer, &gutter_r)
+	// Left Gutter outer rail highlight
+	sdl.set_render_draw_color(renderer, 70, 75, 95, 255)
+	sdl.render_draw_line(renderer, int(g.lane_left - f64(gw)), int(g.lane_top), int(g.lane_left - f64(gw)), int(g.lane_bottom))
+	// Left Gutter lane seam shadow
+	sdl.set_render_draw_color(renderer, 10, 10, 14, 255)
+	sdl.render_draw_line(renderer, int(g.lane_left - 1), int(g.lane_top), int(g.lane_left - 1), int(g.lane_bottom))
+
+	// Right Gutter - Deep curved channel with shadow gradient
+	for x := 0; x < gw; x++ {
+		norm := f64(x) / f64(gw)
+		depth := math.sin(norm * math.pi)
+		base_gray := u8(22.0 - depth * 14.0)
+
+		sdl.set_render_draw_color(renderer, base_gray, base_gray + 2, base_gray + 6, 255)
+		sdl.render_draw_line(renderer, int(g.lane_right + f64(x)), int(g.lane_top), int(g.lane_right + f64(x)), int(g.lane_bottom))
+	}
+	// Right Gutter outer rail highlight
+	sdl.set_render_draw_color(renderer, 70, 75, 95, 255)
+	sdl.render_draw_line(renderer, int(g.lane_right + f64(gw) - 1), int(g.lane_top), int(g.lane_right + f64(gw) - 1), int(g.lane_bottom))
+	// Right Gutter lane seam shadow
+	sdl.set_render_draw_color(renderer, 10, 10, 14, 255)
+	sdl.render_draw_line(renderer, int(g.lane_right), int(g.lane_top), int(g.lane_right), int(g.lane_bottom))
+}
+
+fn draw_pin_deck(renderer &sdl.Renderer, g &BowlingGame) {
+	// Pin Deck Dark Back Pit & LED backlight
+	pit_w := int(g.lane_right - g.lane_left + 70.0)
+	pit_x := int(g.lane_left - 35.0)
+	pit_y := int(g.lane_top - 30.0)
+	pit_h := 30
+
+	// Dark pit drop hole
+	sdl.set_render_draw_color(renderer, 8, 8, 12, 255)
+	pit_rect := sdl.Rect{ x: pit_x, y: pit_y, w: pit_w, h: pit_h }
+	sdl.render_fill_rect(renderer, &pit_rect)
+
+	// LED Backlight strip illuminating pin deck from behind
+	sdl.set_render_draw_color(renderer, 0, 230, 255, 180)
+	led_rect := sdl.Rect{ x: int(g.lane_left), y: int(g.lane_top) - 3, w: int(g.lane_right - g.lane_left), h: 3 }
+	sdl.render_fill_rect(renderer, &led_rect)
+
+	// Pit cushion back wall with rubber texture
+	sdl.set_render_draw_color(renderer, 28, 30, 36, 255)
+	cushion_rect := sdl.Rect{ x: pit_x, y: pit_y, w: pit_w, h: 10 }
+	sdl.render_fill_rect(renderer, &cushion_rect)
 }
 
 fn draw_pins(renderer &sdl.Renderer, g &BowlingGame) {
@@ -125,64 +266,82 @@ fn draw_pins(renderer &sdl.Renderer, g &BowlingGame) {
 
 		px := int(pin.x)
 		py := int(pin.y)
-		pin_w := 18
-		pin_h := 32
 
 		if pin.standing {
-			// Wobble / Tilt displacement
+			// Wobble displacement
 			tilt_offset_x := int(math.sin(pin.tilt) * 12.0)
+			cx := px + tilt_offset_x
 
-			// Standing Pin Body
-			sdl.set_render_draw_color(renderer, 250, 250, 255, 255)
-			body_rect := sdl.Rect{
-				x: px - pin_w / 2 + tilt_offset_x
-				y: py - pin_h / 2
-				w: pin_w
-				h: pin_h
-			}
-			sdl.render_fill_rect(renderer, &body_rect)
+			// 16-Bit Standing Bowling Pin (Contoured with Neck, Belly & Twin Stripes)
+
+			// Drop shadow on pin deck
+			sdl.set_render_draw_color(renderer, 0, 0, 0, 110)
+			shadow_rect := sdl.Rect{ x: cx - 9, y: py + 12, w: 18, h: 6 }
+			sdl.render_fill_rect(renderer, &shadow_rect)
+
+			// Pin layers (Top-down 16-bit contour slices)
+			// Head
+			draw_pin_slice(renderer, cx, py - 18, 6, 4, Color{ r: 250, g: 250, b: 255 })
+			// Neck
+			draw_pin_slice(renderer, cx, py - 14, 4, 3, Color{ r: 245, g: 245, b: 250 })
+			// Red Stripe 1
+			draw_pin_slice(renderer, cx, py - 11, 6, 3, Color{ r: 225, g: 30, b: 40 })
+			// White spacer
+			draw_pin_slice(renderer, cx, py - 8, 8, 2, Color{ r: 245, g: 245, b: 250 })
+			// Red Stripe 2
+			draw_pin_slice(renderer, cx, py - 6, 10, 3, Color{ r: 225, g: 30, b: 40 })
+			// Belly (widest part)
+			draw_pin_slice(renderer, cx, py - 3, 14, 8, Color{ r: 255, g: 255, b: 255 })
+			// Base taper
+			draw_pin_slice(renderer, cx, py + 5, 11, 8, Color{ r: 235, g: 235, b: 245 })
+			// Base rim
+			draw_pin_slice(renderer, cx, py + 13, 9, 3, Color{ r: 200, g: 205, b: 215 })
+
+			// Specular glossy highlight along left side
+			sdl.set_render_draw_color(renderer, 255, 255, 255, 220)
+			sdl.render_draw_line(renderer, cx - 4, py - 2, cx - 3, py + 6)
+			sdl.render_draw_point(renderer, cx - 1, py - 17)
+
+			// Right side 3D shading contour
+			sdl.set_render_draw_color(renderer, 160, 165, 185, 180)
+			sdl.render_draw_line(renderer, cx + 6, py - 1, cx + 5, py + 7)
+		} else {
+			// Knocked/Fallen Tilted Pin on Deck
+			// Shadow
+			sdl.set_render_draw_color(renderer, 0, 0, 0, 90)
+			f_shadow := sdl.Rect{ x: px - 14, y: py - 5, w: 28, h: 14 }
+			sdl.render_fill_rect(renderer, &f_shadow)
+
+			// Fallen horizontal body
+			sdl.set_render_draw_color(renderer, 220, 225, 235, 255)
+			body := sdl.Rect{ x: px - 15, y: py - 6, w: 30, h: 12 }
+			sdl.render_fill_rect(renderer, &body)
 
 			// Red Stripes
-			sdl.set_render_draw_color(renderer, 220, 35, 45, 255)
-			stripe1 := sdl.Rect{
-				x: px - pin_w / 2 + tilt_offset_x
-				y: py - 6
-				w: pin_w
-				h: 3
-			}
-			stripe2 := sdl.Rect{
-				x: px - pin_w / 2 + tilt_offset_x
-				y: py - 1
-				w: pin_w
-				h: 3
-			}
-			sdl.render_fill_rect(renderer, &stripe1)
-			sdl.render_fill_rect(renderer, &stripe2)
+			sdl.set_render_draw_color(renderer, 210, 35, 45, 255)
+			s1 := sdl.Rect{ x: px - 8, y: py - 6, w: 3, h: 12 }
+			s2 := sdl.Rect{ x: px - 3, y: py - 6, w: 3, h: 12 }
+			sdl.render_fill_rect(renderer, &s1)
+			sdl.render_fill_rect(renderer, &s2)
 
-			// 3D Pin Shading Contour
-			sdl.set_render_draw_color(renderer, 180, 185, 200, 255)
-			sdl.render_draw_rect(renderer, &body_rect)
-		} else {
-			// Knocked/Fallen Tilted Pin on Floor
-			sdl.set_render_draw_color(renderer, 210, 215, 225, 255)
-			fallen_rect := sdl.Rect{
-				x: px - pin_h / 2
-				y: py - pin_w / 2
-				w: pin_h
-				h: pin_w
-			}
-			sdl.render_fill_rect(renderer, &fallen_rect)
-
-			sdl.set_render_draw_color(renderer, 200, 40, 50, 255)
-			stripe := sdl.Rect{
-				x: px - 4
-				y: py - pin_w / 2
-				w: 4
-				h: pin_w
-			}
-			sdl.render_fill_rect(renderer, &stripe)
+			// Shading highlight
+			sdl.set_render_draw_color(renderer, 255, 255, 255, 200)
+			sdl.render_draw_line(renderer, px - 13, py - 5, px + 13, py - 5)
+			sdl.set_render_draw_color(renderer, 150, 155, 170, 255)
+			sdl.render_draw_line(renderer, px - 15, py + 5, px + 14, py + 5)
 		}
 	}
+}
+
+fn draw_pin_slice(renderer &sdl.Renderer, cx int, y int, w int, h int, c Color) {
+	rect := sdl.Rect{
+		x: cx - w / 2
+		y: y
+		w: w
+		h: h
+	}
+	sdl.set_render_draw_color(renderer, c.r, c.g, c.b, 255)
+	sdl.render_fill_rect(renderer, &rect)
 }
 
 fn draw_ball(renderer &sdl.Renderer, g &BowlingGame) {
@@ -190,31 +349,44 @@ fn draw_ball(renderer &sdl.Renderer, g &BowlingGame) {
 	by := int(g.ball.y)
 	r := int(g.ball.radius)
 
-	// Ball Drop Shadow
-	sdl.set_render_draw_color(renderer, 0, 0, 0, 90)
-	shadow_rect := sdl.Rect{
-		x: bx - r + 3
-		y: by - r + 5
-		w: r * 2
-		h: r * 2
-	}
-	sdl.render_fill_rect(renderer, &shadow_rect)
+	// Dynamic Contact Drop Shadow (Soft multi-layer)
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 70)
+	shadow_outer := sdl.Rect{ x: bx - r + 3, y: by - r + 6, w: r * 2, h: r * 2 }
+	sdl.render_fill_rect(renderer, &shadow_outer)
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 120)
+	shadow_inner := sdl.Rect{ x: bx - r + 4, y: by - r + 7, w: r * 2 - 4, h: r * 2 - 4 }
+	sdl.render_fill_rect(renderer, &shadow_inner)
 
-	// Ball Sphere
-	color_r := if g.current_player == 0 { u8(30) } else { u8(180) }
-	color_g := if g.current_player == 0 { u8(80) } else { u8(40) }
-	color_b := if g.current_player == 0 { u8(220) } else { u8(40) }
+	// 16-Bit Radial Spherical Bowling Ball Shading
+	// Player 1: Deep Sapphire Cobalt, Player 2: Crimson Ruby / Flame
+	base_r := if g.current_player == 0 { 20.0 } else { 190.0 }
+	base_g := if g.current_player == 0 { 60.0 } else { 30.0 }
+	base_b := if g.current_player == 0 { 210.0 } else { 45.0 }
 
 	for dy := -r; dy <= r; dy++ {
 		for dx := -r; dx <= r; dx++ {
-			if dx * dx + dy * dy <= r * r {
-				// 3D Specular Highlight
-				highlight := f64(dx - r / 3) * f64(dx - r / 3) + f64(dy + r / 3) * f64(dy + r / 3)
-				shade := math.max(0.0, 1.0 - highlight / (f64(r * r) * 1.5))
+			dist_sq := dx * dx + dy * dy
+			if dist_sq <= r * r {
+				// Distance to light source (top-left offset)
+				lx := dx + (r / 3)
+				ly := dy + (r / 3)
+				light_dist := math.sqrt(f64(lx * lx + ly * ly))
+				norm_light := math.max(0.0, 1.0 - (light_dist / f64(r * 2)))
 
-				pr := u8(math.min(255.0, f64(color_r) + shade * 90.0))
-				pg := u8(math.min(255.0, f64(color_g) + shade * 90.0))
-				pb := u8(math.min(255.0, f64(color_b) + shade * 90.0))
+				// 16-bit stepped palette shading
+				shade_step := int(norm_light * 6.0) // 0..6 bands
+				factor := 0.4 + (f64(shade_step) / 6.0) * 0.9
+
+				mut pr := u8(math.min(255.0, base_r * factor))
+				mut pg := u8(math.min(255.0, base_g * factor))
+				mut pb := u8(math.min(255.0, base_b * factor))
+
+				// Specular hotspot glint
+				if lx * lx + ly * ly <= (r * r) / 10 {
+					pr = 255
+					pg = 255
+					pb = 255
+				}
 
 				sdl.set_render_draw_color(renderer, pr, pg, pb, 255)
 				sdl.render_draw_point(renderer, bx + dx, by + dy)
@@ -222,19 +394,45 @@ fn draw_ball(renderer &sdl.Renderer, g &BowlingGame) {
 		}
 	}
 
-	// 3 Finger Grip Holes
-	sdl.set_render_draw_color(renderer, 10, 12, 18, 255)
-	h1 := sdl.Rect{ x: bx - 4, y: by - 8, w: 3, h: 3 }
-	h2 := sdl.Rect{ x: bx + 2, y: by - 8, w: 3, h: 3 }
-	h3 := sdl.Rect{ x: bx - 1, y: by - 1, w: 4, h: 4 }
-	sdl.render_fill_rect(renderer, &h1)
-	sdl.render_fill_rect(renderer, &h2)
-	sdl.render_fill_rect(renderer, &h3)
+	// 16-Bit 3 Finger Grip Holes (with inner shadow depth)
+	// Rotate slightly based on ball travel
+	spin_angle := (g.ball.y * 0.08) + (g.hook * 2.0)
+	cos_s := math.cos(spin_angle)
+	sin_s := math.sin(spin_angle)
+
+	h1_rx := -4.0 * cos_s - (-7.0) * sin_s
+	h1_ry := -4.0 * sin_s + (-7.0) * cos_s
+
+	h2_rx := 4.0 * cos_s - (-7.0) * sin_s
+	h2_ry := 4.0 * sin_s + (-7.0) * cos_s
+
+	h3_rx := 0.0 * cos_s - (1.0) * sin_s
+	h3_ry := 0.0 * sin_s + (1.0) * cos_s
+
+	draw_finger_hole(renderer, bx + int(h1_rx), by + int(h1_ry), 2)
+	draw_finger_hole(renderer, bx + int(h2_rx), by + int(h2_ry), 2)
+	draw_finger_hole(renderer, bx + int(h3_rx), by + int(h3_ry), 3)
+}
+
+fn draw_finger_hole(renderer &sdl.Renderer, x int, y int, radius int) {
+	// Deep hole interior
+	sdl.set_render_draw_color(renderer, 8, 10, 15, 255)
+	for dy := -radius; dy <= radius; dy++ {
+		for dx := -radius; dx <= radius; dx++ {
+			if dx * dx + dy * dy <= radius * radius {
+				sdl.render_draw_point(renderer, x + dx, y + dy)
+			}
+		}
+	}
+	// Hole rim bevel highlight
+	sdl.set_render_draw_color(renderer, 90, 110, 150, 180)
+	sdl.render_draw_point(renderer, x - 1, y - radius)
 }
 
 fn draw_particles(renderer &sdl.Renderer, g &BowlingGame) {
 	for p in g.particles {
 		alpha := u8(255.0 * (p.life / p.max_life))
+		// Sparkle core
 		sdl.set_render_draw_color(renderer, p.color.r, p.color.g, p.color.b, alpha)
 		rect := sdl.Rect{
 			x: int(p.x) - p.size / 2
@@ -243,6 +441,13 @@ fn draw_particles(renderer &sdl.Renderer, g &BowlingGame) {
 			h: p.size
 		}
 		sdl.render_fill_rect(renderer, &rect)
+
+		// 16-bit star cross sparkle on large particles
+		if p.size >= 4 && alpha > 150 {
+			sdl.set_render_draw_color(renderer, 255, 255, 255, alpha)
+			sdl.render_draw_line(renderer, int(p.x) - 2, int(p.y), int(p.x) + 2, int(p.y))
+			sdl.render_draw_line(renderer, int(p.x), int(p.y) - 2, int(p.x), int(p.y) + 2)
+		}
 	}
 }
 
@@ -251,48 +456,67 @@ fn draw_aim_hud(renderer &sdl.Renderer, g &BowlingGame) {
 		bx := int(g.aim_x)
 		by := int(g.lane_bottom - 40.0)
 
-		// Trajectory Guide Arrow Line
-		arrow_len := 120.0
+		// 16-Bit Neon Dotted Trajectory Line
+		arrow_len := 150.0
 		end_x := f64(bx) + math.sin(g.aim_angle) * arrow_len
 		end_y := f64(by) - math.cos(g.aim_angle) * arrow_len
 
-		sdl.set_render_draw_color(renderer, 255, 215, 0, 200)
-		sdl.render_draw_line(renderer, bx, by, int(end_x), int(end_y))
-		sdl.render_draw_line(renderer, bx - 1, by, int(end_x) - 1, int(end_y))
-		sdl.render_draw_line(renderer, bx + 1, by, int(end_x) + 1, int(end_y))
+		// Glowing trajectory guide
+		dots := 12
+		for i := 0; i <= dots; i++ {
+			t := f64(i) / f64(dots)
+			tx := int(f64(bx) + (end_x - f64(bx)) * t)
+			ty := int(f64(by) + (end_y - f64(by)) * t)
 
-		// Power & Hook Gauge Bar (Bottom HUD)
-		bar_x := 600
-		bar_y := 450
-		bar_w := 160
-		bar_h := 22
+			// Glow dot
+			sdl.set_render_draw_color(renderer, 255, 220, 50, 240)
+			dot := sdl.Rect{ x: tx - 1, y: ty - 1, w: 3, h: 3 }
+			sdl.render_fill_rect(renderer, &dot)
+		}
+
+		// Arcade Controls & Power Gauges Panel (Bottom Right)
+		panel_x := 560
+		panel_y := 410
+		panel_w := 220
+		panel_h := 170
+
+		// Beveled Arcade Metal HUD Box
+		draw_arcade_box(renderer, panel_x, panel_y, panel_w, panel_h, 'LAUNCH CONTROLS')
 
 		// Power Meter
-		draw_text(renderer, bar_x, bar_y - 20, 'POWER (SPACE)', 1, Color{ r: 255, g: 255, b: 255 })
+		bar_x := panel_x + 15
+		bar_y := panel_y + 40
+		bar_w := 190
+		bar_h := 18
+
+		draw_text(renderer, bar_x, bar_y - 14, 'POWER (SPACE)', 1, Color{ r: 240, g: 245, b: 255 })
 		bg_rect := sdl.Rect{ x: bar_x, y: bar_y, w: bar_w, h: bar_h }
-		sdl.set_render_draw_color(renderer, 40, 45, 60, 255)
+		sdl.set_render_draw_color(renderer, 20, 22, 32, 255)
 		sdl.render_fill_rect(renderer, &bg_rect)
 
+		// Multi-tone Power Bar
 		fill_w := int(f64(bar_w) * g.power)
-		fill_color := if g.power > 0.8 {
-			Color{ r: 255, g: 50, b: 50 }
-		} else if g.power > 0.5 {
-			Color{ r: 255, g: 200, b: 0 }
-		} else {
-			Color{ r: 50, g: 200, b: 50 }
+		for px := 0; px < fill_w; px++ {
+			progress := f64(px) / f64(bar_w)
+			col := if progress > 0.8 {
+				Color{ r: 255, g: 50, b: 60 }
+			} else if progress > 0.5 {
+				Color{ r: 255, g: 210, b: 30 }
+			} else {
+				Color{ r: 40, g: 220, b: 120 }
+			}
+			sdl.set_render_draw_color(renderer, col.r, col.g, col.b, 255)
+			sdl.render_draw_line(renderer, bar_x + px, bar_y + 1, bar_x + px, bar_y + bar_h - 2)
 		}
-		fill_rect := sdl.Rect{ x: bar_x, y: bar_y, w: fill_w, h: bar_h }
-		sdl.set_render_draw_color(renderer, fill_color.r, fill_color.g, fill_color.b, 255)
-		sdl.render_fill_rect(renderer, &fill_rect)
-
-		sdl.set_render_draw_color(renderer, 200, 210, 230, 255)
+		// Meter frame
+		sdl.set_render_draw_color(renderer, 120, 130, 160, 255)
 		sdl.render_draw_rect(renderer, &bg_rect)
 
 		// Hook / Spin Meter
-		hook_y := bar_y + 45
-		draw_text(renderer, bar_x, hook_y - 20, 'HOOK SPIN (Z / X)', 1, Color{ r: 255, g: 255, b: 255 })
+		hook_y := bar_y + 44
+		draw_text(renderer, bar_x, hook_y - 14, 'HOOK SPIN (Z / X)', 1, Color{ r: 240, g: 245, b: 255 })
 		hook_bg := sdl.Rect{ x: bar_x, y: hook_y, w: bar_w, h: bar_h }
-		sdl.set_render_draw_color(renderer, 40, 45, 60, 255)
+		sdl.set_render_draw_color(renderer, 20, 22, 32, 255)
 		sdl.render_fill_rect(renderer, &hook_bg)
 
 		hook_mid := bar_x + bar_w / 2
@@ -302,19 +526,23 @@ fn draw_aim_hud(renderer &sdl.Renderer, g &BowlingGame) {
 		} else {
 			sdl.Rect{ x: hook_mid + hook_fill_w, y: hook_y, w: -hook_fill_w, h: bar_h }
 		}
-		sdl.set_render_draw_color(renderer, 0, 180, 255, 255)
+		sdl.set_render_draw_color(renderer, 0, 200, 255, 255)
 		sdl.render_fill_rect(renderer, &hook_rect)
-		sdl.set_render_draw_color(renderer, 200, 210, 230, 255)
+
+		// Center zero line
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 220)
+		sdl.render_draw_line(renderer, hook_mid, hook_y, hook_mid, hook_y + bar_h)
+		sdl.set_render_draw_color(renderer, 120, 130, 160, 255)
 		sdl.render_draw_rect(renderer, &hook_bg)
 
-		// Instructions
+		// Step Instructions
 		status_text := match g.phase {
-			.position { 'STEP 1: [A / D] STANCE POSITION -> [SPACE] LOCK' }
-			.angle { 'STEP 2: [SPACE] LOCK LAUNCH ANGLE' }
-			.power { 'STEP 3: [SPACE] BOWL BALL / [Z / X] HOOK SPIN' }
-			else { '' }
+			.position { 'STEP 1: [A/D] STANCE -> [SPACE]' }
+			.angle    { 'STEP 2: [SPACE] LOCK ANGLE' }
+			.power    { 'STEP 3: [SPACE] BOWL / [Z,X] HOOK' }
+			else      { '' }
 		}
-		draw_text_centered(renderer, 400, int(g.lane_bottom + 15.0), status_text, 1, Color{ r: 255, g: 220, b: 100 })
+		draw_text_centered(renderer, panel_x + panel_w / 2, panel_y + panel_h - 22, status_text, 1, Color{ r: 255, g: 220, b: 80 })
 	}
 }
 
@@ -322,52 +550,62 @@ fn draw_pinsetter_sweep(renderer &sdl.Renderer, g &BowlingGame) {
 	if g.phase == .sweep {
 		sy := int(g.sweep_y)
 		lane_w := int(g.lane_right - g.lane_left)
+		lx := int(g.lane_left)
 
-		// Metal Sweeper Bar
-		sdl.set_render_draw_color(renderer, 70, 75, 90, 255)
+		// 16-Bit Mechanical Sweeper Arm
 		sweep_rect := sdl.Rect{
-			x: int(g.lane_left)
+			x: lx
 			y: sy
 			w: lane_w
-			h: 16
+			h: 18
 		}
+		// Dark metallic arm body
+		sdl.set_render_draw_color(renderer, 45, 50, 65, 255)
 		sdl.render_fill_rect(renderer, &sweep_rect)
 
-		sdl.set_render_draw_color(renderer, 200, 210, 230, 255)
-		sdl.render_draw_rect(renderer, &sweep_rect)
+		// Yellow & Black Industrial Hazard Caution Stripes
+		stripe_w := 14
+		for st := 0; st < lane_w; st += stripe_w * 2 {
+			sdl.set_render_draw_color(renderer, 255, 210, 0, 255)
+			hazard := sdl.Rect{ x: lx + st, y: sy + 2, w: stripe_w, h: 14 }
+			sdl.render_fill_rect(renderer, &hazard)
+		}
 
-		draw_text_centered(renderer, 400, sy + 3, 'PINSETTER SWEEP', 1, Color{ r: 255, g: 220, b: 0 })
+		// Top & Bottom metallic highlights
+		sdl.set_render_draw_color(renderer, 200, 210, 235, 255)
+		sdl.render_draw_line(renderer, lx, sy, lx + lane_w, sy)
+		sdl.set_render_draw_color(renderer, 20, 25, 35, 255)
+		sdl.render_draw_line(renderer, lx, sy + 17, lx + lane_w, sy + 17)
+
+		draw_text_centered(renderer, 400, sy + 4, 'PINSETTER SWEEP', 1, Color{ r: 0, g: 0, b: 0 })
 	}
 }
 
 fn draw_overhead_scoreboard(renderer &sdl.Renderer, g &BowlingGame) {
-	// Top Scoreboard Banner (10 Frames)
+	// Neo-Geo Arcade Overhead CRT Scoreboard Panel
 	panel_w := 780
-	panel_h := 80
+	panel_h := 84
 	px := (800 - panel_w) / 2
-	py := 8
+	py := 6
 
-	sdl.set_render_draw_color(renderer, 10, 14, 25, 240)
-	panel_rect := sdl.Rect{ x: px, y: py, w: panel_w, h: panel_h }
-	sdl.render_fill_rect(renderer, &panel_rect)
-
-	sdl.set_render_draw_color(renderer, 0, 180, 255, 255)
-	sdl.render_draw_rect(renderer, &panel_rect)
+	// CRT Monitor Bevelled Casing
+	draw_arcade_box(renderer, px, py, panel_w, panel_h, '')
 
 	p := g.players[g.current_player]
 
-	// Player Name & Game Mode
+	// Player Name & Mode Header with neon glow
 	mode_name := match g.mode {
-		.solo { 'SOLO BOWLING' }
-		.vs_ai { 'VS CPU BOWLER' }
-		.vs_2p { '2P LOCAL VERSUS' }
+		.solo  { 'SOLO ARCADE BOWLING' }
+		.vs_ai { 'VS CPU MASTER' }
+		.vs_2p { '2P LOCAL SHOWDOWN' }
 	}
-	draw_text(renderer, px + 10, py + 8, '${p.name.to_upper()} - ${mode_name}', 1, Color{ r: 255, g: 215, b: 0 })
-	draw_text(renderer, px + panel_w - 180, py + 8, 'TOTAL: ${p.total_score}', 1, Color{ r: 0, g: 255, b: 180 })
+	draw_text(renderer, px + 14, py + 8, '${p.name.to_upper()}', 1, Color{ r: 255, g: 215, b: 0 })
+	draw_text(renderer, px + 120, py + 8, '| ${mode_name}', 1, Color{ r: 160, g: 190, b: 230 })
+	draw_text(renderer, px + panel_w - 190, py + 8, 'TOTAL SCORE: ${p.total_score}', 1, Color{ r: 0, g: 255, b: 180 })
 
-	// Frame Boxes 1-10
+	// Frame Scorecards 1-10
 	frame_w := 54
-	frame_h := 45
+	frame_h := 46
 	start_x := px + 120
 
 	for i := 0; i < 10; i++ {
@@ -375,28 +613,34 @@ fn draw_overhead_scoreboard(renderer &sdl.Renderer, g &BowlingGame) {
 		fy := py + 26
 		is_cur := (i == p.current_frame)
 
-		// Frame box border
-		cr := if is_cur { u8(255) } else { u8(80) }
-		cg := if is_cur { u8(220) } else { u8(90) }
-		cb := if is_cur { u8(50) } else { u8(120) }
+		// Frame box background
+		bg_color := if is_cur { Color{ r: 35, g: 45, b: 70 } } else { Color{ r: 16, g: 20, b: 32 } }
+		f_bg := sdl.Rect{ x: fx, y: fy, w: frame_w - 2, h: frame_h }
+		sdl.set_render_draw_color(renderer, bg_color.r, bg_color.g, bg_color.b, 255)
+		sdl.render_fill_rect(renderer, &f_bg)
+
+		// Frame border (glowing gold for current frame)
+		cr := if is_cur { u8(255) } else { u8(60) }
+		cg := if is_cur { u8(215) } else { u8(75) }
+		cb := if is_cur { u8(40) } else { u8(110) }
 		sdl.set_render_draw_color(renderer, cr, cg, cb, 255)
-		f_rect := sdl.Rect{ x: fx, y: fy, w: frame_w - 2, h: frame_h }
-		sdl.render_draw_rect(renderer, &f_rect)
+		sdl.render_draw_rect(renderer, &f_bg)
 
 		// Frame Number Header
-		draw_text_centered(renderer, fx + (frame_w - 2) / 2, fy + 2, '${i + 1}', 1, Color{ r: 180, g: 190, b: 210 })
+		draw_text_centered(renderer, fx + (frame_w - 2) / 2, fy + 2, '${i + 1}', 1, Color{ r: 160, g: 180, b: 210 })
 
 		// Roll Marks
 		f_score := p.frames[i]
 		if i < 9 {
 			// Sub-box for roll 2
 			sub_rect := sdl.Rect{ x: fx + frame_w - 20, y: fy + 12, w: 18, h: 16 }
-			sdl.set_render_draw_color(renderer, 60, 70, 95, 255)
+			sdl.set_render_draw_color(renderer, 30, 36, 52, 255)
 			sdl.render_fill_rect(renderer, &sub_rect)
+			sdl.set_render_draw_color(renderer, 70, 80, 110, 255)
 			sdl.render_draw_rect(renderer, &sub_rect)
 
 			if f_score.is_strike {
-				draw_text_centered(renderer, fx + frame_w - 11, fy + 15, 'X', 1, Color{ r: 255, g: 50, b: 50 })
+				draw_text_centered(renderer, fx + frame_w - 11, fy + 15, 'X', 1, Color{ r: 255, g: 60, b: 60 })
 			} else {
 				if f_score.roll1 != -1 {
 					r1_str := if f_score.roll1 == 0 { '-' } else { '${f_score.roll1}' }
@@ -425,28 +669,57 @@ fn draw_overhead_scoreboard(renderer &sdl.Renderer, g &BowlingGame) {
 			}
 		}
 
-		// Cumulative Score
+		// Cumulative Score with Glowing Mint Digits
 		if f_score.cumulative != -1 {
 			cum_str := '${f_score.cumulative}'
-			draw_text_centered(renderer, fx + (frame_w - 2) / 2, fy + 30, cum_str, 1, Color{ r: 0, g: 255, b: 200 })
+			draw_text_centered(renderer, fx + (frame_w - 2) / 2, fy + 31, cum_str, 1, Color{ r: 0, g: 255, b: 210 })
 		}
 	}
 }
 
 fn draw_celebration_banner(renderer &sdl.Renderer, g &BowlingGame) {
 	if g.celebration != '' {
-		box_w := 440
-		box_h := 60
+		box_w := 460
+		box_h := 64
 		bx := (800 - box_w) / 2
-		by := 280
+		by := 270
 
-		sdl.set_render_draw_color(renderer, 12, 16, 28, 245)
-		b_rect := sdl.Rect{ x: bx, y: by, w: box_w, h: box_h }
-		sdl.render_fill_rect(renderer, &b_rect)
+		// Glowing Arcade Pop Banner
+		draw_arcade_box(renderer, bx, by, box_w, box_h, '')
 
+		// Gold inner border
 		sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
-		sdl.render_draw_rect(renderer, &b_rect)
+		inner := sdl.Rect{ x: bx + 4, y: by + 4, w: box_w - 8, h: box_h - 8 }
+		sdl.render_draw_rect(renderer, &inner)
 
-		draw_text_centered(renderer, 400, by + 20, g.celebration, 2, Color{ r: 255, g: 220, b: 50 })
+		// Text Shadow + Glowing Text
+		draw_text_centered(renderer, 402, by + 24, g.celebration, 2, Color{ r: 40, g: 20, b: 0 })
+		draw_text_centered(renderer, 400, by + 22, g.celebration, 2, Color{ r: 255, g: 230, b: 60 })
+	}
+}
+
+fn draw_arcade_box(renderer &sdl.Renderer, x int, y int, w int, h int, title string) {
+	// Deep arcade chassis background
+	bg := sdl.Rect{ x: x, y: y, w: w, h: h }
+	sdl.set_render_draw_color(renderer, 12, 15, 26, 245)
+	sdl.render_fill_rect(renderer, &bg)
+
+	// Metallic bevel highlights
+	sdl.set_render_draw_color(renderer, 80, 95, 130, 255)
+	sdl.render_draw_line(renderer, x, y, x + w, y)
+	sdl.render_draw_line(renderer, x, y, x, y + h)
+
+	sdl.set_render_draw_color(renderer, 10, 12, 18, 255)
+	sdl.render_draw_line(renderer, x, y + h - 1, x + w, y + h - 1)
+	sdl.render_draw_line(renderer, x + w - 1, y, x + w - 1, y + h)
+
+	// Cyan neon accent rim
+	sdl.set_render_draw_color(renderer, 0, 180, 255, 200)
+	inner_rim := sdl.Rect{ x: x + 2, y: y + 2, w: w - 4, h: h - 4 }
+	sdl.render_draw_rect(renderer, &inner_rim)
+
+	// Title header
+	if title != '' {
+		draw_text(renderer, x + 12, y + 8, title, 1, Color{ r: 0, g: 220, b: 255 })
 	}
 }

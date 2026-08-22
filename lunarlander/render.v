@@ -88,41 +88,76 @@ fn render_lunarlander_game(renderer &sdl.Renderer, mut g LunarLanderGame) {
 }
 
 fn draw_lunar_lander(renderer &sdl.Renderer, x f32, y f32, angle f32) {
-	// Octagonal Capsule Body + Legs
 	cos_a := f32(math.cos(angle))
 	sin_a := f32(math.sin(angle))
 
-	// Local relative vertices
-	pts := [
-		Point{ x: -10, y: -10 },
-		Point{ x: 10, y: -10 },
-		Point{ x: 14, y: 0 },
+	// 16-Bit Apollo Lunar Excursion Module (LEM)
+	// 1. Lower Descent Stage (Gold Mylar Thermal Foil with Brass Bevels)
+	descent_pts := [
+		Point{ x: -12, y: 0 },
+		Point{ x: 12, y: 0 },
 		Point{ x: 10, y: 10 },
 		Point{ x: -10, y: 10 },
-		Point{ x: -14, y: 0 },
 	]
-
-	sdl.set_render_draw_color(renderer, 220, 220, 230, 255)
-	for i in 0 .. pts.len {
-		p1 := pts[i]
-		p2 := pts[(i + 1) % pts.len]
-
-		// Rotate and translate
+	sdl.set_render_draw_color(renderer, 235, 185, 30, 255)
+	for i in 0 .. descent_pts.len {
+		p1 := descent_pts[i]
+		p2 := descent_pts[(i + 1) % descent_pts.len]
 		rx1 := x + (p1.x * cos_a - p1.y * sin_a)
 		ry1 := y + (p1.x * sin_a + p1.y * cos_a)
 		rx2 := x + (p2.x * cos_a - p2.y * sin_a)
 		ry2 := y + (p2.x * sin_a + p2.y * cos_a)
-
 		sdl.render_draw_line(renderer, int(rx1), int(ry1), int(rx2), int(ry2))
 	}
 
-	// Landing Legs
-	sdl.set_render_draw_color(renderer, 180, 180, 180, 255)
-	leg_l_x := x + (-12.0 * cos_a - 16.0 * sin_a)
-	leg_l_y := y + (-12.0 * sin_a + 16.0 * cos_a)
-	leg_r_x := x + (12.0 * cos_a - 16.0 * sin_a)
-	leg_r_y := y + (12.0 * sin_a + 16.0 * cos_a)
+	// 2. Upper Ascent Stage Cabin (White/Alloy with Cyan Cockpit Triangular Windows)
+	ascent_pts := [
+		Point{ x: -8, y: -12 },
+		Point{ x: 8, y: -12 },
+		Point{ x: 11, y: -2 },
+		Point{ x: -11, y: -2 },
+	]
+	sdl.set_render_draw_color(renderer, 240, 245, 255, 255)
+	for i in 0 .. ascent_pts.len {
+		p1 := ascent_pts[i]
+		p2 := ascent_pts[(i + 1) % ascent_pts.len]
+		rx1 := x + (p1.x * cos_a - p1.y * sin_a)
+		ry1 := y + (p1.x * sin_a + p1.y * cos_a)
+		rx2 := x + (p2.x * cos_a - p2.y * sin_a)
+		ry2 := y + (p2.x * sin_a + p2.y * cos_a)
+		sdl.render_draw_line(renderer, int(rx1), int(ry1), int(rx2), int(ry2))
+	}
 
-	sdl.render_draw_line(renderer, int(x), int(y), int(leg_l_x), int(leg_l_y))
-	sdl.render_draw_line(renderer, int(x), int(y), int(leg_r_x), int(leg_r_y))
+	// Triangular Cockpit Windows (Cyan Glass)
+	sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
+	w_lx := x + (-4.0 * cos_a - (-7.0) * sin_a)
+	w_ly := y + (-4.0 * sin_a + (-7.0) * cos_a)
+	w_rx := x + (4.0 * cos_a - (-7.0) * sin_a)
+	w_ry := y + (4.0 * sin_a + (-7.0) * cos_a)
+	sdl.render_draw_point(renderer, int(w_lx), int(w_ly))
+	sdl.render_draw_point(renderer, int(w_rx), int(w_ry))
+
+	// 3. RCS Quad Thrusters on sides
+	sdl.set_render_draw_color(renderer, 160, 170, 185, 255)
+	rcs_l_x := x + (-12.0 * cos_a - (-6.0) * sin_a)
+	rcs_l_y := y + (-12.0 * sin_a + (-6.0) * cos_a)
+	rcs_r_x := x + (12.0 * cos_a - (-6.0) * sin_a)
+	rcs_r_y := y + (12.0 * sin_a + (-6.0) * cos_a)
+	sdl.render_draw_line(renderer, int(rcs_l_x), int(rcs_l_y), int(rcs_l_x - 3.0 * cos_a), int(rcs_l_y - 3.0 * sin_a))
+	sdl.render_draw_line(renderer, int(rcs_r_x), int(rcs_r_y), int(rcs_r_x + 3.0 * cos_a), int(rcs_r_y + 3.0 * sin_a))
+
+	// 4. Landing Struts & Footpad Dishes
+	sdl.set_render_draw_color(renderer, 200, 200, 210, 255)
+	leg_l_x := x + (-14.0 * cos_a - 16.0 * sin_a)
+	leg_l_y := y + (-14.0 * sin_a + 16.0 * cos_a)
+	leg_r_x := x + (14.0 * cos_a - 16.0 * sin_a)
+	leg_r_y := y + (14.0 * sin_a + 16.0 * cos_a)
+
+	sdl.render_draw_line(renderer, int(x - 8.0 * cos_a), int(y - 8.0 * sin_a), int(leg_l_x), int(leg_l_y))
+	sdl.render_draw_line(renderer, int(x + 8.0 * cos_a), int(y + 8.0 * sin_a), int(leg_r_x), int(leg_r_y))
+
+	// Footpads
+	sdl.set_render_draw_color(renderer, 235, 185, 30, 255)
+	sdl.render_draw_line(renderer, int(leg_l_x - 4.0 * cos_a), int(leg_l_y), int(leg_l_x + 4.0 * cos_a), int(leg_l_y))
+	sdl.render_draw_line(renderer, int(leg_r_x - 4.0 * cos_a), int(leg_r_y), int(leg_r_x + 4.0 * cos_a), int(leg_r_y))
 }

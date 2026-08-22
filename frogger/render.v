@@ -66,61 +66,119 @@ fn render_frogger_game(renderer &sdl.Renderer, mut g FroggerGame) {
 
 		match obj.obj_type {
 			.car {
-				sdl.set_render_draw_color(renderer, 255, 60, 60, 255)
+				// 16-Bit Crimson Sedan with Chrome Bumper & Glass
+				sdl.set_render_draw_color(renderer, 225, 30, 45, 255)
 				rect := sdl.Rect{ x: ox, y: oy, w: int(obj.width), h: 28 }
 				sdl.render_fill_rect(renderer, &rect)
+				sdl.set_render_draw_color(renderer, 255, 120, 130, 255)
+				sdl.render_draw_line(renderer, ox, oy, ox + int(obj.width) - 1, oy)
+
 				// Windows
-				sdl.set_render_draw_color(renderer, 200, 240, 255, 255)
-				win := sdl.Rect{ x: ox + 8, y: oy + 4, w: int(obj.width) - 16, h: 20 }
+				sdl.set_render_draw_color(renderer, 180, 230, 255, 255)
+				win := sdl.Rect{ x: ox + 8, y: oy + 4, w: int(obj.width) - 16, h: 18 }
 				sdl.render_fill_rect(renderer, &win)
+
+				// Headlights
+				sdl.set_render_draw_color(renderer, 255, 255, 140, 255)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: ox + int(obj.width) - 4, y: oy + 2, w: 4, h: 6 })
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: ox + int(obj.width) - 4, y: oy + 20, w: 4, h: 6 })
 			}
 			.truck {
-				sdl.set_render_draw_color(renderer, 220, 180, 30, 255)
+				// 16-Bit Yellow Semi-Truck
+				sdl.set_render_draw_color(renderer, 235, 180, 20, 255)
 				rect := sdl.Rect{ x: ox, y: oy, w: int(obj.width), h: 28 }
 				sdl.render_fill_rect(renderer, &rect)
-				// Cab line
-				sdl.set_render_draw_color(renderer, 50, 50, 50, 255)
-				cab := sdl.Rect{ x: ox + int(obj.width) - 20, y: oy + 2, w: 4, h: 24 }
+
+				// Cargo container bevel
+				sdl.set_render_draw_color(renderer, 180, 130, 10, 255)
+				sdl.render_draw_rect(renderer, &rect)
+
+				// Driver Cab
+				sdl.set_render_draw_color(renderer, 40, 45, 55, 255)
+				cab := sdl.Rect{ x: ox + int(obj.width) - 18, y: oy + 3, w: 14, h: 22 }
 				sdl.render_fill_rect(renderer, &cab)
 			}
 			.race_car {
-				sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
-				rect := sdl.Rect{ x: ox, y: oy, w: int(obj.width), h: 28 }
+				// 16-Bit Cyan Formula Racer
+				sdl.set_render_draw_color(renderer, 0, 210, 245, 255)
+				rect := sdl.Rect{ x: ox, y: oy + 3, w: int(obj.width), h: 22 }
 				sdl.render_fill_rect(renderer, &rect)
+
+				// Yellow Racing Stripe
+				sdl.set_render_draw_color(renderer, 255, 220, 30, 255)
+				stripe := sdl.Rect{ x: ox + 4, y: oy + 11, w: int(obj.width) - 8, h: 6 }
+				sdl.render_fill_rect(renderer, &stripe)
 			}
 			.log_small, .log_medium, .log_large {
-				sdl.set_render_draw_color(renderer, 140, 80, 30, 255)
+				// 16-Bit Cedar Log with Wood Knots
+				sdl.set_render_draw_color(renderer, 135, 75, 25, 255)
 				log_rect := sdl.Rect{ x: ox, y: oy + 2, w: int(obj.width), h: 24 }
 				sdl.render_fill_rect(renderer, &log_rect)
+
+				// Wood Highlights
+				sdl.set_render_draw_color(renderer, 175, 110, 45, 255)
+				sdl.render_draw_line(renderer, ox + 4, oy + 4, ox + int(obj.width) - 4, oy + 4)
+				sdl.render_draw_line(renderer, ox + 8, oy + 14, ox + int(obj.width) - 8, oy + 14)
+
+				// Bark Rings on End Caps
+				sdl.set_render_draw_color(renderer, 95, 45, 15, 255)
+				sdl.render_draw_rect(renderer, &log_rect)
 			}
 			.turtles {
 				if obj.submerged { continue }
-				// Draw 3 turtle shells
+				// 16-Bit Swimming Turtles with Shell Plates
 				count := int(obj.width / 25.0)
 				for i in 0 .. count {
-					sdl.set_render_draw_color(renderer, 200, 50, 50, 255)
-					shell := sdl.Rect{ x: ox + i * 25, y: oy + 4, w: 20, h: 20 }
+					tx := ox + i * 25
+					sdl.set_render_draw_color(renderer, 215, 40, 40, 255)
+					shell := sdl.Rect{ x: tx, y: oy + 3, w: 20, h: 22 }
 					sdl.render_fill_rect(renderer, &shell)
+
+					// Shell Pattern
+					sdl.set_render_draw_color(renderer, 255, 140, 140, 255)
+					sdl.render_draw_rect(renderer, &shell)
+
+					// Turtle Flippers
+					sdl.set_render_draw_color(renderer, 35, 160, 45, 255)
+					sdl.render_fill_rect(renderer, &sdl.Rect{ x: tx - 3, y: oy + 2, w: 4, h: 5 })
+					sdl.render_fill_rect(renderer, &sdl.Rect{ x: tx - 3, y: oy + 20, w: 4, h: 5 })
 				}
 			}
 		}
 	}
 
-	// 4. Draw Frog
+	// 4. 16-Bit Animated Frog Player
 	if g.state == .playing || g.state == .paused {
 		fx := int(g.frog_x)
 		fy := int(g.frog_y)
 
-		sdl.set_render_draw_color(renderer, 0, 255, 100, 255)
-		frog_body := sdl.Rect{ x: fx - 12, y: fy - 12, w: 24, h: 24 }
+		// Frog Body
+		sdl.set_render_draw_color(renderer, 30, 215, 70, 255)
+		frog_body := sdl.Rect{ x: fx - 11, y: fy - 11, w: 22, h: 22 }
 		sdl.render_fill_rect(renderer, &frog_body)
 
-		// Eyes
+		// Yellow-Green Belly Highlight
+		sdl.set_render_draw_color(renderer, 150, 245, 90, 255)
+		belly := sdl.Rect{ x: fx - 6, y: fy - 6, w: 12, h: 12 }
+		sdl.render_fill_rect(renderer, &belly)
+
+		// Webbed Legs
+		sdl.set_render_draw_color(renderer, 20, 160, 50, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: fx - 14, y: fy - 13, w: 5, h: 6 })
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: fx + 9, y: fy - 13, w: 5, h: 6 })
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: fx - 14, y: fy + 7, w: 5, h: 6 })
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: fx + 9, y: fy + 7, w: 5, h: 6 })
+
+		// Big Frog Eyes with White Sclera & Dark Pupils
 		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-		e1 := sdl.Rect{ x: fx - 10, y: fy - 14, w: 6, h: 6 }
-		e2 := sdl.Rect{ x: fx + 4, y: fy - 14, w: 6, h: 6 }
+		e1 := sdl.Rect{ x: fx - 9, y: fy - 15, w: 6, h: 6 }
+		e2 := sdl.Rect{ x: fx + 3, y: fy - 15, w: 6, h: 6 }
 		sdl.render_fill_rect(renderer, &e1)
 		sdl.render_fill_rect(renderer, &e2)
+
+		sdl.set_render_draw_color(renderer, 15, 30, 20, 255)
+		sdl.render_draw_point(renderer, fx - 6, fy - 13)
+		sdl.render_draw_point(renderer, fx + 5, fy - 13)
 	}
 
 	// 5. Draw HUD

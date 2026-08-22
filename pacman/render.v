@@ -53,9 +53,6 @@ fn draw_pacman_sprite(renderer &sdl.Renderer, px f64, py f64, dir Direction, mou
 	cy := margin_y + int(py)
 	r := 11
 
-	// Base Body fill (Yellow Pac-Man)
-	sdl.set_render_draw_color(renderer, 255, 235, 0, 255)
-
 	base_ang := match dir {
 		.right { 0.0 }
 		.left { math.pi }
@@ -64,9 +61,11 @@ fn draw_pacman_sprite(renderer &sdl.Renderer, px f64, py f64, dir Direction, mou
 		else { 0.0 }
 	}
 
+	// 16-Bit Shaded Pac-Man Body with Highlight Contour
 	for ry in -r .. r + 1 {
 		for rx in -r .. r + 1 {
-			if rx * rx + ry * ry <= r * r {
+			d2 := rx * rx + ry * ry
+			if d2 <= r * r {
 				ang := math.atan2(f64(ry), f64(rx))
 				mut diff := math.abs(ang - base_ang)
 				if diff > math.pi {
@@ -74,6 +73,14 @@ fn draw_pacman_sprite(renderer &sdl.Renderer, px f64, py f64, dir Direction, mou
 				}
 
 				if diff >= mouth_ang {
+					col := if ry < -3 && rx < 0 {
+						Color{ r: 255, g: 255, b: 140 }
+					} else if d2 > (r - 2) * (r - 2) && (ry > 2 || rx > 2) {
+						Color{ r: 215, g: 175, b: 0 }
+					} else {
+						Color{ r: 255, g: 220, b: 0 }
+					}
+					sdl.set_render_draw_color(renderer, col.r, col.g, col.b, 255)
 					sdl.render_draw_point(renderer, cx + rx, cy + ry)
 				}
 			}
@@ -145,8 +152,8 @@ fn draw_ghost_sprite(renderer &sdl.Renderer, ghost &Ghost, global_t f64, frighte
 	}
 
 	if ghost.mode != .eaten {
+		// 16-Bit Ghost Body Dome with Highlight & Shaded Contour
 		sdl.set_render_draw_color(renderer, body_color.r, body_color.g, body_color.b, 255)
-		// Dome top & Body
 		for ry in -r .. r - 2 {
 			rx_max := int(math.sqrt(f64(r * r - ry * ry)))
 			rect := sdl.Rect{
@@ -157,14 +164,21 @@ fn draw_ghost_sprite(renderer &sdl.Renderer, ghost &Ghost, global_t f64, frighte
 			}
 			sdl.render_fill_rect(renderer, &rect)
 		}
-		// Wavy skirt bottom
-		skirt_rect := sdl.Rect{
-			x: cx - r
-			y: cy + r - 2
-			w: r * 2
-			h: 4
+
+		// Top Left Highlight
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 140)
+		sdl.render_draw_line(renderer, cx - 6, cy - 7, cx - 2, cy - 9)
+
+		// 16-Bit Scalloped Wavy Tentacle Skirt (3 animated ruffles)
+		wave_phase := int(global_t * 8.0) % 2
+		for s := 0; s < 3; s++ {
+			sx := cx - r + s * 7 + 1
+			sy := cy + r - 2
+			sh := if (s + wave_phase) % 2 == 0 { 5 } else { 3 }
+			skirt_r := sdl.Rect{ x: sx, y: sy, w: 6, h: sh }
+			sdl.set_render_draw_color(renderer, body_color.r, body_color.g, body_color.b, 255)
+			sdl.render_fill_rect(renderer, &skirt_r)
 		}
-		sdl.render_fill_rect(renderer, &skirt_rect)
 	}
 
 	// Eyes / Face Rendering
@@ -180,26 +194,27 @@ fn draw_ghost_sprite(renderer &sdl.Renderer, ghost &Ghost, global_t f64, frighte
 		}
 
 		sdl.set_render_draw_color(renderer, face_color.r, face_color.g, face_color.b, 255)
-		e1 := sdl.Rect{x: eye1_x - 1, y: eye_y - 1, w: 3, h: 3}
-		e2 := sdl.Rect{x: eye2_x - 1, y: eye_y - 1, w: 3, h: 3}
+		e1 := sdl.Rect{ x: eye1_x - 1, y: eye_y - 1, w: 3, h: 3 }
+		e2 := sdl.Rect{ x: eye2_x - 1, y: eye_y - 1, w: 3, h: 3 }
 		sdl.render_fill_rect(renderer, &e1)
 		sdl.render_fill_rect(renderer, &e2)
 
-		// Wavy mouth
-		mouth_rect := sdl.Rect{x: cx - 5, y: cy + 3, w: 10, h: 2}
+		// Wavy zigzag mouth
+		mouth_rect := sdl.Rect{ x: cx - 5, y: cy + 3, w: 10, h: 2 }
 		sdl.render_fill_rect(renderer, &mouth_rect)
 	} else {
 		eye1_x := cx - 4
 		eye2_x := cx + 4
 		eye_y := cy - 3
 
+		// White Sclera with drop shadow
 		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-		e1 := sdl.Rect{x: eye1_x - 3, y: eye_y - 4, w: 6, h: 8}
-		e2 := sdl.Rect{x: eye2_x - 3, y: eye_y - 4, w: 6, h: 8}
+		e1 := sdl.Rect{ x: eye1_x - 3, y: eye_y - 4, w: 6, h: 8 }
+		e2 := sdl.Rect{ x: eye2_x - 3, y: eye_y - 4, w: 6, h: 8 }
 		sdl.render_fill_rect(renderer, &e1)
 		sdl.render_fill_rect(renderer, &e2)
 
-		// Directional Pupil
+		// Directional Cobalt Blue Pupil with Glint
 		dc, dr := dir_to_offset(ghost.dir)
 		pupil_x1 := eye1_x + dc * 2
 		pupil_y1 := eye_y + dr * 2
@@ -207,10 +222,14 @@ fn draw_ghost_sprite(renderer &sdl.Renderer, ghost &Ghost, global_t f64, frighte
 		pupil_y2 := eye_y + dr * 2
 
 		sdl.set_render_draw_color(renderer, 20, 40, 180, 255)
-		p1 := sdl.Rect{x: pupil_x1 - 1, y: pupil_y1 - 2, w: 3, h: 4}
-		p2 := sdl.Rect{x: pupil_x2 - 1, y: pupil_y2 - 2, w: 3, h: 4}
+		p1 := sdl.Rect{ x: pupil_x1 - 1, y: pupil_y1 - 2, w: 3, h: 4 }
+		p2 := sdl.Rect{ x: pupil_x2 - 1, y: pupil_y2 - 2, w: 3, h: 4 }
 		sdl.render_fill_rect(renderer, &p1)
 		sdl.render_fill_rect(renderer, &p2)
+
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 200)
+		sdl.render_draw_point(renderer, pupil_x1, pupil_y1 - 1)
+		sdl.render_draw_point(renderer, pupil_x2, pupil_y1 - 1)
 	}
 }
 

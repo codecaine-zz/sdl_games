@@ -1,5 +1,6 @@
 module main
 
+import math
 import sdl
 
 // Pixel sprite patterns (8x8 or custom bitmap grids)
@@ -30,7 +31,6 @@ const octopus_f1 = [
 ]
 
 pub fn draw_alien_sprite(renderer &sdl.Renderer, x int, y int, kind AlienType, frame int, color Color) {
-	sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
 	scale := 3
 
 	pattern := match kind {
@@ -49,9 +49,20 @@ pub fn draw_alien_sprite(renderer &sdl.Renderer, x int, y int, kind AlienType, f
 		row_bits := pattern[row_idx]
 		for col_idx in 0 .. 8 {
 			if (row_bits & (1 << u32(7 - col_idx))) != 0 {
+				px := x + col_idx * scale + 4
+				py := y + row_idx * scale
+
+				// 16-Bit Dual-Tone Sprite Fill: Top highlight, Bottom base
+				c := if row_idx <= 2 {
+					Color{ r: u8(math.min(255, int(color.r) + 60)), g: u8(math.min(255, int(color.g) + 60)), b: u8(math.min(255, int(color.b) + 60)), a: 255 }
+				} else {
+					color
+				}
+
+				sdl.set_render_draw_color(renderer, c.r, c.g, c.b, c.a)
 				rect := sdl.Rect{
-					x: x + col_idx * scale + 4
-					y: y + row_idx * scale
+					x: px
+					y: py
 					w: scale
 					h: scale
 				}
@@ -86,44 +97,54 @@ pub fn draw_alien_explosion(renderer &sdl.Renderer, cx int, cy int, color Color)
 }
 
 pub fn draw_player_cannon(renderer &sdl.Renderer, x int, y int, w int, h int) {
-	// Classic Green Laser Cannon Base
-	sdl.set_render_draw_color(renderer, 50, 240, 70, 255)
-
-	// Bottom Base
-	base_rect := sdl.Rect{x: x, y: y + 10, w: w, h: h - 10}
+	// 16-Bit Metallic Emerald Laser Cannon Base
+	// Base Body
+	sdl.set_render_draw_color(renderer, 25, 175, 55, 255)
+	base_rect := sdl.Rect{ x: x, y: y + 10, w: w, h: h - 10 }
 	sdl.render_fill_rect(renderer, &base_rect)
+
+	// Top Highlight Line
+	sdl.set_render_draw_color(renderer, 100, 255, 140, 255)
+	sdl.render_draw_line(renderer, x, y + 10, x + w - 1, y + 10)
 
 	// Middle Turret
 	mid_w := w * 2 / 3
-	mid_rect := sdl.Rect{x: x + (w - mid_w) / 2, y: y + 4, w: mid_w, h: 6}
+	sdl.set_render_draw_color(renderer, 45, 225, 75, 255)
+	mid_rect := sdl.Rect{ x: x + (w - mid_w) / 2, y: y + 4, w: mid_w, h: 6 }
 	sdl.render_fill_rect(renderer, &mid_rect)
 
-	// Top Barrel
-	gun_rect := sdl.Rect{x: x + w / 2 - 2, y: y, w: 4, h: 4}
+	// Top Cannon Barrel with muzzle glow
+	sdl.set_render_draw_color(renderer, 220, 255, 220, 255)
+	gun_rect := sdl.Rect{ x: x + w / 2 - 2, y: y, w: 4, h: 5 }
 	sdl.render_fill_rect(renderer, &gun_rect)
 }
 
 pub fn draw_ufo_saucer(renderer &sdl.Renderer, x int, y int) {
-	// Saucer Dome (White)
-	sdl.set_render_draw_color(renderer, 240, 240, 240, 255)
-	dome := sdl.Rect{x: x + 16, y: y, w: 16, h: 6}
+	// 16-Bit Mystery Flying Saucer
+	// Saucer Glass Cockpit Dome (Glowing Cyan)
+	sdl.set_render_draw_color(renderer, 120, 240, 255, 255)
+	dome := sdl.Rect{ x: x + 16, y: y, w: 16, h: 6 }
 	sdl.render_fill_rect(renderer, &dome)
 
-	// Saucer Main Hull (Vibrant Crimson Red)
-	sdl.set_render_draw_color(renderer, 255, 40, 60, 255)
-	hull := sdl.Rect{x: x + 4, y: y + 6, w: 40, h: 8}
+	// Saucer Main Hull (Shaded Crimson Red)
+	sdl.set_render_draw_color(renderer, 235, 30, 50, 255)
+	hull := sdl.Rect{ x: x + 4, y: y + 6, w: 40, h: 8 }
 	sdl.render_fill_rect(renderer, &hull)
 
-	// Saucer Lower Lip & Landing Thrusters
-	sdl.set_render_draw_color(renderer, 255, 180, 0, 255)
-	lip := sdl.Rect{x: x + 10, y: y + 14, w: 28, h: 4}
+	// Upper Hull Highlight
+	sdl.set_render_draw_color(renderer, 255, 140, 150, 255)
+	sdl.render_draw_line(renderer, x + 4, y + 6, x + 43, y + 6)
+
+	// Saucer Lower Lip & Gold Thrusters
+	sdl.set_render_draw_color(renderer, 255, 195, 20, 255)
+	lip := sdl.Rect{ x: x + 10, y: y + 14, w: 28, h: 4 }
 	sdl.render_fill_rect(renderer, &lip)
 
-	// Lights
+	// Blinking Warning Lights
 	sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-	sdl.render_fill_rect(renderer, &sdl.Rect{x: x + 8, y: y + 8, w: 4, h: 4})
-	sdl.render_fill_rect(renderer, &sdl.Rect{x: x + 22, y: y + 8, w: 4, h: 4})
-	sdl.render_fill_rect(renderer, &sdl.Rect{x: x + 36, y: y + 8, w: 4, h: 4})
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 8, y: y + 8, w: 4, h: 4 })
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 22, y: y + 8, w: 4, h: 4 })
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 36, y: y + 8, w: 4, h: 4 })
 }
 
 pub fn render_space_invaders(renderer &sdl.Renderer, game &SpaceInvadersGame) {

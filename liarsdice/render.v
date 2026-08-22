@@ -15,8 +15,24 @@ const col_pip_red = Color{ r: 220, g: 40, b: 40, a: 255 }
 const col_pip_black = Color{ r: 30, g: 30, b: 30, a: 255 }
 
 pub fn render_die_face(renderer &sdl.Renderer, x int, y int, size int, face int, is_wild bool) {
-	// Die body
-	draw_beveled_box(renderer, x, y, size, size, col_die_white, Color{r:255,g:255,b:255}, col_die_shadow)
+	// Drop Shadow
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 90)
+	shadow := sdl.Rect{ x: x + 2, y: y + 3, w: size, h: size }
+	sdl.render_fill_rect(renderer, &shadow)
+
+	// 16-Bit Ivory Bone Die Body
+	body := sdl.Rect{ x: x, y: y, w: size, h: size }
+	sdl.set_render_draw_color(renderer, 248, 246, 240, 255)
+	sdl.render_fill_rect(renderer, &body)
+
+	// Highlight & Shadow Bevel Edges
+	sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+	sdl.render_draw_line(renderer, x, y, x + size - 1, y)
+	sdl.render_draw_line(renderer, x, y, x, y + size - 1)
+
+	sdl.set_render_draw_color(renderer, 175, 175, 180, 255)
+	sdl.render_draw_line(renderer, x, y + size - 1, x + size - 1, y + size - 1)
+	sdl.render_draw_line(renderer, x + size - 1, y, x + size - 1, y + size - 1)
 
 	pip_col := if face == 1 || is_wild { col_pip_red } else { col_pip_black }
 	pip_r := math.max(2, size / 10)
@@ -27,39 +43,48 @@ pub fn render_die_face(renderer &sdl.Renderer, x int, y int, size int, face int,
 
 	match face {
 		1 {
-			draw_filled_circle(renderer, cx, cy, pip_r + 1, pip_col)
+			draw_die_pip(renderer, cx, cy, pip_r + 2, pip_col)
 		}
 		2 {
-			draw_filled_circle(renderer, cx - p_off, cy - p_off, pip_r, pip_col)
-			draw_filled_circle(renderer, cx + p_off, cy + p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx - p_off, cy - p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx + p_off, cy + p_off, pip_r, pip_col)
 		}
 		3 {
-			draw_filled_circle(renderer, cx - p_off, cy - p_off, pip_r, pip_col)
-			draw_filled_circle(renderer, cx, cy, pip_r, pip_col)
-			draw_filled_circle(renderer, cx + p_off, cy + p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx - p_off, cy - p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx, cy, pip_r, pip_col)
+			draw_die_pip(renderer, cx + p_off, cy + p_off, pip_r, pip_col)
 		}
 		4 {
-			draw_filled_circle(renderer, cx - p_off, cy - p_off, pip_r, pip_col)
-			draw_filled_circle(renderer, cx + p_off, cy - p_off, pip_r, pip_col)
-			draw_filled_circle(renderer, cx - p_off, cy + p_off, pip_r, pip_col)
-			draw_filled_circle(renderer, cx + p_off, cy + p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx - p_off, cy - p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx + p_off, cy - p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx - p_off, cy + p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx + p_off, cy + p_off, pip_r, pip_col)
 		}
 		5 {
-			draw_filled_circle(renderer, cx - p_off, cy - p_off, pip_r, pip_col)
-			draw_filled_circle(renderer, cx + p_off, cy - p_off, pip_r, pip_col)
-			draw_filled_circle(renderer, cx, cy, pip_r, pip_col)
-			draw_filled_circle(renderer, cx - p_off, cy + p_off, pip_r, pip_col)
-			draw_filled_circle(renderer, cx + p_off, cy + p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx - p_off, cy - p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx + p_off, cy - p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx, cy, pip_r, pip_col)
+			draw_die_pip(renderer, cx - p_off, cy + p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx + p_off, cy + p_off, pip_r, pip_col)
 		}
 		6 {
-			draw_filled_circle(renderer, cx - p_off, cy - p_off, pip_r, pip_col)
-			draw_filled_circle(renderer, cx + p_off, cy - p_off, pip_r, pip_col)
-			draw_filled_circle(renderer, cx - p_off, cy, pip_r, pip_col)
-			draw_filled_circle(renderer, cx + p_off, cy, pip_r, pip_col)
-			draw_filled_circle(renderer, cx - p_off, cy + p_off, pip_r, pip_col)
-			draw_filled_circle(renderer, cx + p_off, cy + p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx - p_off, cy - p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx + p_off, cy - p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx - p_off, cy, pip_r, pip_col)
+			draw_die_pip(renderer, cx + p_off, cy, pip_r, pip_col)
+			draw_die_pip(renderer, cx - p_off, cy + p_off, pip_r, pip_col)
+			draw_die_pip(renderer, cx + p_off, cy + p_off, pip_r, pip_col)
 		}
 		else {}
+	}
+}
+
+fn draw_die_pip(renderer &sdl.Renderer, cx int, cy int, r int, col Color) {
+	draw_filled_circle(renderer, cx, cy, r, col)
+	// Inset 3D specular reflection in pip
+	if r >= 3 {
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 180)
+		sdl.render_draw_point(renderer, cx - 1, cy - 1)
 	}
 }
 
@@ -70,13 +95,28 @@ pub fn render_dice_cup(renderer &sdl.Renderer, x int, y int, w int, h int, is_sh
 	}
 
 	bx := x + shake_x
-	// Cup outer shape
-	draw_beveled_box(renderer, bx, y, w, h, Color{r:160,g:70,b:30}, Color{r:210,g:100,b:50}, Color{r:90,g:35,b:15})
-	// Cup leather bands
-	draw_beveled_box(renderer, bx, y + 10, w, 8, col_gold, Color{r:255,g:230,b:100}, col_gold_dark)
-	draw_beveled_box(renderer, bx, y + h - 18, w, 8, col_gold, Color{r:255,g:230,b:100}, col_gold_dark)
 
-	draw_text_centered(renderer, bx + w / 2, y + h / 2 - 4, label, 1, Color{r:255,g:255,b:200})
+	// Drop shadow
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 100)
+	shadow := sdl.Rect{ x: bx + 3, y: y + 4, w: w, h: h }
+	sdl.render_fill_rect(renderer, &shadow)
+
+	// 16-Bit Handcrafted Stitched Leather Dice Cup
+	draw_beveled_box(renderer, bx, y, w, h, Color{ r: 130, g: 58, b: 24 }, Color{ r: 185, g: 90, b: 42 }, Color{ r: 75, g: 28, b: 12 })
+
+	// Gold Rivet & Stitched Leather Bands
+	draw_beveled_box(renderer, bx, y + 8, w, 8, col_gold, Color{ r: 255, g: 235, b: 120 }, col_gold_dark)
+	draw_beveled_box(renderer, bx, y + h - 16, w, 8, col_gold, Color{ r: 255, g: 235, b: 120 }, col_gold_dark)
+
+	// Gold Rivets
+	for rx := bx + 12; rx < bx + w - 10; rx += 28 {
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+		sdl.render_draw_point(renderer, rx, y + 11)
+		sdl.render_draw_point(renderer, rx, y + h - 13)
+	}
+
+	draw_text_centered(renderer, bx + w / 2 + 1, y + h / 2 - 3, label, 1, Color{ r: 25, g: 12, b: 4 })
+	draw_text_centered(renderer, bx + w / 2, y + h / 2 - 4, label, 1, Color{ r: 255, g: 245, b: 190 })
 }
 
 pub fn render_liarsdice_game(renderer &sdl.Renderer, mut g LiarsDiceGame, w int, h int, mx int, my int) {

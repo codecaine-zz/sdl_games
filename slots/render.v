@@ -150,97 +150,152 @@ fn draw_reels(renderer &sdl.Renderer, g &SlotsGame) {
 fn draw_slot_symbol(renderer &sdl.Renderer, cx int, cy int, sym SymbolType) {
 	match sym {
 		.cherry {
-			// Twin Red Cherries with Green Stem
-			draw_filled_circle(renderer, cx - 8, cy + 6, 8, Color{ r: 210, g: 25, b: 35 })
-			draw_filled_circle(renderer, cx + 8, cy + 8, 8, Color{ r: 210, g: 25, b: 35 })
-			// Specular shine
-			sdl.set_render_draw_color(renderer, 255, 160, 170, 255)
-			sdl.render_draw_point(renderer, cx - 10, cy + 4)
-			sdl.render_draw_point(renderer, cx + 6, cy + 6)
-			// Green Stem
-			sdl.set_render_draw_color(renderer, 45, 160, 45, 255)
-			sdl.render_draw_line(renderer, cx - 8, cy - 2, cx, cy - 14)
-			sdl.render_draw_line(renderer, cx + 8, cy, cx, cy - 14)
+			// 16-Bit Twin Glossy Red Cherries with Stems and Leaf
+			// Left Cherry with multi-step spherical shading
+			draw_filled_circle(renderer, cx - 10, cy + 8, 9, Color{ r: 215, g: 22, b: 35 })
+			draw_filled_circle(renderer, cx - 10, cy + 8, 7, Color{ r: 240, g: 45, b: 55 })
+			sdl.set_render_draw_color(renderer, 255, 200, 210, 255)
+			sdl.render_draw_point(renderer, cx - 13, cy + 5)
+			sdl.render_draw_point(renderer, cx - 12, cy + 5)
+			sdl.render_draw_point(renderer, cx - 13, cy + 6)
+
+			// Right Cherry
+			draw_filled_circle(renderer, cx + 8, cy + 10, 9, Color{ r: 215, g: 22, b: 35 })
+			draw_filled_circle(renderer, cx + 8, cy + 10, 7, Color{ r: 240, g: 45, b: 55 })
+			sdl.set_render_draw_color(renderer, 255, 200, 210, 255)
+			sdl.render_draw_point(renderer, cx + 5, cy + 7)
+			sdl.render_draw_point(renderer, cx + 6, cy + 7)
+
+			// Green Stems converging at top
+			sdl.set_render_draw_color(renderer, 50, 165, 45, 255)
+			sdl.render_draw_line(renderer, cx - 10, cy, cx - 2, cy - 14)
+			sdl.render_draw_line(renderer, cx + 8, cy + 2, cx - 2, cy - 14)
+
+			// Emerald Leaf
+			sdl.set_render_draw_color(renderer, 35, 190, 50, 255)
+			leaf := sdl.Rect{ x: cx - 2, y: cy - 18, w: 10, h: 6 }
+			sdl.render_fill_rect(renderer, &leaf)
+			sdl.set_render_draw_color(renderer, 255, 255, 255, 180)
+			sdl.render_draw_line(renderer, cx - 1, cy - 17, cx + 7, cy - 14)
 		}
 		.lemon {
-			// Yellow Lemon oval
-			draw_filled_circle(renderer, cx, cy, 14, Color{ r: 245, g: 215, b: 20 })
-			draw_text_centered(renderer, cx, cy - 4, 'LEMON', 1, Color{ r: 160, g: 130, b: 0 })
+			// 16-Bit Shaded Golden Lemon
+			draw_filled_circle(renderer, cx, cy, 14, Color{ r: 235, g: 195, b: 20 })
+			draw_filled_circle(renderer, cx, cy, 11, Color{ r: 255, g: 225, b: 40 })
+			// Lemon Tips
+			sdl.set_render_draw_color(renderer, 220, 180, 15, 255)
+			sdl.render_draw_point(renderer, cx - 16, cy)
+			sdl.render_draw_point(renderer, cx + 16, cy)
+			// Specular gloss
+			sdl.set_render_draw_color(renderer, 255, 255, 255, 220)
+			sdl.render_draw_line(renderer, cx - 6, cy - 6, cx + 6, cy - 6)
+			// Green leaf
+			sdl.set_render_draw_color(renderer, 40, 160, 45, 255)
+			sdl.render_draw_line(renderer, cx - 4, cy - 15, cx, cy - 12)
 		}
 		.orange {
-			// Vibrant Orange
-			draw_filled_circle(renderer, cx, cy, 15, Color{ r: 245, g: 125, b: 20 })
-			draw_filled_circle(renderer, cx, cy - 13, 3, Color{ r: 40, g: 140, b: 40 })
+			// 16-Bit Juicy Tangerine Orange
+			draw_filled_circle(renderer, cx, cy, 15, Color{ r: 230, g: 105, b: 15 })
+			draw_filled_circle(renderer, cx, cy, 12, Color{ r: 255, g: 140, b: 25 })
+			sdl.set_render_draw_color(renderer, 255, 220, 150, 220)
+			sdl.render_draw_point(renderer, cx - 5, cy - 5)
+			sdl.render_draw_point(renderer, cx - 4, cy - 5)
+			// Stem & Leaf
+			sdl.set_render_draw_color(renderer, 35, 140, 40, 255)
+			sdl.render_draw_line(renderer, cx, cy - 15, cx + 6, cy - 18)
 		}
 		.plum {
-			// Deep Purple Plum
-			draw_filled_circle(renderer, cx, cy, 14, Color{ r: 135, g: 45, b: 165 })
-			sdl.set_render_draw_color(renderer, 200, 140, 230, 255)
-			sdl.render_draw_point(renderer, cx - 4, cy - 4)
+			// 16-Bit Royal Velvet Plum
+			draw_filled_circle(renderer, cx, cy, 15, Color{ r: 110, g: 30, b: 145 })
+			draw_filled_circle(renderer, cx, cy, 12, Color{ r: 155, g: 45, b: 195 })
+			sdl.set_render_draw_color(renderer, 230, 170, 255, 220)
+			sdl.render_draw_point(renderer, cx - 4, cy - 5)
+			sdl.render_draw_point(renderer, cx - 5, cy - 4)
 		}
 		.bell {
-			// Liberty Bell (Golden Brass)
-			draw_filled_circle(renderer, cx, cy + 2, 13, Color{ r: 240, g: 190, b: 30 })
-			base_rect := sdl.Rect{ x: cx - 14, y: cy + 8, w: 28, h: 5 }
-			sdl.set_render_draw_color(renderer, 210, 160, 20, 255)
-			sdl.render_fill_rect(renderer, &base_rect)
-			// Bell Clapper
-			draw_filled_circle(renderer, cx, cy + 14, 3, Color{ r: 120, g: 80, b: 10 })
+			// 16-Bit Golden Liberty Bell
+			// Upper dome
+			draw_filled_circle(renderer, cx, cy - 2, 11, Color{ r: 250, g: 205, b: 35 })
+			// Flared Skirt
+			skirt := sdl.Rect{ x: cx - 15, y: cy + 4, w: 30, h: 7 }
+			sdl.set_render_draw_color(renderer, 225, 175, 25, 255)
+			sdl.render_fill_rect(renderer, &skirt)
+			sdl.set_render_draw_color(renderer, 255, 235, 120, 255)
+			sdl.render_draw_line(renderer, cx - 14, cy + 4, cx + 14, cy + 4)
+			// Base clapper
+			draw_filled_circle(renderer, cx, cy + 13, 4, Color{ r: 120, g: 85, b: 15 })
 		}
 		.bar_single {
-			// Blue 1-BAR Plaque
-			b_rect := sdl.Rect{ x: cx - 22, y: cy - 10, w: 44, h: 20 }
-			sdl.set_render_draw_color(renderer, 35, 75, 180, 255)
+			// 16-Bit Brushed Cobalt Single BAR Plaque
+			b_rect := sdl.Rect{ x: cx - 24, y: cy - 11, w: 48, h: 22 }
+			sdl.set_render_draw_color(renderer, 25, 70, 175, 255)
 			sdl.render_fill_rect(renderer, &b_rect)
-			sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-			sdl.render_draw_rect(renderer, &b_rect)
+			sdl.set_render_draw_color(renderer, 100, 170, 255, 255)
+			sdl.render_draw_line(renderer, cx - 24, cy - 11, cx + 23, cy - 11)
+			sdl.set_render_draw_color(renderer, 10, 30, 80, 255)
+			sdl.render_draw_line(renderer, cx - 24, cy + 10, cx + 23, cy + 10)
+			draw_text_centered(renderer, cx + 1, cy - 3, 'BAR', 1, Color{ r: 10, g: 20, b: 40 })
 			draw_text_centered(renderer, cx, cy - 4, 'BAR', 1, Color{ r: 255, g: 255, b: 255 })
 		}
 		.bar_double {
-			// Red 2-BAR Plaque
-			b_rect := sdl.Rect{ x: cx - 24, y: cy - 11, w: 48, h: 22 }
-			sdl.set_render_draw_color(renderer, 210, 35, 45, 255)
+			// 16-Bit Crimson 2-BAR Plaque with Gold Bezel
+			b_rect := sdl.Rect{ x: cx - 26, y: cy - 12, w: 52, h: 24 }
+			sdl.set_render_draw_color(renderer, 195, 25, 35, 255)
 			sdl.render_fill_rect(renderer, &b_rect)
-			sdl.set_render_draw_color(renderer, 255, 220, 50, 255)
+			sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
 			sdl.render_draw_rect(renderer, &b_rect)
-			draw_text_centered(renderer, cx, cy - 4, '2-BAR', 1, Color{ r: 255, g: 255, b: 255 })
+			draw_text_centered(renderer, cx + 1, cy - 3, '2-BAR', 1, Color{ r: 40, g: 10, b: 10 })
+			draw_text_centered(renderer, cx, cy - 4, '2-BAR', 1, Color{ r: 255, g: 245, b: 200 })
 		}
 		.bar_triple {
-			// Gold 3-BAR Plaque
-			b_rect := sdl.Rect{ x: cx - 26, y: cy - 12, w: 52, h: 24 }
-			sdl.set_render_draw_color(renderer, 220, 165, 20, 255)
+			// 16-Bit Radiant Gold 3-BAR Plaque
+			b_rect := sdl.Rect{ x: cx - 28, y: cy - 13, w: 56, h: 26 }
+			sdl.set_render_draw_color(renderer, 245, 195, 30, 255)
 			sdl.render_fill_rect(renderer, &b_rect)
 			sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+			sdl.render_draw_line(renderer, cx - 28, cy - 13, cx + 27, cy - 13)
+			sdl.set_render_draw_color(renderer, 140, 95, 10, 255)
 			sdl.render_draw_rect(renderer, &b_rect)
-			draw_text_centered(renderer, cx, cy - 4, '3-BAR', 1, Color{ r: 20, g: 20, b: 30 })
+			draw_text_centered(renderer, cx + 1, cy - 3, '3-BAR', 1, Color{ r: 20, g: 15, b: 5 })
+			draw_text_centered(renderer, cx, cy - 4, '3-BAR', 1, Color{ r: 255, g: 255, b: 255 })
 		}
 		.seven {
-			// Lucky Red 777
-			draw_text_centered(renderer, cx, cy - 12, '7', 3, Color{ r: 230, g: 25, b: 35 })
+			// 16-Bit Lucky Flame Red 777
+			draw_text_centered(renderer, cx + 2, cy - 13, '7', 3, Color{ r: 60, g: 10, b: 10 })
+			draw_text_centered(renderer, cx, cy - 15, '7', 3, Color{ r: 245, g: 30, b: 40 })
 		}
 		.diamond {
-			// Sparkling Cyan Diamond
-			sdl.set_render_draw_color(renderer, 30, 220, 255, 255)
-			d_size := 14
-			sdl.render_draw_line(renderer, cx, cy - d_size, cx + d_size, cy)
-			sdl.render_draw_line(renderer, cx + d_size, cy, cx, cy + d_size)
-			sdl.render_draw_line(renderer, cx, cy + d_size, cx - d_size, cy)
-			sdl.render_draw_line(renderer, cx - d_size, cy, cx, cy - d_size)
-			draw_text_centered(renderer, cx, cy - 3, '$$', 1, Color{ r: 255, g: 255, b: 255 })
+			// 16-Bit Brilliant Faceted Cyan Diamond
+			d_size := 16
+			sdl.set_render_draw_color(renderer, 0, 215, 255, 255)
+			for dy := -d_size; dy <= d_size; dy++ {
+				span := d_size - int(math.abs(f64(dy)))
+				for dx := -span; dx <= span; dx++ {
+					sdl.render_draw_point(renderer, cx + dx, cy + dy)
+				}
+			}
+			// Facet Lines
+			sdl.set_render_draw_color(renderer, 255, 255, 255, 240)
+			sdl.render_draw_line(renderer, cx, cy - d_size, cx, cy + d_size)
+			sdl.render_draw_line(renderer, cx - d_size, cy, cx + d_size, cy)
+			sdl.render_draw_point(renderer, cx - 3, cy - 3)
 		}
 		.wild {
-			// Rainbow Wild Badge
-			w_rect := sdl.Rect{ x: cx - 24, y: cy - 12, w: 48, h: 24 }
-			sdl.set_render_draw_color(renderer, 180, 40, 220, 255)
+			// 16-Bit Radiant Rainbow Wild Badge
+			w_rect := sdl.Rect{ x: cx - 26, y: cy - 13, w: 52, h: 26 }
+			sdl.set_render_draw_color(renderer, 165, 35, 215, 255)
 			sdl.render_fill_rect(renderer, &w_rect)
-			sdl.set_render_draw_color(renderer, 255, 255, 100, 255)
+			sdl.set_render_draw_color(renderer, 255, 225, 40, 255)
 			sdl.render_draw_rect(renderer, &w_rect)
+			draw_text_centered(renderer, cx + 1, cy - 3, 'WILD', 1, Color{ r: 20, g: 5, b: 30 })
 			draw_text_centered(renderer, cx, cy - 4, 'WILD', 1, Color{ r: 255, g: 255, b: 255 })
 		}
 		.scatter {
-			// Golden Star Scatter Badge
-			draw_filled_circle(renderer, cx, cy, 15, Color{ r: 255, g: 200, b: 20 })
-			draw_text_centered(renderer, cx, cy - 4, 'SCAT', 1, Color{ r: 10, g: 10, b: 20 })
+			// 16-Bit Golden Star Scatter Medallion
+			draw_filled_circle(renderer, cx, cy, 16, Color{ r: 255, g: 205, b: 25 })
+			draw_circle_ring(renderer, cx, cy, 16, 2, Color{ r: 255, g: 255, b: 255 })
+			draw_text_centered(renderer, cx + 1, cy - 3, '★', 1, Color{ r: 40, g: 25, b: 5 })
+			draw_text_centered(renderer, cx, cy - 4, '★', 1, Color{ r: 255, g: 255, b: 255 })
 		}
 	}
 }
@@ -465,5 +520,19 @@ fn draw_circle_wire(renderer &sdl.Renderer, cx int, cy int, r int, c Color) {
 		x2 := int(f64(cx) + math.cos(a2) * f64(r))
 		y2 := int(f64(cy) + math.sin(a2) * f64(r))
 		sdl.render_draw_line(renderer, x1, y1, x2, y2)
+	}
+}
+
+fn draw_circle_ring(renderer &sdl.Renderer, cx int, cy int, r int, thickness int, c Color) {
+	sdl.set_render_draw_color(renderer, c.r, c.g, c.b, c.a)
+	r_outer := r + thickness / 2
+	r_inner := r - thickness / 2
+	for dy := -r_outer; dy <= r_outer; dy++ {
+		for dx := -r_outer; dx <= r_outer; dx++ {
+			d2 := dx * dx + dy * dy
+			if d2 <= r_outer * r_outer && d2 >= r_inner * r_inner {
+				sdl.render_draw_point(renderer, cx + dx, cy + dy)
+			}
+		}
 	}
 }
