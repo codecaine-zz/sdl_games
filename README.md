@@ -60,6 +60,7 @@ v install sdl
 | **SkiFree Extreme** | `skifree/` | Classic 1991 Windows shareware winter sports recreation! Downhill slalom, jump ramps, mid-air stunt combos (Daffy, 360 Spin, Backflip, Spread Eagle), snow puff particles, 4 game modes, and the terrifying fast-running Yeti monster! | `Arrows`/`WASD` steer & tricks, `Space` jump & tuck, `M` mode, `R` restart | [Preview](#34-skifree-extreme) |
 | **JezzBall Pro** | `jezzball/` | Legendary 1992 Windows Entertainment Pack containment puzzle! Red and blue bouncing kinetic energy atoms, horizontal & vertical laser wall expansion, flood-fill isolated territory capture, 75%+ containment goal, and procedural FM audio. | `Left Click` build wall, `Right Click`/`Space` toggle orientation, `R` restart | [Preview](#35-jezzball-pro) |
 | **Yahtzee Deluxe** | `yahtzee/` | Classic 5-dice strategy game! Tumbling ivory dice physics, official 13-category scorecard with Upper Bonus (+35) and Yahtzee Bonus (+100) Joker rules, expected-value AI bot opponent, 2P Local mode, shaker rattle sound, and confetti celebrations! | `Space`/`Click` roll, `1-5` toggle hold, `Click row` score, `M` sound | [Preview](#36-yahtzee-deluxe) |
+| **Mappy Arcade** | `mappy/` | Namco 1983 arcade classic! 6-floor mansion, trampoline bounce physics (wear states), door stun swings, microwave shockwaves, loot pair multipliers (2x-6x), Goro hide bonus, and balloon bonus rounds. | `A`/`D` or `Arrows` move/dismount, `Space`/`W` door, `1`/`2` start, `P` pause, `M` sound | [Preview](#44-mappy-arcade) |
 
 ---
 
@@ -477,4 +478,25 @@ v run peggle/
 ```bash
 v run dopewars/
 ```
+
+---
+
+### 44. Mappy Arcade (`mappy/`)
+*1983 Namco Police Mouse Platformer Classic*
+
+- **Trampoline Physics & Elastic Wear**: 4-state trampoline resilience (Green -> Blue -> Yellow -> Red -> Snap), safe mid-air passing, precision floor dismounting.
+- **Doors & Microwave Shockwaves**: Wooden doors stun patrolling cats in swing arc; Microwave Super Doors fire ultrasonic shockwaves sweeping cats off-screen for escalating combo scores (+200, +400, +800, +1600...).
+- **Stolen Loot Multipliers**: 5 item types in pairs (Radios, TVs, Microwaves, Paintings, Safes) award 2x, 3x, 4x, 5x, 6x multipliers for consecutive pairs.
+- **Goro Ambush & Balloon Bonus Rounds**: 1000 pt Nyamco hide bonus, Hurry Up alarms, Gosenzo Coin hazard, and balloon-popping bonus stages with 5000 pt Perfect clears.
+- **4 Difficulty Modes**:
+  - **Easy (Cadet)**: 5 lives, slower cats (0.8x), 5 trampoline bounces, 55s hurry timer, 6s door stun.
+  - **Normal (Officer)**: 3 lives, standard speed (1.0x), 4 trampoline bounces, 40s hurry timer, 4.5s door stun.
+  - **Hard (Chief Detective)**: 2 lives, fast aggressive cats (1.25x), 3 trampoline bounces, 28s hurry timer, 3s door stun.
+  - **Expert (Arcade Mania)**: 1 life, extreme speed (1.45x), 2 Goro boss cats, 2 trampoline bounces, 20s hurry timer (+50% bonus score!).
+- **Controls**: `A`/`D` or `Left`/`Right` to move/dismount, `Space`/`W`/`Up` to open doors, `1-4` select difficulty, `D`/`Tab` cycle difficulty, `5`/`B` bonus stage, `P` to pause, `M`/`S` to toggle sound.
+
+```bash
+v run mappy/
+```
+
 
