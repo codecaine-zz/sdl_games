@@ -319,11 +319,13 @@ fn (ge &GameEngine) update(dt f64, p1_left bool, p1_right bool, p1_flap bool, p2
 		}
 
 		if left {
-			p.motion.vx -= 180.0 * dt
+			accel := if p.motion.is_grounded { 360.0 } else { 200.0 }
+			p.motion.vx -= accel * dt
 			p.facing_right = false
 		}
 		if right {
-			p.motion.vx += 180.0 * dt
+			accel := if p.motion.is_grounded { 360.0 } else { 200.0 }
+			p.motion.vx += accel * dt
 			p.facing_right = true
 		}
 
@@ -343,13 +345,25 @@ fn (ge &GameEngine) update(dt f64, p1_left bool, p1_right bool, p1_flap bool, p2
 
 		update_motion(mut p.motion, dt, mutable_ge.world_w)
 
-		// Platform collisions
-		for plat in mutable_ge.platforms {
-			if check_platform_landing(mut p.motion, p.w, p.h, plat) {
-				if p.state == .parachuting {
-					p.state = .pumping
-					p.balloons = 0
-					p.pump_timer = 1.0
+		// Platform collisions & ledge support
+		if update_platforms_collision(mut p.motion, p.w, p.h, mutable_ge.platforms) {
+			if p.state == .parachuting {
+				// Player lost both balloons and crashed!
+				p.state = .drowning
+				sound_mgr.play_splash()
+				p.lives--
+				if p.lives <= 0 {
+					p.state = .dead
+					mutable_ge.state = .game_over
+				} else {
+					// Respawn safely with full balloons
+					p.motion.x = 400.0
+					p.motion.y = 200.0
+					p.motion.vx = 0
+					p.motion.vy = 0
+					p.balloons = 2
+					p.state = .flying
+					p.invincibility = 2.5
 				}
 			}
 		}
@@ -414,10 +428,7 @@ fn (ge &GameEngine) update(dt f64, p1_left bool, p1_right bool, p1_flap bool, p2
 				}
 
 				update_motion(mut enemy.motion, dt, mutable_ge.world_w)
-
-				for plat in mutable_ge.platforms {
-					check_platform_landing(mut enemy.motion, enemy.w, enemy.h, plat)
-				}
+				update_platforms_collision(mut enemy.motion, enemy.w, enemy.h, mutable_ge.platforms)
 
 				if enemy.motion.y >= mutable_ge.water_level {
 					enemy.active = false
@@ -428,13 +439,10 @@ fn (ge &GameEngine) update(dt f64, p1_left bool, p1_right bool, p1_flap bool, p2
 				enemy.motion.vy = 60.0
 				update_motion(mut enemy.motion, dt, mutable_ge.world_w)
 
-				for plat in mutable_ge.platforms {
-					if check_platform_landing(mut enemy.motion, enemy.w, enemy.h, plat) {
-						enemy.state = .pumping
-						enemy.balloons = 0
-						enemy.pump_timer = 1.0
-						break
-					}
+				if update_platforms_collision(mut enemy.motion, enemy.w, enemy.h, mutable_ge.platforms) {
+					enemy.state = .pumping
+					enemy.balloons = 0
+					enemy.pump_timer = 1.0
 				}
 
 				if enemy.motion.y >= mutable_ge.water_level {
@@ -484,8 +492,19 @@ fn (ge &GameEngine) update(dt f64, p1_left bool, p1_right bool, p1_flap bool, p2
 				dist := math.hypot(spark.x - p.motion.x, spark.y - p.motion.y)
 				if dist <= (spark.radius + 14.0) {
 					sound_mgr.play_spark_zap()
-					p.balloons = 0
-					p.state = .drowning
+					p.lives--
+					if p.lives <= 0 {
+						p.state = .dead
+						mutable_ge.state = .game_over
+					} else {
+						p.motion.x = 400.0
+						p.motion.y = 200.0
+						p.motion.vx = 0
+						p.motion.vy = 0
+						p.balloons = 2
+						p.state = .flying
+						p.invincibility = 2.5
+					}
 				}
 			}
 		}
@@ -524,27 +543,26 @@ fn (ge &GameEngine) check_balloon_collisions(sound_mgr &SoundManager) {
 			dx := math.abs(p.motion.x - enemy.motion.x)
 			dy := math.abs(p.motion.y - enemy.motion.y)
 
-			if dx <= 28.0 && dy <= 32.0 {
-				// Height comparison (smaller Y is HIGHER altitude on screen)
-				if p.motion.y < enemy.motion.y - 4.0 {
+			if dx <= 30.0 && dy <= 34.0 {
+				if enemy.state == .pumping || enemy.state == .parachuting {
+					// Defeat pumping or parachuting enemy by running into or stomping them!
+					enemy.active = false
+					sound_mgr.play_pickup()
+					p.score += enemy.score_val
+					mutable_ge.score += enemy.score_val
+					if mutable_ge.score > mutable_ge.high_score {
+						mutable_ge.high_score = mutable_ge.score
+					}
+					if p.motion.y < enemy.motion.y {
+						p.motion.vy = -160.0
+					}
+				} else if p.motion.y < enemy.motion.y - 4.0 {
 					// Player is ABOVE Enemy -> Player pops enemy balloon!
 					p.motion.vy = -180.0 // Tactile upward bounce
-
-					if enemy.state == .flying {
-						enemy.balloons--
-						sound_mgr.play_balloon_pop()
-						if enemy.balloons <= 0 {
-							enemy.state = .parachuting
-						}
-					} else if enemy.state == .parachuting || enemy.state == .pumping {
-						// Defeat parachuting/pumping enemy!
-						enemy.active = false
-						sound_mgr.play_pickup()
-						p.score += enemy.score_val
-						mutable_ge.score += enemy.score_val
-						if mutable_ge.score > mutable_ge.high_score {
-							mutable_ge.high_score = mutable_ge.score
-						}
+					enemy.balloons--
+					sound_mgr.play_balloon_pop()
+					if enemy.balloons <= 0 {
+						enemy.state = .parachuting
 					}
 				} else if enemy.motion.y < p.motion.y - 4.0 && p.invincibility <= 0 {
 					// Enemy is ABOVE Player -> Enemy pops player balloon!
@@ -554,7 +572,20 @@ fn (ge &GameEngine) check_balloon_collisions(sound_mgr &SoundManager) {
 						p.motion.vy = 120.0
 						sound_mgr.play_balloon_pop()
 						if p.balloons <= 0 {
-							p.state = .parachuting
+							// Lost both balloons -> Immediately lose life and respawn/game over!
+							p.lives--
+							if p.lives <= 0 {
+								p.state = .dead
+								mutable_ge.state = .game_over
+							} else {
+								p.motion.x = 400.0
+								p.motion.y = 200.0
+								p.motion.vx = 0
+								p.motion.vy = 0
+								p.balloons = 2
+								p.state = .flying
+								p.invincibility = 2.5
+							}
 						}
 					}
 				}

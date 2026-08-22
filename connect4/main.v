@@ -1,6 +1,7 @@
 module main
 
 import math
+import os
 import rand
 import sdl
 
@@ -790,6 +791,29 @@ fn (mut app App) cleanup() {
 }
 
 fn main() {
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		sdl.init(sdl.init_video)
+		surface := sdl.create_rgb_surface(0, win_width, win_height, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut app := new_app()
+		app.renderer = s_renderer
+		// Seed some pieces on board
+		app.board.grid[5][3] = 1
+		app.board.grid[5][4] = 2
+		app.board.grid[5][2] = 1
+		app.board.grid[4][3] = 2
+		app.board.grid[5][1] = 1
+		app.board.grid[4][4] = 2
+		app.p1_score = 3
+		app.p2_score = 2
+		app.render()
+		sdl.save_bmp(surface, 'screenshots/connect4.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		sdl.quit()
+		return
+	}
+
 	mut app := new_app()
 	if !app.init_sdl() {
 		return

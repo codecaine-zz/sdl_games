@@ -61,12 +61,17 @@ fn (app &App) run() {
 			if unsafe { surface != nil } {
 				sw_rend := sdl.create_software_renderer(surface)
 				if unsafe { sw_rend != nil } {
-					mutable_app.game.battle_player = Card{ rank: 14, suit: .spades } // Ace
-					mutable_app.game.battle_ai = Card{ rank: 13, suit: .hearts } // King
+					mutable_app.game.battle_player = Card{ rank: 14, suit: .spades } // Ace of Spades
+					mutable_app.game.battle_ai = Card{ rank: 13, suit: .hearts } // King of Hearts
 					mutable_app.game.has_battle_card = true
 					mutable_app.game.round_winner = 1
 					mutable_app.game.phase = .comparing
-					mutable_app.game.war_pot = [Card{ rank: 10, suit: .clubs }, Card{ rank: 7, suit: .diamonds }]
+					mutable_app.game.bob_mood = 2 // Worried
+					mutable_app.game.war_pot = [Card{ rank: 10, suit: .clubs }, Card{ rank: 7, suit: .diamonds }, Card{ rank: 9, suit: .hearts }]
+					mutable_app.game.floating_texts.clear()
+					mutable_app.game.spawn_sparks(460, 290, 30, Color{ r: 70, g: 180, b: 255 })
+					mutable_app.game.spawn_shockwave(460, 290, Color{ r: 100, g: 200, b: 255 })
+					mutable_app.game.spawn_floating_text(460, 252, '★ CRITICAL ACE SLAM! ★', Color{ r: 255, g: 230, b: 60 }, 1)
 					draw_war_game(sw_rend, &mutable_app.game)
 					sdl.save_bmp(surface, 'screenshots/war.bmp'.str)
 					sdl.destroy_renderer(sw_rend)

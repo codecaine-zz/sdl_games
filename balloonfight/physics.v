@@ -1,5 +1,7 @@
 module main
 
+import math
+
 struct MotionState {
 pub mut:
 	x           f64
@@ -9,9 +11,10 @@ pub mut:
 	is_grounded bool
 }
 
-const gravity = 420.0
+const gravity = 460.0
 const air_drag = 0.985
-const max_fall_speed = 380.0
+const ground_friction = 0.84
+const max_fall_speed = 400.0
 
 fn apply_flap(mut m MotionState, power f64) {
 	m.vy -= power
@@ -27,9 +30,12 @@ fn update_motion(mut m MotionState, dt f64, world_w f64) {
 		if m.vy > max_fall_speed {
 			m.vy = max_fall_speed
 		}
+		m.vx *= air_drag
+	} else {
+		m.vy = 0
+		m.vx *= ground_friction
 	}
 
-	m.vx *= air_drag
 	m.x += m.vx * dt
 	m.y += m.vy * dt
 
@@ -49,19 +55,58 @@ pub mut:
 	h f64
 }
 
-fn check_platform_landing(mut m MotionState, char_w f64, char_h f64, platform Platform) bool {
+fn update_platforms_collision(mut m MotionState, char_w f64, char_h f64, platforms []Platform) bool {
 	char_left := m.x - (char_w / 2.0)
 	char_right := m.x + (char_w / 2.0)
 	char_bottom := m.y + (char_h / 2.0)
-	prev_bottom := (m.y - m.vy * 0.016) + (char_h / 2.0)
+	char_top := m.y - (char_h / 2.0)
 
-	if char_right >= platform.x && char_left <= platform.x + platform.w {
-		if prev_bottom <= platform.y + 4.0 && char_bottom >= platform.y {
-			m.y = platform.y - (char_h / 2.0)
-			m.vy = 0
-			m.is_grounded = true
+	// Check if still resting on any platform ledge
+	if m.is_grounded {
+		mut on_ground := false
+		for plat in platforms {
+			if char_right >= plat.x && char_left <= plat.x + plat.w {
+				if math.abs(char_bottom - plat.y) <= 4.0 {
+					on_ground = true
+					m.y = plat.y - (char_h / 2.0)
+					m.vy = 0
+					break
+				}
+			}
+		}
+		if !on_ground {
+			// Walked off the edge of the platform! Immediately resume falling
+			m.is_grounded = false
+		} else {
 			return true
 		}
 	}
-	return false
+
+	// Landing on top of platforms from the air
+	if m.vy >= 0 {
+		for plat in platforms {
+			if char_right >= plat.x && char_left <= plat.x + plat.w {
+				if char_bottom >= plat.y && char_bottom <= plat.y + 14.0 {
+					m.y = plat.y - (char_h / 2.0)
+					m.vy = 0
+					m.is_grounded = true
+					return true
+				}
+			}
+		}
+	} else if m.vy < 0 {
+		// Bumping head into underside of platform
+		for plat in platforms {
+			if char_right >= plat.x && char_left <= plat.x + plat.w {
+				plat_bottom := plat.y + plat.h
+				if char_top <= plat_bottom && char_top >= plat_bottom - 10.0 {
+					m.y = plat_bottom + (char_h / 2.0)
+					m.vy = math.abs(m.vy) * 0.3
+					break
+				}
+			}
+		}
+	}
+
+	return m.is_grounded
 }

@@ -1,5 +1,6 @@
 module main
 
+import math
 import rand
 
 pub enum UnoColor {
@@ -26,6 +27,61 @@ pub enum UnoCardType {
 	draw_two
 	wild
 	wild_draw_four
+}
+
+pub struct Particle {
+pub mut:
+	x          f64
+	y          f64
+	vx         f64
+	vy         f64
+	color      Color
+	size       f64
+	life       f64
+	max_life   f64
+	shape_type int // 0: spark, 1: circle/star, 2: confetti
+	rot        f64
+	vrot       f64
+	gravity    f64
+}
+
+pub struct FloatingText {
+pub mut:
+	x        f64
+	y        f64
+	text     string
+	color    Color
+	scale    int
+	life     f64
+	max_life f64
+	vy       f64
+}
+
+pub struct Shockwave {
+pub mut:
+	cx         f64
+	cy         f64
+	radius     f64
+	max_radius f64
+	color      Color
+	life       f64
+	max_life   f64
+	thickness  f64
+}
+
+pub struct FlyingUnoCard {
+pub mut:
+	card          UnoCard
+	is_face_up    bool
+	start_x       f64
+	start_y       f64
+	target_x      f64
+	target_y      f64
+	x             f64
+	y             f64
+	progress      f64
+	speed         f64
+	flip_progress f64
 }
 
 pub struct UnoCard {
@@ -69,6 +125,16 @@ pub mut:
 	celeb_timer   f64
 	uno_warning   bool
 	draw_anim_t   f64
+
+	// VFX State
+	particles       []Particle
+	floating_texts  []FloatingText
+	shockwaves      []Shockwave
+	flying_cards    []FlyingUnoCard
+	shake_intensity f64
+	shake_timer     f64
+	anim_timer      f64
+	pulse_time      f64
 }
 
 pub fn new_uno_game() UnoGame {
@@ -312,7 +378,135 @@ pub fn (mut g UnoGame) call_uno() {
 	}
 }
 
+pub fn (mut g UnoGame) trigger_shake(intensity f64, duration f64) {
+	g.shake_intensity = intensity
+	g.shake_timer = duration
+}
+
+pub fn (mut g UnoGame) spawn_sparks(x f64, y f64, count int, col Color) {
+	for _ in 0 .. count {
+		angle := rand.f64() * math.pi * 2.0
+		speed := 40.0 + rand.f64() * 180.0
+		g.particles << Particle{
+			x:          x
+			y:          y
+			vx:         math.cos(angle) * speed
+			vy:         math.sin(angle) * speed
+			color:      col
+			size:       2.0 + rand.f64() * 3.0
+			life:       0.0
+			max_life:   0.35 + rand.f64() * 0.35
+			shape_type: 0
+			rot:        rand.f64() * 6.28
+			vrot:       (rand.f64() - 0.5) * 10.0
+			gravity:    100.0
+		}
+	}
+}
+
+pub fn (mut g UnoGame) spawn_confetti(x f64, y f64, count int) {
+	cols := [
+		Color{ r: 235, g: 45, b: 55 },
+		Color{ r: 40, g: 130, b: 245 },
+		Color{ r: 50, g: 190, b: 75 },
+		Color{ r: 250, g: 210, b: 35 },
+		Color{ r: 255, g: 255, b: 255 },
+	]
+	for _ in 0 .. count {
+		angle := rand.f64() * math.pi * 2.0
+		speed := 70.0 + rand.f64() * 250.0
+		col_idx := rand.int_in_range(0, cols.len) or { 0 }
+		g.particles << Particle{
+			x:          x + (rand.f64() - 0.5) * 40.0
+			y:          y + (rand.f64() - 0.5) * 40.0
+			vx:         math.cos(angle) * speed
+			vy:         math.sin(angle) * speed - 120.0
+			color:      cols[col_idx]
+			size:       4.0 + rand.f64() * 4.0
+			life:       0.0
+			max_life:   1.4 + rand.f64() * 0.9
+			shape_type: 2
+			rot:        rand.f64() * 6.28
+			vrot:       (rand.f64() - 0.5) * 8.0
+			gravity:    100.0
+		}
+	}
+}
+
+pub fn (mut g UnoGame) spawn_shockwave(cx f64, cy f64, col Color) {
+	g.shockwaves << Shockwave{
+		cx:         cx
+		cy:         cy
+		radius:     10.0
+		max_radius: 130.0
+		color:      col
+		life:       0.0
+		max_life:   0.45
+		thickness:  3.0
+	}
+}
+
+pub fn (mut g UnoGame) spawn_floating_text(x f64, y f64, text string, col Color, scale int) {
+	g.floating_texts << FloatingText{
+		x:        x
+		y:        y
+		text:     text
+		color:    col
+		scale:    scale
+		life:     0.0
+		max_life: 1.6
+		vy:       -28.0
+	}
+}
+
 pub fn (mut g UnoGame) update(dt f64, mut sound_mgr SoundManager) {
+	g.anim_timer += dt
+	g.pulse_time += dt
+
+	if g.shake_timer > 0.0 {
+		g.shake_timer -= dt
+		if g.shake_timer <= 0.0 {
+			g.shake_intensity = 0.0
+		}
+	}
+
+	for mut p in g.particles {
+		p.life += dt
+		p.x += p.vx * dt
+		p.y += p.vy * dt
+		p.vy += p.gravity * dt
+		p.rot += p.vrot * dt
+		p.vx *= (1.0 - 0.5 * dt)
+	}
+	g.particles = g.particles.filter(it.life < it.max_life)
+
+	for mut sw in g.shockwaves {
+		sw.life += dt
+		prog := sw.life / sw.max_life
+		sw.radius = 10.0 + (sw.max_radius - 10.0) * math.sin(prog * math.pi * 0.5)
+	}
+	g.shockwaves = g.shockwaves.filter(it.life < it.max_life)
+
+	for mut ft in g.floating_texts {
+		ft.life += dt
+		ft.y += ft.vy * dt
+		ft.vy *= (1.0 - 0.8 * dt)
+	}
+	g.floating_texts = g.floating_texts.filter(it.life < it.max_life)
+
+	for mut fc in g.flying_cards {
+		fc.progress += fc.speed * dt
+		if fc.progress > 1.0 {
+			fc.progress = 1.0
+		}
+		t := fc.progress
+		ease := 1.0 - math.pow(1.0 - t, 3.0)
+		fc.x = fc.start_x + (fc.target_x - fc.start_x) * ease
+		fc.y = fc.start_y + (fc.target_y - fc.start_y) * ease
+		fc.flip_progress = t
+	}
+	g.flying_cards = g.flying_cards.filter(it.progress < 1.0)
+
 	if g.celeb_timer > 0.0 {
 		g.celeb_timer -= dt
 		if g.celeb_timer <= 0.0 {

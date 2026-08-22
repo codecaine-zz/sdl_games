@@ -44,29 +44,38 @@ fn (mut sm SoundManager) play_samples(samples []i16) {
 }
 
 pub fn (mut sm SoundManager) play_flap_sound() {
-	count := int(audio_sample_rate * 0.08)
+	count := int(audio_sample_rate * 0.06)
 	mut samples := []i16{cap: count}
+	attack_samples := int(audio_sample_rate * 0.002)
+
 	for i in 0 .. count {
 		t := f64(i) / f64(audio_sample_rate)
-		freq := 300.0 + 400.0 * (t / 0.08)
-		env := 1.0 - (t / 0.08)
-		val := i16(math.sin(2.0 * math.pi * freq * t) * env * 18000.0)
+		freq := 340.0 + 450.0 * (t / 0.06)
+		env := math.exp(-32.0 * t)
+		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+		harm := math.sin(2.0 * math.pi * freq * t) + 0.3 * math.sin(4.0 * math.pi * freq * t)
+		val := i16(harm * env * attack * 19000.0)
 		samples << val
 	}
 	sm.play_samples(samples)
 }
 
 pub fn (mut sm SoundManager) play_point_sound() {
-	notes := [987.77, 1318.51] // B5 -> E6 bell chime
-	note_dur := 0.08
+	notes := [987.77, 1318.51] // B5 -> E6 sparkling coin chime
+	note_dur := 0.07
 	count := int(audio_sample_rate * note_dur * f64(notes.len))
 	mut samples := []i16{cap: count}
-	for freq in notes {
+	attack_samples := int(audio_sample_rate * 0.002)
+
+	for n_idx, freq in notes {
 		sub_count := int(audio_sample_rate * note_dur)
 		for i in 0 .. sub_count {
 			t := f64(i) / f64(audio_sample_rate)
-			env := math.exp(-8.0 * t)
-			val := i16(math.sin(2.0 * math.pi * freq * t) * env * 22000.0)
+			decay := if n_idx == 1 { -8.0 } else { -12.0 }
+			env := math.exp(decay * t)
+			attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+			harm := math.sin(2.0 * math.pi * freq * t) + 0.35 * math.sin(4.0 * math.pi * freq * t)
+			val := i16(harm * env * attack * 22000.0)
 			samples << val
 		}
 	}
@@ -74,26 +83,34 @@ pub fn (mut sm SoundManager) play_point_sound() {
 }
 
 pub fn (mut sm SoundManager) play_hit_sound() {
-	count := int(audio_sample_rate * 0.12)
+	count := int(audio_sample_rate * 0.1)
 	mut samples := []i16{cap: count}
+	attack_samples := int(audio_sample_rate * 0.002)
+
 	for i in 0 .. count {
 		t := f64(i) / f64(audio_sample_rate)
-		freq := 180.0 - 100.0 * (t / 0.12)
-		env := 1.0 - (t / 0.12)
-		val := i16((math.sin(2.0 * math.pi * freq * t) + math.sin(4.0 * math.pi * freq * t) * 0.5) * env * 22000.0)
+		freq := 220.0 - 140.0 * (t / 0.1)
+		env := math.exp(-25.0 * t)
+		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+		harm := math.sin(2.0 * math.pi * freq * t) + 0.5 * math.sin(4.0 * math.pi * freq * t)
+		val := i16(harm * env * attack * 24000.0)
 		samples << val
 	}
 	sm.play_samples(samples)
 }
 
 pub fn (mut sm SoundManager) play_die_sound() {
-	count := int(audio_sample_rate * 0.25)
+	count := int(audio_sample_rate * 0.22)
 	mut samples := []i16{cap: count}
+	attack_samples := int(audio_sample_rate * 0.002)
+
 	for i in 0 .. count {
 		t := f64(i) / f64(audio_sample_rate)
-		freq := 400.0 - 320.0 * (t / 0.25)
-		env := 1.0 - (t / 0.25)
-		val := i16(math.sin(2.0 * math.pi * freq * t) * env * 20000.0)
+		freq := 450.0 - 360.0 * (t / 0.22)
+		env := math.exp(-10.0 * t)
+		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+		harm := math.sin(2.0 * math.pi * freq * t) + 0.3 * math.sin(2.0 * math.pi * 10.0 * t)
+		val := i16(harm * env * attack * 22000.0)
 		samples << val
 	}
 	sm.play_samples(samples)

@@ -14,6 +14,16 @@ mut:
 	size  int
 }
 
+struct FloatText {
+mut:
+	x     f64
+	y     f64
+	text  string
+	life  f64
+	color Color
+	scale int
+}
+
 const block_colors = [
 	Color{
 		r: 0

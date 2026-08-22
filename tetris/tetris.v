@@ -75,6 +75,7 @@ pub mut:
 	level      int = 1
 	game_over  bool
 	is_paused  bool
+	last_cleared int
 }
 
 fn new_tetris_game() TetrisGame {
@@ -206,6 +207,7 @@ fn (mut g TetrisGame) lock_piece() int { // returns lines cleared
 	}
 
 	cleared := g.clear_lines()
+	g.last_cleared = cleared
 
 	// Spawn next piece
 	g.curr_piece = g.next_piece

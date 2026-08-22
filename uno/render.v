@@ -4,68 +4,93 @@ import math
 import sdl
 
 fn draw_uno_game(renderer &sdl.Renderer, g &UnoGame) {
-	// Table Background (Green Casino Felt with Vignette)
-	draw_uno_table_background(renderer)
+	// Screen shake calculation
+	mut shake_x := 0
+	mut shake_y := 0
+	if g.shake_timer > 0.0 && g.shake_intensity > 0.0 {
+		decay := g.shake_timer / 0.45
+		s := g.shake_intensity * decay
+		shake_x = int(math.sin(g.anim_timer * 45.0) * s)
+		shake_y = int(math.cos(g.anim_timer * 40.0) * s)
+	}
 
-	draw_table_center(renderer, g)
-	draw_player_hands(renderer, g)
-	draw_action_prompts(renderer, g)
+	// Deep Casino / Arcade Floor
+	draw_uno_table_background(renderer, shake_x, shake_y)
+
+	draw_table_center(renderer, shake_x, shake_y, g)
+	draw_player_hands(renderer, shake_x, shake_y, g)
+	draw_flying_cards(renderer, shake_x, shake_y, g)
+	draw_special_effects(renderer, shake_x, shake_y, g)
+	draw_action_prompts(renderer, shake_x, shake_y, g)
+
+	if g.celebration != '' {
+		draw_celebration_banner(renderer, shake_x, shake_y, g)
+	}
 
 	if g.state == .color_pick {
-		draw_color_picker_modal(renderer)
+		draw_color_picker_modal(renderer, shake_x, shake_y)
 	}
 }
 
-fn draw_uno_table_background(renderer &sdl.Renderer) {
+fn draw_uno_table_background(renderer &sdl.Renderer, sx int, sy int) {
+	// Outer stadium table with deep indigo felt gradient
 	for y := 0; y < 600; y += 4 {
-		shade := u8(14 + (y * 8) / 600)
-		sdl.set_render_draw_color(renderer, shade - 2, shade + 48, shade + 22, 255)
+		shade := u8(12 + (y * 8) / 600)
+		sdl.set_render_draw_color(renderer, shade + 2, shade + 8, shade + 28, 255)
 		rect := sdl.Rect{ x: 0, y: y, w: 800, h: 4 }
 		sdl.render_fill_rect(renderer, &rect)
 	}
 
-	// Wood Trim Border
-	sdl.set_render_draw_color(renderer, 55, 26, 14, 255)
-	wood_rect := sdl.Rect{ x: 8, y: 8, w: 784, h: 584 }
-	sdl.render_draw_rect(renderer, &wood_rect)
-	sdl.set_render_draw_color(renderer, 85, 42, 22, 255)
-	inner_trim := sdl.Rect{ x: 10, y: 10, w: 780, h: 580 }
-	sdl.render_draw_rect(renderer, &inner_trim)
+	// Polished Cherry Wood Outer Frame with Brass Corner Bolts
+	sdl.set_render_draw_color(renderer, 58, 20, 16, 255)
+	frame := sdl.Rect{ x: 6 + sx, y: 6 + sy, w: 788, h: 588 }
+	sdl.render_draw_rect(renderer, &frame)
+
+	sdl.set_render_draw_color(renderer, 95, 36, 26, 255)
+	inner_rim := sdl.Rect{ x: 8 + sx, y: 8 + sy, w: 784, h: 584 }
+	sdl.render_draw_rect(renderer, &inner_rim)
+
+	// Gold Inlay Line
+	sdl.set_render_draw_color(renderer, 215, 175, 45, 180)
+	gold_line := sdl.Rect{ x: 12 + sx, y: 12 + sy, w: 776, h: 576 }
+	sdl.render_draw_rect(renderer, &gold_line)
 }
 
-fn draw_table_center(renderer &sdl.Renderer, g &UnoGame) {
-	cx := 400
-	cy := 270
+fn draw_table_center(renderer &sdl.Renderer, sx int, sy int, g &UnoGame) {
+	cx := 400 + sx
+	cy := 265 + sy
 
 	// Center Felt Circle with Depth Ring
-	draw_filled_circle(renderer, cx, cy, 112, Color{ r: 10, g: 45, b: 24 })
+	draw_filled_circle(renderer, cx, cy, 114, Color{ r: 16, g: 22, b: 42 })
 
-	// Active Color Indicator Halo Ring
+	// Active Color Indicator Halo Ring with pulsing thickness
 	col_rgb := get_color_rgb(g.active_color)
-	draw_circle_ring(renderer, cx, cy, 110, 6, col_rgb)
-	draw_circle_ring(renderer, cx, cy, 114, 1, Color{ r: 255, g: 255, b: 255, a: 160 })
+	pulse := (math.sin(g.anim_timer * 6.0) + 1.0) * 0.5
+	ring_thick := int(5.0 + pulse * 3.0)
+	draw_circle_ring(renderer, cx, cy, 110, ring_thick, col_rgb)
+	draw_circle_ring(renderer, cx, cy, 114, 1, Color{ r: 255, g: 255, b: 255, a: 180 })
 
 	// Direction Rotation Indicator
-	dir_str := if g.direction == 1 { 'ROTATION: CLOCKWISE >>' } else { '<< ROTATION: COUNTER-CW' }
-	draw_text_centered(renderer, cx, cy - 85, dir_str, 1, Color{ r: 240, g: 230, b: 150 })
+	dir_str := if g.direction == 1 { 'ROTATION: CLOCKWISE ↻' } else { '↺ ROTATION: COUNTER-CW' }
+	draw_text_centered(renderer, cx, cy - 96, dir_str, 1, Color{ r: 240, g: 230, b: 150 })
 
 	// Draw Pile (Stacked Face Down Cards)
 	draw_pile_x := cx - 78
 	draw_pile_y := cy - 48
 	card_w := 62
-	card_h := 92
+	card_h := 90
 
 	// Deck thickness shadows
-	draw_card_back(renderer, draw_pile_x + 2, draw_pile_y - 2, card_w, card_h)
+	draw_card_back(renderer, draw_pile_x + 3, draw_pile_y - 3, card_w, card_h)
 	draw_card_back(renderer, draw_pile_x, draw_pile_y, card_w, card_h)
 
-	draw_text_centered(renderer, draw_pile_x + card_w / 2, draw_pile_y + card_h + 8, 'DECK (${g.deck.len})', 1, Color{ r: 220, g: 235, b: 255 })
+	draw_text_centered(renderer, draw_pile_x + card_w / 2, draw_pile_y + card_h + 8, 'DECK (${g.deck.len})', 1, Color{ r: 210, g: 230, b: 255 })
 
 	// Discard Pile (Top Face Up Card)
 	top_card := g.top_discard()
 	dis_pile_x := cx + 16
 	dis_pile_y := cy - 48
-	draw_uno_card(renderer, dis_pile_x, dis_pile_y, card_w, card_h, top_card, true)
+	draw_uno_card(renderer, dis_pile_x, dis_pile_y, card_w, card_h, top_card, false, true)
 
 	// Active Color Badge Banner
 	col_name := match g.active_color {
@@ -78,21 +103,21 @@ fn draw_table_center(renderer &sdl.Renderer, g &UnoGame) {
 	draw_text_centered(renderer, cx, cy + 62, 'ACTIVE COLOR: ${col_name}', 1, col_rgb)
 }
 
-fn draw_player_hands(renderer &sdl.Renderer, g &UnoGame) {
+fn draw_player_hands(renderer &sdl.Renderer, sx int, sy int, g &UnoGame) {
 	// Top Player (Bot Bob)
-	draw_bot_horizontal_hand(renderer, 400, 40, &g.players[2], g.current_p_idx == 2)
+	draw_bot_horizontal_hand(renderer, 400 + sx, 35 + sy, &g.players[2], g.current_p_idx == 2)
 
 	// Left Player (Bot Alice)
-	draw_bot_vertical_hand(renderer, 50, 270, &g.players[1], g.current_p_idx == 1)
+	draw_bot_vertical_hand(renderer, 80 + sx, 260 + sy, &g.players[1], g.current_p_idx == 1)
 
 	// Right Player (Bot Charlie)
-	draw_bot_vertical_hand(renderer, 730, 270, &g.players[3], g.current_p_idx == 3)
+	draw_bot_vertical_hand(renderer, 720 + sx, 260 + sy, &g.players[3], g.current_p_idx == 3)
 
 	// Bottom Player (Human Player 1)
-	draw_human_hand(renderer, g)
+	draw_human_hand(renderer, sx, sy, g)
 }
 
-fn draw_human_hand(renderer &sdl.Renderer, g &UnoGame) {
+fn draw_human_hand(renderer &sdl.Renderer, sx int, sy int, g &UnoGame) {
 	p := &g.players[0]
 	hand_len := p.hand.len
 	if hand_len == 0 {
@@ -100,16 +125,16 @@ fn draw_human_hand(renderer &sdl.Renderer, g &UnoGame) {
 	}
 
 	card_w := 62
-	card_h := 92
+	card_h := 90
 	spacing := math.min(54.0, 540.0 / f64(math.max(1, hand_len)))
 	total_w := int(f64(hand_len - 1) * spacing) + card_w
-	start_x := 400 - total_w / 2
-	base_y := 465
+	start_x := 400 + sx - total_w / 2
+	base_y := 472 + sy
 
 	// Player Turn Indicator
 	is_my_turn := g.current_p_idx == 0
 	turn_col := if is_my_turn { Color{ r: 255, g: 220, b: 50 } } else { Color{ r: 200, g: 200, b: 200 } }
-	draw_text_centered(renderer, 400, base_y - 25, '${p.name} - ${hand_len} CARDS ${if is_my_turn { '(YOUR TURN!)' } else { '' }}', 1, turn_col)
+	draw_text_centered(renderer, 400 + sx, 428 + sy, '${p.name} - ${hand_len} CARDS ${if is_my_turn { '(YOUR TURN!)' } else { '' }}', 1, turn_col)
 
 	for i := 0; i < hand_len; i++ {
 		card := p.hand[i]
@@ -117,90 +142,81 @@ fn draw_human_hand(renderer &sdl.Renderer, g &UnoGame) {
 		is_selected := i == g.selected_card
 		is_playable := is_my_turn && g.is_card_playable(card)
 
-		cy := if is_selected { base_y - 20 } else { base_y }
-
-		draw_uno_card(renderer, cx, cy, card_w, card_h, card, is_playable)
-
-		if is_selected {
-			// Glowing Gold Selection Border
-			sel_rect := sdl.Rect{ x: cx - 2, y: cy - 2, w: card_w + 4, h: card_h + 4 }
-			sdl.set_render_draw_color(renderer, 255, 235, 60, 255)
-			sdl.render_draw_rect(renderer, &sel_rect)
-			sel_inner := sdl.Rect{ x: cx - 3, y: cy - 3, w: card_w + 6, h: card_h + 6 }
-			sdl.render_draw_rect(renderer, &sel_inner)
-		}
-	}
-
-	// "CALL UNO!" Button on Bottom Right
-	if p.hand.len <= 2 {
-		uno_btn_rect := sdl.Rect{ x: 670, y: 490, w: 105, h: 42 }
-		btn_col := if p.called_uno { Color{ r: 35, g: 160, b: 65 } } else { Color{ r: 220, g: 30, b: 40 } }
-		sdl.set_render_draw_color(renderer, btn_col.r, btn_col.g, btn_col.b, 255)
-		sdl.render_fill_rect(renderer, &uno_btn_rect)
-		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-		sdl.render_draw_rect(renderer, &uno_btn_rect)
-
-		btn_text := if p.called_uno { 'UNO CALLED!' } else { '[U] CALL UNO' }
-		draw_text_centered(renderer, 722, 504, btn_text, 1, Color{ r: 255, g: 255, b: 255 })
+		cy := if is_selected { base_y - 22 } else { base_y }
+		draw_uno_card(renderer, cx, cy, card_w, card_h, card, is_selected, is_playable)
 	}
 }
 
 fn draw_bot_horizontal_hand(renderer &sdl.Renderer, cx int, cy int, p &UnoPlayer, is_turn bool) {
 	hand_len := p.hand.len
-	spacing := 16
-	total_w := hand_len * spacing + 40
-	start_x := cx - total_w / 2
+	name_col := if is_turn { Color{ r: 255, g: 215, b: 0 } } else { Color{ r: 220, g: 220, b: 220 } }
+	draw_text_centered(renderer, cx, cy, '${p.name} (${hand_len} cards)${if is_turn { ' *' } else { '' }}', 1, name_col)
 
-	turn_col := if is_turn { Color{ r: 255, g: 220, b: 50 } } else { Color{ r: 200, g: 200, b: 200 } }
-	draw_text_centered(renderer, cx, cy - 18, '${p.name}: ${hand_len} cards ${if p.called_uno { '[UNO!]' } else { '' }}', 1, turn_col)
+	if hand_len == 0 { return }
+	card_w := 34
+	card_h := 46
+	spacing := math.min(22.0, 240.0 / f64(math.max(1, hand_len)))
+	total_w := int(f64(hand_len - 1) * spacing) + card_w
+	start_x := cx - total_w / 2
+	cards_y := cy + 14
 
 	for i := 0; i < hand_len; i++ {
-		draw_card_back(renderer, start_x + i * spacing, cy, 38, 54)
+		bx := start_x + int(f64(i) * spacing)
+		draw_card_back(renderer, bx, cards_y, card_w, card_h)
 	}
 }
 
 fn draw_bot_vertical_hand(renderer &sdl.Renderer, cx int, cy int, p &UnoPlayer, is_turn bool) {
 	hand_len := p.hand.len
-	spacing := 14
-	total_h := hand_len * spacing + 40
-	start_y := cy - total_h / 2
+	if hand_len == 0 { return }
+	card_w := 44
+	card_h := 28
+	spacing := math.min(16.0, 140.0 / f64(math.max(1, hand_len)))
+	total_h := int(f64(hand_len - 1) * spacing) + card_h
+	start_y := cy - total_h / 2 + 10
+	cards_x := cx - card_w / 2
 
-	turn_col := if is_turn { Color{ r: 255, g: 220, b: 50 } } else { Color{ r: 200, g: 200, b: 200 } }
-	draw_text_centered(renderer, cx, start_y - 18, '${p.name}', 1, turn_col)
-	draw_text_centered(renderer, cx, start_y - 6, '(${hand_len} cards)', 1, turn_col)
+	name_col := if is_turn { Color{ r: 255, g: 215, b: 0 } } else { Color{ r: 220, g: 220, b: 220 } }
+	draw_text_centered(renderer, cx, start_y - 24, '${p.name}', 1, name_col)
+	draw_text_centered(renderer, cx, start_y - 12, '(${hand_len})', 1, Color{ r: 180, g: 200, b: 220 })
 
 	for i := 0; i < hand_len; i++ {
-		draw_card_back(renderer, cx - 24, start_y + i * spacing, 48, 32)
+		by := start_y + int(f64(i) * spacing)
+		draw_card_back(renderer, cards_x, by, card_w, card_h)
 	}
 }
 
 // -------------------------------------------------------------
-// 16-Bit UNO Card Graphics
+// High-Definition Uno Card Graphics
 // -------------------------------------------------------------
 
-fn draw_uno_card(renderer &sdl.Renderer, x int, y int, w int, h int, card UnoCard, is_playable bool) {
+fn draw_uno_card(renderer &sdl.Renderer, x int, y int, w int, h int, card UnoCard, is_selected bool, is_playable bool) {
 	// Drop Shadow
-	sdl.set_render_draw_color(renderer, 0, 0, 0, 100)
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 110)
 	shadow := sdl.Rect{ x: x + 2, y: y + 3, w: w, h: h }
 	sdl.render_fill_rect(renderer, &shadow)
 
-	// White Card Base Border
-	base_rect := sdl.Rect{ x: x, y: y, w: w, h: h }
+	// Outer White Border Base
+	bg := sdl.Rect{ x: x, y: y, w: w, h: h }
 	sdl.set_render_draw_color(renderer, 252, 252, 255, 255)
-	sdl.render_fill_rect(renderer, &base_rect)
+	sdl.render_fill_rect(renderer, &bg)
 
-	// Primary Card Color Body (Inset 3px)
-	rgb := get_color_rgb(card.color)
-	body_rect := sdl.Rect{ x: x + 3, y: y + 3, w: w - 6, h: h - 6 }
-	sdl.set_render_draw_color(renderer, rgb.r, rgb.g, rgb.b, 255)
-	sdl.render_fill_rect(renderer, &body_rect)
+	// Card Color Fill
+	card_bg := get_color_rgb(card.color)
+	inner := sdl.Rect{ x: x + 2, y: y + 2, w: w - 4, h: h - 4 }
+	sdl.set_render_draw_color(renderer, card_bg.r, card_bg.g, card_bg.b, 255)
+	sdl.render_fill_rect(renderer, &inner)
 
-	// Inner Elliptical Center Badge
+	// Inner Gradient / Gloss Highlight
+	sdl.set_render_draw_color(renderer, 255, 255, 255, 60)
+	for gy := 0; gy < h / 3; gy++ {
+		sdl.render_draw_line(renderer, x + 3, y + 3 + gy, x + w - 4, y + 3 + gy)
+	}
+
 	cx := x + w / 2
 	cy := y + h / 2
 
 	if card.color == .wild_color {
-		// Wild Card: 4-Quadrant Color Disc Center
 		draw_wild_quadrant_disc(renderer, cx, cy, int(f64(w) * 0.32))
 	} else {
 		// Standard White Center Oval
@@ -215,13 +231,21 @@ fn draw_uno_card(renderer &sdl.Renderer, x int, y int, w int, h int, card UnoCar
 	sym_str := get_card_symbol_str(card.typ)
 	corner_col := if card.color == .wild_color { Color{ r: 255, g: 215, b: 0 } } else { Color{ r: 255, g: 255, b: 255 } }
 
-	draw_text(renderer, x + 5, y + 4, sym_str, 1, corner_col)
+	draw_text(renderer, x + 4, y + 4, sym_str, 1, corner_col)
 	draw_text(renderer, x + w - 12, y + h - 12, sym_str, 1, corner_col)
 
-	// Outer Playable Highlight / Dim Outline
-	border_col := if is_playable { Color{ r: 255, g: 255, b: 255 } } else { Color{ r: 80, g: 85, b: 95 } }
-	sdl.set_render_draw_color(renderer, border_col.r, border_col.g, border_col.b, 255)
-	sdl.render_draw_rect(renderer, &base_rect)
+	// Outer Playable Highlight / Selection Glow
+	if is_selected {
+		draw_circle_ring(renderer, cx, cy, int(f64(w) * 0.55), 2, Color{ r: 255, g: 220, b: 40 })
+		sdl.set_render_draw_color(renderer, 255, 220, 40, 255)
+		sdl.render_draw_rect(renderer, &bg)
+	} else if is_playable {
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+		sdl.render_draw_rect(renderer, &bg)
+	} else {
+		sdl.set_render_draw_color(renderer, 70, 75, 85, 255)
+		sdl.render_draw_rect(renderer, &bg)
+	}
 }
 
 fn draw_uno_symbol_artwork(renderer &sdl.Renderer, cx int, cy int, typ UnoCardType, col UnoColor, _w int) {
@@ -325,6 +349,145 @@ fn draw_card_back(renderer &sdl.Renderer, x int, y int, w int, h int) {
 	draw_text_centered(renderer, cx, cy - 4, 'UNO', 1, Color{ r: 255, g: 215, b: 45 })
 }
 
+// -------------------------------------------------------------
+// Flying Cards & Visual Special Effects
+// -------------------------------------------------------------
+
+fn draw_flying_cards(renderer &sdl.Renderer, sx int, sy int, g &UnoGame) {
+	card_w := 62
+	card_h := 90
+	for fc in g.flying_cards {
+		fx := int(fc.x) + sx
+		fy := int(fc.y) + sy
+
+		if fc.is_face_up {
+			flip_factor := math.abs(math.cos(fc.flip_progress * math.pi))
+			cur_w := int(f64(card_w) * (0.2 + flip_factor * 0.8))
+			cur_x := fx + (card_w - cur_w) / 2
+			draw_uno_card(renderer, cur_x, fy, cur_w, card_h, fc.card, false, true)
+		} else {
+			draw_card_back(renderer, fx, fy, card_w, card_h)
+		}
+	}
+}
+
+fn draw_special_effects(renderer &sdl.Renderer, sx int, sy int, g &UnoGame) {
+	for sw in g.shockwaves {
+		alpha := u8(255.0 * (1.0 - sw.life / sw.max_life))
+		c := Color{ r: sw.color.r, g: sw.color.g, b: sw.color.b, a: alpha }
+		draw_circle_ring(renderer, int(sw.cx) + sx, int(sw.cy) + sy, int(sw.radius), int(sw.thickness), c)
+	}
+
+	for p in g.particles {
+		alpha := u8(255.0 * (1.0 - p.life / p.max_life))
+		col := Color{ r: p.color.r, g: p.color.g, b: p.color.b, a: alpha }
+		px := int(p.x) + sx
+		py := int(p.y) + sy
+		sz := int(p.size)
+
+		if p.shape_type == 0 {
+			sdl.set_render_draw_color(renderer, col.r, col.g, col.b, col.a)
+			sdl.render_draw_line(renderer, px, py, px + int(p.vx * 0.04), py + int(p.vy * 0.04))
+			draw_filled_circle(renderer, px, py, sz, col)
+		} else if p.shape_type == 2 {
+			c_rect := sdl.Rect{ x: px - sz, y: py - sz / 2, w: sz * 2, h: sz }
+			sdl.set_render_draw_color(renderer, col.r, col.g, col.b, col.a)
+			sdl.render_fill_rect(renderer, &c_rect)
+		} else {
+			draw_filled_circle(renderer, px, py, sz, col)
+		}
+	}
+
+	for ft in g.floating_texts {
+		alpha := u8(255.0 * (1.0 - ft.life / ft.max_life))
+		col := Color{ r: ft.color.r, g: ft.color.g, b: ft.color.b, a: alpha }
+		tx := int(ft.x) + sx
+		ty := int(ft.y) + sy
+
+		draw_status_pill(renderer, tx, ty, ft.text, Color{ r: 12, g: 18, b: 30 }, col)
+	}
+}
+
+fn draw_status_pill(renderer &sdl.Renderer, cx int, cy int, text string, bg_col Color, txt_col Color) {
+	tw := text.len * 8 + 18
+	pill := sdl.Rect{ x: cx - tw / 2, y: cy - 9, w: tw, h: 18 }
+	sdl.set_render_draw_color(renderer, bg_col.r, bg_col.g, bg_col.b, 240)
+	sdl.render_fill_rect(renderer, &pill)
+	sdl.set_render_draw_color(renderer, txt_col.r, txt_col.g, txt_col.b, 255)
+	sdl.render_draw_rect(renderer, &pill)
+	draw_text_centered(renderer, cx, cy - 4, text, 1, txt_col)
+}
+
+fn draw_action_prompts(renderer &sdl.Renderer, sx int, sy int, g &UnoGame) {
+	// Bottom Controls Bar
+	bar_rect := sdl.Rect{ x: 20 + sx, y: 568 + sy, w: 760, h: 26 }
+	sdl.set_render_draw_color(renderer, 10, 15, 25, 245)
+	sdl.render_fill_rect(renderer, &bar_rect)
+	sdl.set_render_draw_color(renderer, 220, 180, 50, 255)
+	sdl.render_draw_rect(renderer, &bar_rect)
+
+	prompt_str := if g.state == .player_turn {
+		'[LEFT/RIGHT] SELECT | [SPACE/ENTER] PLAY | [D] DRAW CARD | [U] SHOUT UNO | [M] SOUND'
+	} else if g.state == .round_over {
+		'[SPACE/ENTER] NEXT ROUND | [M] SOUND'
+	} else {
+		'OPPONENTS ARE PLAYING... | [M] SOUND'
+	}
+
+	draw_text_centered(renderer, 400 + sx, 575 + sy, prompt_str, 1, Color{ r: 255, g: 235, b: 120 })
+}
+
+fn draw_celebration_banner(renderer &sdl.Renderer, sx int, sy int, g &UnoGame) {
+	box_w := 540
+	box_h := 38
+	bx := (800 - box_w) / 2 + sx
+	by := 148 + sy
+
+	sdl.set_render_draw_color(renderer, 12, 18, 30, 250)
+	b_rect := sdl.Rect{ x: bx, y: by, w: box_w, h: box_h }
+	sdl.render_fill_rect(renderer, &b_rect)
+
+	sdl.set_render_draw_color(renderer, 255, 215, 50, 255)
+	sdl.render_draw_rect(renderer, &b_rect)
+
+	draw_text_centered(renderer, 400 + sx, by + 13, g.celebration, 1, Color{ r: 255, g: 230, b: 70 })
+}
+
+fn draw_color_picker_modal(renderer &sdl.Renderer, sx int, sy int) {
+	// Modal backdrop
+	modal := sdl.Rect{ x: 260 + sx, y: 160 + sy, w: 280, h: 220 }
+	sdl.set_render_draw_color(renderer, 14, 18, 28, 250)
+	sdl.render_fill_rect(renderer, &modal)
+
+	sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+	sdl.render_draw_rect(renderer, &modal)
+
+	draw_text_centered(renderer, 400 + sx, 180 + sy, 'CHOOSE ACTIVE COLOR', 1, Color{ r: 255, g: 255, b: 255 })
+
+	// 4 Color Buttons
+	cols := [
+		Color{ r: 225, g: 35, b: 45 },
+		Color{ r: 35, g: 110, b: 225 },
+		Color{ r: 45, g: 175, b: 55 },
+		Color{ r: 235, g: 195, b: 25 },
+	]
+	labels := ['[1] RED', '[2] BLUE', '[3] GREEN', '[4] YELLOW']
+
+	for i := 0; i < 4; i++ {
+		bx := 290 + sx + (i % 2) * 115
+		by := 210 + sy + (i / 2) * 65
+		b_rect := sdl.Rect{ x: bx, y: by, w: 105, h: 50 }
+
+		sdl.set_render_draw_color(renderer, cols[i].r, cols[i].g, cols[i].b, 255)
+		sdl.render_fill_rect(renderer, &b_rect)
+
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+		sdl.render_draw_rect(renderer, &b_rect)
+
+		draw_text_centered(renderer, bx + 52, by + 20, labels[i], 1, Color{ r: 255, g: 255, b: 255 })
+	}
+}
+
 fn get_color_rgb(col UnoColor) Color {
 	return match col {
 		.red        { Color{ r: 225, g: 35, b: 45 } }
@@ -353,73 +516,6 @@ fn get_card_symbol_str(typ UnoCardType) string {
 		.wild           { 'W' }
 		.wild_draw_four { '+4' }
 	}
-}
-
-fn draw_action_prompts(renderer &sdl.Renderer, g &UnoGame) {
-	// Bottom Controls Bar
-	bar_rect := sdl.Rect{ x: 20, y: 568, w: 760, h: 26 }
-	sdl.set_render_draw_color(renderer, 10, 35, 20, 240)
-	sdl.render_fill_rect(renderer, &bar_rect)
-	draw_text_centered(renderer, 400, 574, '[A/D or ARROWS] SELECT CARD | [SPACE/ENTER] PLAY | [D] DRAW CARD | [U] CALL UNO | [M] SOUND', 1, Color{ r: 220, g: 235, b: 255 })
-
-	// Celebration / Announcement Banner
-	if g.celebration != '' {
-		box_w := 540
-		box_h := 45
-		bx := (800 - box_w) / 2
-		by := 220
-
-		sdl.set_render_draw_color(renderer, 15, 20, 35, 240)
-		b_rect := sdl.Rect{ x: bx, y: by, w: box_w, h: box_h }
-		sdl.render_fill_rect(renderer, &b_rect)
-
-		sdl.set_render_draw_color(renderer, 255, 220, 50, 255)
-		sdl.render_draw_rect(renderer, &b_rect)
-
-		draw_text_centered(renderer, 400, by + 16, g.celebration, 1, Color{ r: 255, g: 235, b: 80 })
-	}
-}
-
-fn draw_color_picker_modal(renderer &sdl.Renderer) {
-	mx := 260
-	my := 170
-	mw := 280
-	mh := 180
-
-	sdl.set_render_draw_color(renderer, 15, 20, 30, 245)
-	bg := sdl.Rect{ x: mx, y: my, w: mw, h: mh }
-	sdl.render_fill_rect(renderer, &bg)
-	sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
-	sdl.render_draw_rect(renderer, &bg)
-
-	draw_text_centered(renderer, 400, my + 15, 'CHOOSE ACTIVE COLOR', 1, Color{ r: 255, g: 255, b: 255 })
-
-	// 4 Color quadrant buttons
-	btn_w := 115
-	btn_h := 50
-	// 1: Red
-	r_rect := sdl.Rect{ x: mx + 15, y: my + 45, w: btn_w, h: btn_h }
-	sdl.set_render_draw_color(renderer, 225, 35, 45, 255)
-	sdl.render_fill_rect(renderer, &r_rect)
-	draw_text_centered(renderer, mx + 15 + btn_w / 2, my + 63, '[1] RED', 1, Color{ r: 255, g: 255, b: 255 })
-
-	// 2: Blue
-	b_rect := sdl.Rect{ x: mx + 150, y: my + 45, w: btn_w, h: btn_h }
-	sdl.set_render_draw_color(renderer, 35, 110, 225, 255)
-	sdl.render_fill_rect(renderer, &b_rect)
-	draw_text_centered(renderer, mx + 150 + btn_w / 2, my + 63, '[2] BLUE', 1, Color{ r: 255, g: 255, b: 255 })
-
-	// 3: Green
-	g_rect := sdl.Rect{ x: mx + 15, y: my + 110, w: btn_w, h: btn_h }
-	sdl.set_render_draw_color(renderer, 45, 175, 55, 255)
-	sdl.render_fill_rect(renderer, &g_rect)
-	draw_text_centered(renderer, mx + 15 + btn_w / 2, my + 128, '[3] GREEN', 1, Color{ r: 255, g: 255, b: 255 })
-
-	// 4: Yellow
-	y_rect := sdl.Rect{ x: mx + 150, y: my + 110, w: btn_w, h: btn_h }
-	sdl.set_render_draw_color(renderer, 235, 195, 25, 255)
-	sdl.render_fill_rect(renderer, &y_rect)
-	draw_text_centered(renderer, mx + 150 + btn_w / 2, my + 128, '[4] YELLOW', 1, Color{ r: 255, g: 255, b: 255 })
 }
 
 fn draw_filled_circle(renderer &sdl.Renderer, cx int, cy int, r int, c Color) {

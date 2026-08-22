@@ -53,6 +53,12 @@ pub fn render_dopewars_game(renderer &sdl.Renderer, mut g DopeWarsGame, win_w in
 
 		draw_text_centered(renderer, win_w / 2, by + 14, g.banner_text, 2, Color{255, 230, 80, 255})
 	}
+
+	// CRT Phosphor Scanline Overlay
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 30)
+	for y := 0; y < win_h; y += 3 {
+		sdl.render_draw_line(renderer, 0, y, win_w, y)
+	}
 }
 
 fn render_header(renderer &sdl.Renderer, g DopeWarsGame, win_w int, sound_enabled bool) {

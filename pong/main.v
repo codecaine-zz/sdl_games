@@ -1,6 +1,7 @@
 module main
 
 import math
+import os
 import rand
 import sdl
 
@@ -365,27 +366,41 @@ fn (mut app App) render() {
 		h: paddle_h
 	}
 
-	// P1 Red Neon Paddle
+	// P1 Red Neon Paddle with Halo
+	sdl.set_render_draw_color(app.renderer, 235, 45, 60, 90)
+	p1_halo := sdl.Rect{x: p1_rect.x - 2, y: p1_rect.y - 2, w: p1_rect.w + 4, h: p1_rect.h + 4}
+	sdl.render_draw_rect(app.renderer, &p1_halo)
+
 	sdl.set_render_draw_color(app.renderer, 235, 45, 60, 255)
 	sdl.render_fill_rect(app.renderer, &p1_rect)
-	sdl.set_render_draw_color(app.renderer, 255, 140, 150, 255)
+	sdl.set_render_draw_color(app.renderer, 255, 160, 170, 255)
 	sdl.render_draw_rect(app.renderer, &p1_rect)
 
-	// P2 Cyan Neon Paddle
+	// P2 Cyan Neon Paddle with Halo
+	sdl.set_render_draw_color(app.renderer, 40, 220, 240, 90)
+	p2_halo := sdl.Rect{x: p2_rect.x - 2, y: p2_rect.y - 2, w: p2_rect.w + 4, h: p2_rect.h + 4}
+	sdl.render_draw_rect(app.renderer, &p2_halo)
+
 	sdl.set_render_draw_color(app.renderer, 40, 220, 240, 255)
 	sdl.render_fill_rect(app.renderer, &p2_rect)
-	sdl.set_render_draw_color(app.renderer, 150, 250, 255, 255)
+	sdl.set_render_draw_color(app.renderer, 180, 250, 255, 255)
 	sdl.render_draw_rect(app.renderer, &p2_rect)
 
-	// Render Ball
+	// Render Ball with Glow & Specular
 	bx := int(app.game.ball.x)
 	by := int(app.game.ball.y)
+	sdl.set_render_draw_color(app.renderer, 100, 200, 255, 120)
+	b_glow := sdl.Rect{x: bx - 2, y: by - 2, w: ball_size + 4, h: ball_size + 4}
+	sdl.render_fill_rect(app.renderer, &b_glow)
+
 	draw_filled_circle(app.renderer, bx + ball_size / 2, by + ball_size / 2, ball_size / 2,
 		Color{
 		r: 255
 		g: 255
 		b: 255
 	})
+	sdl.set_render_draw_color(app.renderer, 255, 255, 255, 255)
+	sdl.render_draw_point(app.renderer, bx + ball_size / 2 - 2, by + ball_size / 2 - 2)
 
 	// Draw Control Buttons
 	app.btn_restart.draw(app.renderer, app.mouse_x, app.mouse_y)
@@ -469,6 +484,24 @@ fn (mut app App) cleanup() {
 }
 
 fn main() {
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		sdl.init(sdl.init_video)
+		surface := sdl.create_rgb_surface(0, court_w, court_h, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut app := new_app()
+		app.renderer = s_renderer
+		app.game.score_p1 = 5
+		app.game.score_p2 = 4
+		app.game.ball.x = 420
+		app.game.ball.y = 280
+		app.render()
+		sdl.save_bmp(surface, 'screenshots/pong.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		sdl.quit()
+		return
+	}
+
 	mut app := new_app()
 	if !app.init_sdl() {
 		return

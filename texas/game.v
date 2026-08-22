@@ -1,6 +1,62 @@
 module main
 
+import math
 import rand
+
+pub struct Particle {
+pub mut:
+	x          f64
+	y          f64
+	vx         f64
+	vy         f64
+	color      Color
+	size       f64
+	life       f64
+	max_life   f64
+	shape_type int // 0: spark, 1: circle/star, 2: confetti
+	rot        f64
+	vrot       f64
+	gravity    f64
+}
+
+pub struct FloatingText {
+pub mut:
+	x        f64
+	y        f64
+	text     string
+	color    Color
+	scale    int
+	life     f64
+	max_life f64
+	vy       f64
+}
+
+pub struct Shockwave {
+pub mut:
+	cx         f64
+	cy         f64
+	radius     f64
+	max_radius f64
+	color      Color
+	life       f64
+	max_life   f64
+	thickness  f64
+}
+
+pub struct FlyingCard {
+pub mut:
+	card          Card
+	is_face_up    bool
+	start_x       f64
+	start_y       f64
+	target_x      f64
+	target_y      f64
+	x             f64
+	y             f64
+	progress      f64
+	speed         f64
+	flip_progress f64
+}
 
 pub struct PokerPlayer {
 pub mut:
@@ -45,6 +101,16 @@ pub mut:
 	stage_timer       f64
 	hand_count        int
 	winner_indices    []int
+
+	// VFX State
+	particles       []Particle
+	floating_texts  []FloatingText
+	shockwaves      []Shockwave
+	flying_cards    []FlyingCard
+	shake_intensity f64
+	shake_timer     f64
+	anim_timer      f64
+	pulse_time      f64
 }
 
 pub fn new_texas_game() TexasGame {
@@ -93,15 +159,15 @@ pub fn (mut g TexasGame) start_new_hand() {
 		}
 	}
 
-	// Post Blinds
+	// Post Small Blind
 	sb_idx := g.get_next_active_player(g.dealer_idx)
-	bb_idx := g.get_next_active_player(sb_idx)
-
 	g.post_bet(sb_idx, g.small_blind)
-	g.players[sb_idx].last_action = 'SB ($$${g.small_blind})'
+	g.players[sb_idx].last_action = 'SB (\$${g.small_blind})'
 
+	// Post Big Blind
+	bb_idx := g.get_next_active_player(sb_idx)
 	g.post_bet(bb_idx, g.big_blind)
-	g.players[bb_idx].last_action = 'BB ($$${g.big_blind})'
+	g.players[bb_idx].last_action = 'BB (\$${g.big_blind})'
 
 	g.current_bet = g.big_blind
 	g.min_raise = g.big_blind * 2
@@ -328,7 +394,152 @@ fn (mut g TexasGame) resolve_showdown(mut sound_mgr SoundManager) {
 	g.stage_timer = 0.0
 }
 
+pub fn (mut g TexasGame) trigger_shake(intensity f64, duration f64) {
+	g.shake_intensity = intensity
+	g.shake_timer = duration
+}
+
+pub fn (mut g TexasGame) spawn_sparks(x f64, y f64, count int, col Color) {
+	for _ in 0 .. count {
+		angle := rand.f64() * math.pi * 2.0
+		speed := 40.0 + rand.f64() * 160.0
+		g.particles << Particle{
+			x:          x
+			y:          y
+			vx:         math.cos(angle) * speed
+			vy:         math.sin(angle) * speed
+			color:      col
+			size:       2.0 + rand.f64() * 3.0
+			life:       0.0
+			max_life:   0.35 + rand.f64() * 0.35
+			shape_type: 0
+			rot:        rand.f64() * 6.28
+			vrot:       (rand.f64() - 0.5) * 10.0
+			gravity:    120.0
+		}
+	}
+}
+
+pub fn (mut g TexasGame) spawn_confetti(x f64, y f64, count int) {
+	cols := [
+		Color{ r: 255, g: 215, b: 0 },
+		Color{ r: 255, g: 60, b: 60 },
+		Color{ r: 50, g: 150, b: 255 },
+		Color{ r: 60, g: 255, b: 120 },
+		Color{ r: 255, g: 120, b: 240 },
+		Color{ r: 255, g: 255, b: 255 },
+	]
+	for _ in 0 .. count {
+		angle := rand.f64() * math.pi * 2.0
+		speed := 60.0 + rand.f64() * 240.0
+		col_idx := rand.int_in_range(0, cols.len) or { 0 }
+		g.particles << Particle{
+			x:          x + (rand.f64() - 0.5) * 40.0
+			y:          y + (rand.f64() - 0.5) * 40.0
+			vx:         math.cos(angle) * speed
+			vy:         math.sin(angle) * speed - 100.0
+			color:      cols[col_idx]
+			size:       4.0 + rand.f64() * 4.0
+			life:       0.0
+			max_life:   1.3 + rand.f64() * 1.0
+			shape_type: 2
+			rot:        rand.f64() * 6.28
+			vrot:       (rand.f64() - 0.5) * 8.0
+			gravity:    100.0
+		}
+	}
+}
+
+pub fn (mut g TexasGame) spawn_shockwave(cx f64, cy f64, col Color) {
+	g.shockwaves << Shockwave{
+		cx:         cx
+		cy:         cy
+		radius:     10.0
+		max_radius: 120.0
+		color:      col
+		life:       0.0
+		max_life:   0.45
+		thickness:  3.0
+	}
+}
+
+pub fn (mut g TexasGame) spawn_floating_text(x f64, y f64, text string, col Color, scale int) {
+	g.floating_texts << FloatingText{
+		x:        x
+		y:        y
+		text:     text
+		color:    col
+		scale:    scale
+		life:     0.0
+		max_life: 1.6
+		vy:       -26.0
+	}
+}
+
+pub fn (mut g TexasGame) spawn_flying_card(c Card, sx f64, sy f64, tx f64, ty f64, face_up bool) {
+	g.flying_cards << FlyingCard{
+		card:          c
+		is_face_up:    face_up
+		start_x:       sx
+		start_y:       sy
+		target_x:      tx
+		target_y:      ty
+		x:             sx
+		y:             sy
+		progress:      0.0
+		speed:         4.0
+		flip_progress: 0.0
+	}
+}
+
 pub fn (mut g TexasGame) update(dt f64, mut sound_mgr SoundManager) {
+	g.anim_timer += dt
+	g.pulse_time += dt
+
+	if g.shake_timer > 0.0 {
+		g.shake_timer -= dt
+		if g.shake_timer <= 0.0 {
+			g.shake_intensity = 0.0
+		}
+	}
+
+	for mut p in g.particles {
+		p.life += dt
+		p.x += p.vx * dt
+		p.y += p.vy * dt
+		p.vy += p.gravity * dt
+		p.rot += p.vrot * dt
+		p.vx *= (1.0 - 0.5 * dt)
+	}
+	g.particles = g.particles.filter(it.life < it.max_life)
+
+	for mut sw in g.shockwaves {
+		sw.life += dt
+		prog := sw.life / sw.max_life
+		sw.radius = 10.0 + (sw.max_radius - 10.0) * math.sin(prog * math.pi * 0.5)
+	}
+	g.shockwaves = g.shockwaves.filter(it.life < it.max_life)
+
+	for mut ft in g.floating_texts {
+		ft.life += dt
+		ft.y += ft.vy * dt
+		ft.vy *= (1.0 - 0.8 * dt)
+	}
+	g.floating_texts = g.floating_texts.filter(it.life < it.max_life)
+
+	for mut fc in g.flying_cards {
+		fc.progress += fc.speed * dt
+		if fc.progress > 1.0 {
+			fc.progress = 1.0
+		}
+		t := fc.progress
+		ease := 1.0 - math.pow(1.0 - t, 3.0)
+		fc.x = fc.start_x + (fc.target_x - fc.start_x) * ease
+		fc.y = fc.start_y + (fc.target_y - fc.start_y) * ease
+		fc.flip_progress = t
+	}
+	g.flying_cards = g.flying_cards.filter(it.progress < 1.0)
+
 	if g.celeb_timer > 0.0 {
 		g.celeb_timer -= dt
 		if g.celeb_timer <= 0.0 {

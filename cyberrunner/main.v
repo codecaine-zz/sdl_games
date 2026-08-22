@@ -2,7 +2,9 @@ module main
 
 import gg
 import math
+import os
 import rand
+import sokol.sapp
 
 enum GameState {
 	title
@@ -429,8 +431,29 @@ fn (mut app App) update_game(dt f32) {
 
 fn frame_cb(mut app App) {
 	dt := f32(0.0166) // 60fps tick
+	app.frame_count++
+
+	if os.getenv('SNAPSHOT') == '1' || os.args.contains('--snap') {
+		if app.frame_count == 1 {
+			app.init_game()
+			app.state = .playing
+			app.player.score = 4250
+			app.player.multiplier = 3
+			app.player.boost_charge = 85.0
+		}
+	}
+
 	app.update_game(dt)
 	render_frame(mut app)
+
+	if os.getenv('SNAPSHOT') == '1' || os.args.contains('--snap') {
+		if app.frame_count >= 15 {
+			path := os.real_path('screenshots/cyberrunner.png')
+			eprintln('Saving screenshot to: ${path}')
+			sapp.screenshot_png(path) or { eprintln('Screenshot error: ${err}') }
+			app.gg.quit()
+		}
+	}
 }
 
 fn key_down(key gg.KeyCode, mut app App) {
@@ -534,6 +557,11 @@ fn event_cb(ev &gg.Event, mut app App) {
 }
 
 fn main() {
+	if os.getenv('SNAPSHOT') == '1' || os.args.contains('--snap') {
+		capture_cyberrunner_snapshot('screenshots/cyberrunner.bmp')
+		return
+	}
+
 	mut app := &App{
 		sound: new_sound_manager()
 	}

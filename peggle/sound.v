@@ -57,14 +57,16 @@ pub fn (mut sm SoundManager) play_cannon() {
 	dur := 0.12
 	count := int(audio_sample_rate * dur)
 	mut samples := []i16{cap: count}
+	attack_samples := int(audio_sample_rate * 0.002)
 
 	for i in 0 .. count {
 		t := f64(i) / f64(audio_sample_rate)
-		env := math.exp(-t * 30.0)
-		freq := 320.0 * math.exp(-t * 20.0)
-		s := math.sin(2.0 * math.pi * freq * t)
-		noise := (rand.f64() * 2.0 - 1.0) * 0.3
-		val := i16((s + noise) * env * 18000.0)
+		env := math.exp(-t * 28.0)
+		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+		freq := 340.0 * math.exp(-t * 20.0)
+		s := math.sin(2.0 * math.pi * freq * t) + 0.3 * math.sin(4.0 * math.pi * freq * t)
+		noise := (rand.f64() * 2.0 - 1.0) * 0.25
+		val := i16((s + noise) * env * attack * 20000.0)
 		samples << val
 	}
 	sm.play_samples(samples)
@@ -78,12 +80,14 @@ pub fn (mut sm SoundManager) play_peg_ding(combo int) {
 	dur := 0.15
 	count := int(audio_sample_rate * dur)
 	mut samples := []i16{cap: count}
+	attack_samples := int(audio_sample_rate * 0.002)
 
 	for i in 0 .. count {
 		t := f64(i) / f64(audio_sample_rate)
-		env := math.exp(-t * 18.0)
-		s := math.sin(2.0 * math.pi * freq * t)
-		val := i16(s * env * 15000.0)
+		env := math.exp(-t * 16.0)
+		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+		s := math.sin(2.0 * math.pi * freq * t) + 0.35 * math.sin(4.0 * math.pi * freq * t)
+		val := i16(s * env * attack * 18000.0)
 		samples << val
 	}
 	sm.play_samples(samples)
@@ -91,19 +95,23 @@ pub fn (mut sm SoundManager) play_peg_ding(combo int) {
 
 // Bucket Catch Free Ball
 pub fn (mut sm SoundManager) play_bucket_catch() {
-	dur := 0.3
+	dur := 0.28
 	count := int(audio_sample_rate * dur)
 	mut samples := []i16{cap: count}
 	notes := [659.25, 880.00, 1318.51]
+	note_dur := dur / f64(notes.len)
+	attack_samples := int(audio_sample_rate * 0.002)
 
 	for i in 0 .. count {
 		t := f64(i) / f64(audio_sample_rate)
-		n_idx := int(t / (dur / 3.0))
+		n_idx := int(t / note_dur)
 		freq := if n_idx < notes.len { notes[n_idx] } else { notes.last() }
-		local_t := math.fmod(t, dur / 3.0)
-		env := math.exp(-local_t * 15.0)
-		s := math.sin(2.0 * math.pi * freq * t)
-		val := i16(s * env * 15000.0)
+		local_t := math.fmod(t, note_dur)
+		local_sample := int(local_t * f64(audio_sample_rate))
+		attack := if local_sample < attack_samples { f64(local_sample) / f64(attack_samples) } else { 1.0 }
+		env := math.exp(-local_t * 14.0)
+		s := math.sin(2.0 * math.pi * freq * local_t) + 0.3 * math.sin(4.0 * math.pi * freq * local_t)
+		val := i16(s * env * attack * 18000.0)
 		samples << val
 	}
 	sm.play_samples(samples)
@@ -111,21 +119,25 @@ pub fn (mut sm SoundManager) play_bucket_catch() {
 
 // EXTREME FEVER Ode to Joy Celebration!
 pub fn (mut sm SoundManager) play_fever() {
-	dur := 0.85
+	dur := 0.9
 	count := int(audio_sample_rate * dur)
 	mut samples := []i16{cap: count}
 	// Ode to Joy opening notes: E5, E5, F5, G5, G5, F5, E5, D5
 	notes := [659.25, 659.25, 698.46, 783.99, 783.99, 698.46, 659.25, 587.33]
+	note_dur := dur / f64(notes.len)
+	attack_samples := int(audio_sample_rate * 0.002)
 
 	for i in 0 .. count {
 		t := f64(i) / f64(audio_sample_rate)
-		n_idx := int(t / (dur / 8.0))
+		n_idx := int(t / note_dur)
 		freq := if n_idx < notes.len { notes[n_idx] } else { notes.last() }
-		local_t := math.fmod(t, dur / 8.0)
-		env := math.exp(-local_t * 12.0)
-		s1 := math.sin(2.0 * math.pi * freq * t)
-		s2 := math.sin(2.0 * math.pi * (freq * 2.0) * t) * 0.3
-		val := i16((s1 + s2) * env * 16000.0)
+		local_t := math.fmod(t, note_dur)
+		local_sample := int(local_t * f64(audio_sample_rate))
+		attack := if local_sample < attack_samples { f64(local_sample) / f64(attack_samples) } else { 1.0 }
+		env := math.exp(-local_t * 10.0)
+		s1 := math.sin(2.0 * math.pi * freq * local_t)
+		s2 := math.sin(2.0 * math.pi * (freq * 2.0) * local_t) * 0.3
+		val := i16((s1 + s2) * env * attack * 20000.0)
 		samples << val
 	}
 	sm.play_samples(samples)

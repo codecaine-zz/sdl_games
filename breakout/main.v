@@ -1,26 +1,28 @@
 module main
 
 import math
+import os
 import rand
 import sdl
 
 struct App {
 mut:
-	window      &sdl.Window   = unsafe { nil }
-	renderer    &sdl.Renderer = unsafe { nil }
-	game        BreakoutGame
-	sound_mgr   SoundManager
-	particles   []Particle
-	mouse_x     int
-	mouse_y     int
-	key_left    bool
-	key_right   bool
-	key_launch  bool
-	key_fire    bool
-	paused      bool
-	btn_restart Button
-	btn_level   Button
-	btn_sound   Button
+	window          &sdl.Window   = unsafe { nil }
+	renderer        &sdl.Renderer = unsafe { nil }
+	game            BreakoutGame
+	sound_mgr       SoundManager
+	particles       []Particle
+	paddle_target_x f64 = world_w / 2.0
+	mouse_x         int = int(world_w / 2.0)
+	mouse_y         int
+	key_left        bool
+	key_right       bool
+	key_launch      bool
+	key_fire        bool
+	paused          bool
+	btn_restart     Button
+	btn_level       Button
+	btn_sound       Button
 }
 
 fn new_app() App {
@@ -85,6 +87,7 @@ fn (mut app App) reset_game() {
 	app.sound_mgr.clear_audio()
 	app.game.reset()
 	app.game.last_sound_event = ''
+	app.paddle_target_x = world_w / 2.0
 }
 
 fn (mut app App) update(dt f64) {
@@ -92,12 +95,17 @@ fn (mut app App) update(dt f64) {
 		return
 	}
 
-	mut move_x := f64(app.mouse_x)
+	paddle_speed := 650.0
 	if app.key_left {
-		move_x = app.game.paddle.x + app.game.paddle.w / 2.0 - 400.0 * dt
-	} else if app.key_right {
-		move_x = app.game.paddle.x + app.game.paddle.w / 2.0 + 400.0 * dt
+		app.paddle_target_x -= paddle_speed * dt
 	}
+	if app.key_right {
+		app.paddle_target_x += paddle_speed * dt
+	}
+
+	min_x := 10.0 + app.game.paddle.w / 2.0
+	max_x := world_w - 10.0 - app.game.paddle.w / 2.0
+	app.paddle_target_x = math.clamp(app.paddle_target_x, min_x, max_x)
 
 	if app.game.level_cleared && app.key_launch {
 		app.game.level++
@@ -105,9 +113,10 @@ fn (mut app App) update(dt f64) {
 			app.game.level = 1
 		}
 		app.game.load_level(app.game.level)
+		app.paddle_target_x = world_w / 2.0
 		app.key_launch = false
 	} else {
-		app.game.step(dt, move_x, app.key_launch, app.key_fire)
+		app.game.step(dt, app.paddle_target_x, app.key_launch, app.key_fire)
 		app.key_launch = false
 		app.key_fire = false
 	}
@@ -175,6 +184,23 @@ fn (mut app App) update(dt f64) {
 }
 
 fn main() {
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		sdl.init(sdl.init_video)
+		surface := sdl.create_rgb_surface(0, world_w, world_h, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut app := new_app()
+		app.renderer = s_renderer
+		app.game.score = 4820
+		app.game.level = 2
+		app.game.load_level(2)
+		render_breakout_game(app.renderer, &app.game, app.particles)
+		sdl.save_bmp(surface, 'screenshots/breakout.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		sdl.quit()
+		return
+	}
+
 	if sdl.init(sdl.init_video | sdl.init_audio) < 0 {
 		eprintln('Failed to initialize SDL')
 		return
@@ -218,6 +244,9 @@ fn main() {
 				.mousemotion {
 					app.mouse_x = event.motion.x
 					app.mouse_y = event.motion.y
+					if event.motion.xrel != 0 {
+						app.paddle_target_x = f64(event.motion.x)
+					}
 				}
 				.mousebuttondown {
 					if event.button.button == u8(sdl.button_left) {
@@ -243,16 +272,16 @@ fn main() {
 				}
 				.keydown {
 					sym := event.key.keysym.sym
-					if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) {
+					if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) || sym == int(sdl.KeyCode.h) {
 						app.key_left = true
-					} else if sym == int(sdl.KeyCode.right) || sym == int(sdl.KeyCode.d) {
+					} else if sym == int(sdl.KeyCode.right) || sym == int(sdl.KeyCode.d) || sym == int(sdl.KeyCode.l) {
 						app.key_right = true
-					} else if sym == int(sdl.KeyCode.space) || sym == int(sdl.KeyCode.up) {
+					} else if sym == int(sdl.KeyCode.space) || sym == int(sdl.KeyCode.up) || sym == int(sdl.KeyCode.w) || sym == int(sdl.KeyCode.@return) {
 						app.key_launch = true
 						app.key_fire = true
 					} else if sym == int(sdl.KeyCode.r) {
 						app.reset_game()
-					} else if sym == int(sdl.KeyCode.l) {
+					} else if sym == int(sdl.KeyCode.n) {
 						app.game.level++
 						if app.game.level > max_level {
 							app.game.level = 1
@@ -269,9 +298,9 @@ fn main() {
 				}
 				.keyup {
 					sym := event.key.keysym.sym
-					if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) {
+					if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) || sym == int(sdl.KeyCode.h) {
 						app.key_left = false
-					} else if sym == int(sdl.KeyCode.right) || sym == int(sdl.KeyCode.d) {
+					} else if sym == int(sdl.KeyCode.right) || sym == int(sdl.KeyCode.d) || sym == int(sdl.KeyCode.l) {
 						app.key_right = false
 					}
 				}

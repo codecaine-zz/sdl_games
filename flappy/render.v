@@ -136,12 +136,20 @@ pub fn draw_retro_pipe(renderer &sdl.Renderer, px f64, top_h f64, gap f64, win_h
 }
 
 pub fn render_flappy_game(renderer &sdl.Renderer, game &FlappyGame, win_w int, win_h int) {
-	// 1. Sky Gradient (Bright Blue to Cyan)
-	sdl.set_render_draw_color(renderer, 75, 190, 235, 255)
+	// 1. Sky Horizon (Deep Azure to Sunlight Cyan)
+	sdl.set_render_draw_color(renderer, 70, 185, 240, 255)
 	sdl.render_clear(renderer)
 
+	// Golden Sun Flare in top-right
+	sdl.set_render_draw_color(renderer, 255, 245, 180, 160)
+	sun_rect := sdl.Rect{x: win_w - 90, y: 35, w: 45, h: 45}
+	sdl.render_fill_rect(renderer, &sun_rect)
+	sdl.set_render_draw_color(renderer, 255, 255, 220, 240)
+	sun_core := sdl.Rect{x: win_w - 82, y: 43, w: 29, h: 29}
+	sdl.render_fill_rect(renderer, &sun_core)
+
 	// Distant City Skyline Parallax
-	sdl.set_render_draw_color(renderer, 140, 215, 205, 255)
+	sdl.set_render_draw_color(renderer, 130, 210, 200, 255)
 	skyline_y := int(f64(win_h) - ground_height - 60.0)
 	for i := 0; i < win_w / 35 + 2; i++ {
 		bx := (i * 35 - int(game.scroll_x * 0.2)) % (win_w + 70) - 35
@@ -149,13 +157,18 @@ pub fn render_flappy_game(renderer &sdl.Renderer, game &FlappyGame, win_w int, w
 		sdl.render_fill_rect(renderer, &sdl.Rect{x: bx, y: skyline_y - bh, w: 32, h: bh + 60})
 	}
 
-	// Clouds Parallax
-	sdl.set_render_draw_color(renderer, 240, 250, 255, 200)
-	for i := 0; i < 4; i++ {
-		cx := (i * 160 - int(game.scroll_x * 0.4)) % (win_w + 120) - 60
-		cy := 70 + (i * 37) % 80
-		sdl.render_fill_rect(renderer, &sdl.Rect{x: cx, y: cy, w: 70, h: 22})
-		sdl.render_fill_rect(renderer, &sdl.Rect{x: cx + 15, y: cy - 10, w: 40, h: 18})
+	// Fluffy Volumetric Clouds Parallax
+	for i := 0; i < 5; i++ {
+		cx := (i * 140 - int(game.scroll_x * 0.35)) % (win_w + 140) - 70
+		cy := 60 + (i * 31) % 85
+		// Cloud base
+		sdl.set_render_draw_color(renderer, 245, 250, 255, 220)
+		sdl.render_fill_rect(renderer, &sdl.Rect{x: cx, y: cy, w: 75, h: 22})
+		sdl.render_fill_rect(renderer, &sdl.Rect{x: cx + 12, y: cy - 12, w: 32, h: 20})
+		sdl.render_fill_rect(renderer, &sdl.Rect{x: cx + 32, y: cy - 18, w: 26, h: 22})
+		// Cloud drop shadow
+		sdl.set_render_draw_color(renderer, 205, 225, 240, 180)
+		sdl.render_fill_rect(renderer, &sdl.Rect{x: cx + 4, y: cy + 18, w: 67, h: 4})
 	}
 
 	// 2. Pipes

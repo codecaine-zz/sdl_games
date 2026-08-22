@@ -73,6 +73,9 @@ fn (app &App) run() {
 					]
 					mutable_app.game.active_color = .red
 					mutable_app.game.selected_card = 0
+					mutable_app.game.spawn_confetti(400, 260, 45)
+					mutable_app.game.spawn_shockwave(400, 260, Color{ r: 235, g: 45, b: 55 })
+					mutable_app.game.spawn_floating_text(400, 195, '★ MATCH RED 7! YOUR TURN ★', Color{ r: 255, g: 220, b: 50 }, 1)
 					draw_uno_game(sw_rend, &mutable_app.game)
 					sdl.save_bmp(surface, 'screenshots/uno.bmp'.str)
 					sdl.destroy_renderer(sw_rend)

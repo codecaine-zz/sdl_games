@@ -75,6 +75,10 @@ fn (app &App) run() {
 					]
 					mutable_app.game.state = .round_over
 					mutable_app.game.celebration = 'BLACKJACK 21!! PAYS 3:2 ($250)'
+					mutable_app.game.floating_texts.clear()
+					mutable_app.game.spawn_confetti(400, 320, 50)
+					mutable_app.game.spawn_shockwave(400, 320, Color{ r: 255, g: 215, b: 0 })
+					mutable_app.game.spawn_floating_text(400, 295, '★ NATURAL BLACKJACK! +$250 ★', Color{ r: 255, g: 230, b: 50 }, 1)
 					draw_blackjack_game(sw_rend, &mutable_app.game)
 					sdl.save_bmp(surface, 'screenshots/blackjack.bmp'.str)
 					sdl.destroy_renderer(sw_rend)

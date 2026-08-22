@@ -80,20 +80,73 @@ fn test_giant_fish_trigger() {
 	assert ge.fish.x == 300.0
 }
 
-fn test_balloon_trip_mode() {
+fn test_ledge_fall_gravity() {
+	platforms := [
+		Platform{x: 100.0, y: 300.0, w: 100.0, h: 20.0},
+	]
+	// Standing on platform
+	mut m := MotionState{
+		x:           150.0
+		y:           300.0 - 18.0 // Center of character (h=36)
+		vx:          0
+		vy:          0
+		is_grounded: true
+	}
+	// Verify supported
+	assert update_platforms_collision(mut m, 28.0, 36.0, platforms) == true
+	assert m.is_grounded == true
+
+	// Walk off the right edge (x past 200 + char_w/2)
+	m.x = 220.0
+	assert update_platforms_collision(mut m, 28.0, 36.0, platforms) == false
+	assert m.is_grounded == false
+
+	// Update motion - gravity MUST accelerate downward
+	update_motion(mut m, 0.05, 800.0)
+	assert m.vy > 0.0
+	assert m.y > (300.0 - 18.0)
+}
+
+fn test_defeat_pumping_enemy_by_running_into_them() {
 	mut ge := new_game_engine()
 	sm := new_sound_manager()
-	ge.start_game(.balloon_trip)
+	ge.start_game(.mode_a_1p)
 
-	assert ge.mode == .balloon_trip
-	assert ge.trip_balloons.len > 0
+	// Both player and enemy on same platform level
+	ge.players[0].motion.x = 200.0
+	ge.players[0].motion.y = 282.0
+	ge.enemies[0].motion.x = 210.0
+	ge.enemies[0].motion.y = 282.0
+	ge.enemies[0].state = .pumping
+	ge.enemies[0].active = true
 
-	// Player collects trip balloon
-	ge.players[0].motion.x = ge.trip_balloons[0].x - ge.trip_scroll_x
-	ge.players[0].motion.y = ge.trip_balloons[0].y
+	ge.check_balloon_collisions(&sm)
 
-	ge.update_balloon_trip_mode(0.016, false, false, false, &sm)
-
-	assert ge.trip_balloons[0].collected == true
+	assert ge.enemies[0].active == false
 	assert ge.score > 0
+}
+
+fn test_player_zero_balloons_instant_death() {
+	mut ge := new_game_engine()
+	sm := new_sound_manager()
+	ge.start_game(.mode_a_1p)
+
+	initial_lives := ge.players[0].lives
+	ge.players[0].balloons = 1
+	ge.players[0].invincibility = 0
+	ge.players[0].motion.x = 200.0
+	ge.players[0].motion.y = 200.0
+
+	// Position enemy directly above player to pop last balloon
+	ge.enemies[0].motion.x = 200.0
+	ge.enemies[0].motion.y = 180.0
+	ge.enemies[0].state = .flying
+	ge.enemies[0].active = true
+
+	ge.check_balloon_collisions(&sm)
+
+	// Player should immediately lose 1 life and respawn with 2 balloons
+	assert ge.players[0].lives == initial_lives - 1
+	assert ge.players[0].balloons == 2
+	assert ge.players[0].state == .flying
 }

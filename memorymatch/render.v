@@ -4,24 +4,34 @@ import math
 import sdl
 
 pub fn render_memory_match(renderer &sdl.Renderer, game &MemoryGame, screen_w int, screen_h int, hover_idx int) {
+	// Screen shake calculation
+	mut shake_x := 0
+	mut shake_y := 0
+	if game.shake_timer > 0.0 && game.shake_intensity > 0.0 {
+		decay := game.shake_timer / 0.45
+		s := game.shake_intensity * decay
+		shake_x = int(math.sin(game.anim_timer * 45.0) * s)
+		shake_y = int(math.cos(game.anim_timer * 40.0) * s)
+	}
+
 	// 1. Background: Deep royal navy with subtle ambient vignette
-	sdl.set_render_draw_color(renderer, 15, 20, 34, 255)
+	sdl.set_render_draw_color(renderer, 12, 16, 28, 255)
 	sdl.render_clear(renderer)
 
-	// Background grid lines
-	sdl.set_render_draw_color(renderer, 24, 30, 50, 255)
-	for y := 60; y < screen_h; y += 40 {
+	// Luxury grid background with ambient dots
+	sdl.set_render_draw_color(renderer, 20, 26, 44, 255)
+	for y := 60; y < screen_h; y += 32 {
 		sdl.render_draw_line(renderer, 0, y, screen_w, y)
 	}
-	for x := 0; x < screen_w; x += 40 {
+	for x := 0; x < screen_w; x += 32 {
 		sdl.render_draw_line(renderer, x, 60, x, screen_h)
 	}
 
 	// 2. Top Header HUD
 	hud_h := 54
-	sdl.set_render_draw_color(renderer, 12, 16, 28, 255)
+	sdl.set_render_draw_color(renderer, 10, 14, 24, 250)
 	sdl.render_fill_rect(renderer, &sdl.Rect{x: 0, y: 0, w: screen_w, h: hud_h})
-	sdl.set_render_draw_color(renderer, 45, 60, 100, 255)
+	sdl.set_render_draw_color(renderer, 215, 175, 45, 255)
 	sdl.render_draw_line(renderer, 0, hud_h, screen_w, hud_h)
 
 	draw_text(renderer, 20, 18, 'MEMORY MATCH', 2, Color{r: 255, g: 215, b: 0})
@@ -50,8 +60,8 @@ pub fn render_memory_match(renderer &sdl.Renderer, game &MemoryGame, screen_w in
 
 	total_grid_w := game.cols * (card_w + 12) - 12
 	total_grid_h := game.rows * (card_h + 12) - 12
-	start_x := (screen_w - total_grid_w) / 2
-	start_y := board_y + (avail_h - total_grid_h) / 2
+	start_x := (screen_w - total_grid_w) / 2 + shake_x
+	start_y := board_y + (avail_h - total_grid_h) / 2 + shake_y
 
 	for row in 0 .. game.rows {
 		for col in 0 .. game.cols {
@@ -73,47 +83,99 @@ pub fn render_memory_match(renderer &sdl.Renderer, game &MemoryGame, screen_w in
 		}
 	}
 
-	// 4. Footer Controls Hint
+	// 4. Special Effects (Shockwaves, Particles, Floating Badges)
+	draw_special_effects(renderer, shake_x, shake_y, game)
+
+	// 5. Footer Controls Hint
 	draw_text_centered(renderer, screen_w / 2, screen_h - 22, '[LEFT CLICK] FLIP CARD  [G] GRID MODE  [R] NEW GAME  [S] SOUND', 1, Color{r: 160, g: 180, b: 220})
 
-	// 5. Victory Modal Overlay
+	// 6. Victory Modal Overlay
 	if game.state == .game_won {
-		sdl.set_render_draw_color(renderer, 0, 0, 0, 190)
-		sdl.render_fill_rect(renderer, &sdl.Rect{x: 0, y: 0, w: screen_w, h: screen_h})
-
-		mw := 500
-		mh := 280
-		mx := (screen_w - mw) / 2
-		my := (screen_h - mh) / 2
-		m_rect := sdl.Rect{x: mx, y: my, w: mw, h: mh}
-
-		sdl.set_render_draw_color(renderer, 20, 26, 48, 255)
-		sdl.render_fill_rect(renderer, &m_rect)
-		sdl.set_render_draw_color(renderer, 70, 120, 240, 255)
-		sdl.render_draw_rect(renderer, &m_rect)
-
-		draw_text_centered(renderer, screen_w / 2, my + 24, 'GRID CLEARED!', 3, Color{r: 255, g: 215, b: 0})
-
-		// Render Star Rating
-		for s in 0 .. 3 {
-			star_x := screen_w / 2 - 40 + s * 40
-			star_col := if s < game.stars { Color{r: 255, g: 215, b: 0} } else { Color{r: 60, g: 65, b: 80} }
-			draw_star_icon(renderer, star_x, my + 80, 14, star_col)
-		}
-
-		draw_text_centered(renderer, screen_w / 2, my + 120, 'TOTAL TURNS: ${game.turns}', 2, Color{r: 255, g: 255, b: 255})
-		draw_text_centered(renderer, screen_w / 2, my + 150, 'CLEAR TIME: ${time_str}', 2, Color{r: 100, g: 255, b: 180})
-		draw_text_centered(renderer, screen_w / 2, my + 180, 'MAX COMBO: ${game.max_combo}X', 2, Color{r: 255, g: 200, b: 60})
-
-		draw_text_centered(renderer, screen_w / 2, my + 230, 'PRESS [SPACE] OR [R] TO PLAY AGAIN', 1, Color{r: 140, g: 200, b: 255})
+		draw_victory_modal(renderer, game, screen_w, screen_h, time_str)
 	}
 
 	sdl.render_present(renderer)
 }
 
+fn draw_special_effects(renderer &sdl.Renderer, sx int, sy int, g &MemoryGame) {
+	for sw in g.shockwaves {
+		alpha := u8(255.0 * (1.0 - sw.life / sw.max_life))
+		c := Color{ r: sw.color.r, g: sw.color.g, b: sw.color.b, a: alpha }
+		draw_circle_ring(renderer, int(sw.cx) + sx, int(sw.cy) + sy, int(sw.radius), int(sw.thickness), c)
+	}
+
+	for p in g.particles {
+		alpha := u8(255.0 * (1.0 - p.life / p.max_life))
+		col := Color{ r: p.color.r, g: p.color.g, b: p.color.b, a: alpha }
+		px := int(p.x) + sx
+		py := int(p.y) + sy
+		sz := int(p.size)
+
+		if p.shape_type == 0 {
+			sdl.set_render_draw_color(renderer, col.r, col.g, col.b, col.a)
+			sdl.render_draw_line(renderer, px, py, px + int(p.vx * 0.04), py + int(p.vy * 0.04))
+			fill_circ(renderer, px, py, sz)
+		} else if p.shape_type == 2 {
+			c_rect := sdl.Rect{ x: px - sz, y: py - sz / 2, w: sz * 2, h: sz }
+			sdl.set_render_draw_color(renderer, col.r, col.g, col.b, col.a)
+			sdl.render_fill_rect(renderer, &c_rect)
+		} else {
+			fill_circ(renderer, px, py, sz)
+		}
+	}
+
+	for ft in g.floating_texts {
+		alpha := u8(255.0 * (1.0 - ft.life / ft.max_life))
+		col := Color{ r: ft.color.r, g: ft.color.g, b: ft.color.b, a: alpha }
+		tx := int(ft.x) + sx
+		ty := int(ft.y) + sy
+
+		draw_status_pill(renderer, tx, ty, ft.text, Color{ r: 10, g: 15, b: 25 }, col)
+	}
+}
+
+fn draw_status_pill(renderer &sdl.Renderer, cx int, cy int, text string, bg_col Color, txt_col Color) {
+	tw := text.len * 8 + 18
+	pill := sdl.Rect{ x: cx - tw / 2, y: cy - 9, w: tw, h: 18 }
+	sdl.set_render_draw_color(renderer, bg_col.r, bg_col.g, bg_col.b, 240)
+	sdl.render_fill_rect(renderer, &pill)
+	sdl.set_render_draw_color(renderer, txt_col.r, txt_col.g, txt_col.b, 255)
+	sdl.render_draw_rect(renderer, &pill)
+	draw_text_centered(renderer, cx, cy - 4, text, 1, txt_col)
+}
+
+fn draw_victory_modal(renderer &sdl.Renderer, game &MemoryGame, screen_w int, screen_h int, time_str string) {
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 190)
+	sdl.render_fill_rect(renderer, &sdl.Rect{x: 0, y: 0, w: screen_w, h: screen_h})
+
+	mw := 500
+	mh := 280
+	mx := (screen_w - mw) / 2
+	my := (screen_h - mh) / 2
+	m_rect := sdl.Rect{x: mx, y: my, w: mw, h: mh}
+
+	sdl.set_render_draw_color(renderer, 20, 26, 48, 255)
+	sdl.render_fill_rect(renderer, &m_rect)
+	sdl.set_render_draw_color(renderer, 255, 215, 45, 255)
+	sdl.render_draw_rect(renderer, &m_rect)
+
+	draw_text_centered(renderer, screen_w / 2, my + 24, '★ GRID CLEARED! ★', 3, Color{r: 255, g: 215, b: 0})
+
+	// Render Star Rating
+	for s in 0 .. 3 {
+		star_x := screen_w / 2 - 40 + s * 40
+		star_col := if s < game.stars { Color{r: 255, g: 215, b: 0} } else { Color{r: 60, g: 65, b: 80} }
+		draw_star_icon(renderer, star_x, my + 80, 14, star_col)
+	}
+
+	draw_text_centered(renderer, screen_w / 2, my + 120, 'TOTAL TURNS: ${game.turns}', 2, Color{r: 255, g: 255, b: 255})
+	draw_text_centered(renderer, screen_w / 2, my + 150, 'CLEAR TIME: ${time_str}', 2, Color{r: 100, g: 255, b: 180})
+	draw_text_centered(renderer, screen_w / 2, my + 180, 'MAX COMBO: ${game.max_combo}X', 2, Color{r: 255, g: 200, b: 60})
+
+	draw_text_centered(renderer, screen_w / 2, my + 230, 'PRESS [SPACE] OR [R] TO PLAY AGAIN', 1, Color{r: 140, g: 200, b: 255})
+}
+
 fn draw_card_3d(renderer &sdl.Renderer, card &Card, cx int, cy int, w int, h int, is_hover bool) {
-	// 3D horizontal perspective cosine scaling
-	// flip_progress: 0.0 (back) to 1.0 (front)
 	angle := card.flip_progress * math.pi
 	scale_x := math.abs(math.cos(angle))
 	is_front := math.cos(angle) < 0.0 || card.flip_progress >= 0.5
@@ -122,13 +184,18 @@ fn draw_card_3d(renderer &sdl.Renderer, card &Card, cx int, cy int, w int, h int
 	offset_x := (w - cur_w) / 2
 	rx := cx + offset_x
 
+	// Drop shadow
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 110)
+	shadow := sdl.Rect{x: rx + 2, y: cy + 3, w: cur_w, h: h}
+	sdl.render_fill_rect(renderer, &shadow)
+
 	card_rect := sdl.Rect{x: rx, y: cy, w: cur_w, h: h}
 
 	if card.is_matched {
-		// Matched card: Soft golden halo translucent card
-		sdl.set_render_draw_color(renderer, 24, 38, 55, 255)
+		// Matched card: Soft cyan glow tile
+		sdl.set_render_draw_color(renderer, 22, 36, 52, 255)
 		sdl.render_fill_rect(renderer, &card_rect)
-		sdl.set_render_draw_color(renderer, 80, 200, 120, 255)
+		sdl.set_render_draw_color(renderer, 80, 220, 140, 255)
 		sdl.render_draw_rect(renderer, &card_rect)
 		if cur_w > 20 {
 			draw_card_icon(renderer, card.icon, rx + cur_w / 2, cy + h / 2, cur_w)
@@ -138,42 +205,56 @@ fn draw_card_3d(renderer &sdl.Renderer, card &Card, cx int, cy int, w int, h int
 
 	if is_front {
 		// Front of card (Ivory / Platinum tile with glowing icon)
-		sdl.set_render_draw_color(renderer, 235, 240, 250, 255)
+		sdl.set_render_draw_color(renderer, 252, 250, 244, 255)
 		sdl.render_fill_rect(renderer, &card_rect)
 
-		// Border & Bevel
-		sdl.set_render_draw_color(renderer, 160, 175, 205, 255)
+		// Border & Inner Inlay
+		sdl.set_render_draw_color(renderer, 35, 38, 45, 255)
 		sdl.render_draw_rect(renderer, &card_rect)
 
-		inner_rect := sdl.Rect{x: rx + 4, y: cy + 4, w: cur_w - 8, h: h - 8}
-		sdl.set_render_draw_color(renderer, 215, 225, 240, 255)
-		sdl.render_draw_rect(renderer, &inner_rect)
+		if cur_w > 12 {
+			inner_rect := sdl.Rect{x: rx + 3, y: cy + 3, w: cur_w - 6, h: h - 6}
+			sdl.set_render_draw_color(renderer, 220, 205, 175, 255)
+			sdl.render_draw_rect(renderer, &inner_rect)
+		}
 
 		if cur_w > 20 {
 			draw_card_icon(renderer, card.icon, rx + cur_w / 2, cy + h / 2, cur_w)
 		}
 	} else {
-		// Back of card (Deep sapphire metallic with gold circuit pattern)
-		base_b := if is_hover { 75 } else { 55 }
-		sdl.set_render_draw_color(renderer, 25, 38, u8(base_b), 255)
+		// Back of card (Deep sapphire metallic with gold diamond lattice)
+		sdl.set_render_draw_color(renderer, 20, 32, 58, 255)
 		sdl.render_fill_rect(renderer, &card_rect)
 
-		border_col := if is_hover { Color{r: 255, g: 215, b: 0} } else { Color{r: 50, g: 80, b: 140} }
+		border_col := if is_hover { Color{r: 255, g: 220, b: 50} } else { Color{r: 215, g: 175, b: 45} }
 		sdl.set_render_draw_color(renderer, border_col.r, border_col.g, border_col.b, 255)
 		sdl.render_draw_rect(renderer, &card_rect)
 
-		// Inner diamond geometric pattern on card back
-		if cur_w > 24 {
+		if cur_w > 20 {
+			inner := sdl.Rect{x: rx + 3, y: cy + 3, w: cur_w - 6, h: h - 6}
+			sdl.set_render_draw_color(renderer, 30, 48, 85, 255)
+			sdl.render_fill_rect(renderer, &inner)
+
 			mid_x := rx + cur_w / 2
 			mid_y := cy + h / 2
-			dw := cur_w / 3
-			dh := h / 4
 
-			sdl.set_render_draw_color(renderer, 220, 180, 50, 200)
-			sdl.render_draw_line(renderer, mid_x, mid_y - dh, mid_x + dw, mid_y)
-			sdl.render_draw_line(renderer, mid_x + dw, mid_y, mid_x, mid_y + dh)
-			sdl.render_draw_line(renderer, mid_x, mid_y + dh, mid_x - dw, mid_y)
-			sdl.render_draw_line(renderer, mid_x - dw, mid_y, mid_x, mid_y - dh)
+			// Gold Star Medallion Center
+			draw_star_icon(renderer, mid_x, mid_y, 8, Color{ r: 245, g: 205, b: 40 })
+			draw_circle_ring(renderer, mid_x, mid_y, 11, 1, Color{ r: 255, g: 255, b: 255, a: 140 })
+		}
+	}
+}
+
+fn draw_circle_ring(renderer &sdl.Renderer, cx int, cy int, r int, thickness int, c Color) {
+	sdl.set_render_draw_color(renderer, c.r, c.g, c.b, c.a)
+	r_outer := r + thickness / 2
+	r_inner := r - thickness / 2
+	for dy := -r_outer; dy <= r_outer; dy++ {
+		for dx := -r_outer; dx <= r_outer; dx++ {
+			d2 := dx * dx + dy * dy
+			if d2 <= r_outer * r_outer && d2 >= r_inner * r_inner {
+				sdl.render_draw_point(renderer, cx + dx, cy + dy)
+			}
 		}
 	}
 }

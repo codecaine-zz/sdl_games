@@ -50,24 +50,32 @@ fn (sm &SoundManager) clear_audio() {
 	}
 }
 
+fn (sm &SoundManager) play_pcm(pcm []i16) {
+	if !sm.sound_enabled || sm.dev == 0 || pcm.len == 0 {
+		return
+	}
+	sdl.queue_audio(sm.dev, pcm.data, u32(pcm.len * 2))
+}
+
 fn (sm &SoundManager) play_laser_sound() {
 	if !sm.sound_enabled || sm.dev == 0 {
 		return
 	}
 	sample_rate := 44100
-	duration_ms := 60
+	duration_ms := 65
 	num_samples := (sample_rate * duration_ms) / 1000
 	mut pcm := []i16{len: num_samples}
+	attack_samples := sample_rate * 2 / 1000
 
 	for i in 0 .. num_samples {
 		t := f64(i) / f64(sample_rate)
-		freq := 900.0 - (700.0 * (f64(i) / f64(num_samples)))
-		env := math.exp(-25.0 * t)
-		val := math.sin(2.0 * math.pi * freq * t) * env * 20000.0
-		pcm[i] = i16(val)
+		freq := 950.0 - (750.0 * (f64(i) / f64(num_samples)))
+		env := math.exp(-22.0 * t)
+		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+		harm := math.sin(2.0 * math.pi * freq * t) + 0.3 * math.sin(4.0 * math.pi * freq * t)
+		pcm[i] = i16(harm * env * attack * 20000.0)
 	}
-
-	sdl.queue_audio(sm.dev, pcm.data, u32(num_samples * 2))
+	sm.play_pcm(pcm)
 }
 
 fn (sm &SoundManager) play_plasma_sound() {
@@ -75,20 +83,20 @@ fn (sm &SoundManager) play_plasma_sound() {
 		return
 	}
 	sample_rate := 44100
-	duration_ms := 100
+	duration_ms := 90
 	num_samples := (sample_rate * duration_ms) / 1000
 	mut pcm := []i16{len: num_samples}
+	attack_samples := sample_rate * 2 / 1000
 
 	for i in 0 .. num_samples {
 		t := f64(i) / f64(sample_rate)
-		freq := 1200.0 - (900.0 * (f64(i) / f64(num_samples)))
-		sq := if math.sin(2.0 * math.pi * freq * t) > 0.0 { 1.0 } else { -1.0 }
-		env := math.exp(-15.0 * t)
-		val := sq * env * 18000.0
-		pcm[i] = i16(val)
+		freq := 1300.0 - (1000.0 * (f64(i) / f64(num_samples)))
+		env := math.exp(-16.0 * t)
+		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+		harm := math.sin(2.0 * math.pi * freq * t) + 0.4 * math.sin(4.0 * math.pi * freq * t)
+		pcm[i] = i16(harm * env * attack * 22000.0)
 	}
-
-	sdl.queue_audio(sm.dev, pcm.data, u32(num_samples * 2))
+	sm.play_pcm(pcm)
 }
 
 fn (sm &SoundManager) play_explosion_sound(size int) {
@@ -96,20 +104,23 @@ fn (sm &SoundManager) play_explosion_sound(size int) {
 		return
 	}
 	sample_rate := 44100
-	duration_ms := if size == 3 { 350 } else if size == 2 { 220 } else { 150 }
+	duration_ms := if size == 3 { 380 } else if size == 2 { 240 } else { 160 }
 	num_samples := (sample_rate * duration_ms) / 1000
 	mut pcm := []i16{len: num_samples}
+	attack_samples := sample_rate * 2 / 1000
 
 	for i in 0 .. num_samples {
 		t := f64(i) / f64(sample_rate)
 		noise := (rand.f64() * 2.0) - 1.0
-		decay := if size == 3 { 8.0 } else if size == 2 { 14.0 } else { 20.0 }
+		sub_freq := if size == 3 { 90.0 } else { 130.0 }
+		sub := math.sin(2.0 * math.pi * (sub_freq - 50.0 * (f64(i) / f64(num_samples))) * t)
+		decay := if size == 3 { 7.0 } else if size == 2 { 12.0 } else { 18.0 }
 		env := math.exp(-decay * t)
-		val := noise * env * 22000.0
+		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+		val := (noise * 0.65 + sub * 0.35) * env * attack * 24000.0
 		pcm[i] = i16(val)
 	}
-
-	sdl.queue_audio(sm.dev, pcm.data, u32(num_samples * 2))
+	sm.play_pcm(pcm)
 }
 
 fn (sm &SoundManager) play_powerup_sound() {
@@ -117,23 +128,26 @@ fn (sm &SoundManager) play_powerup_sound() {
 		return
 	}
 	sample_rate := 44100
-	duration_ms := 180
-	num_samples := (sample_rate * duration_ms) / 1000
-	mut pcm := []i16{len: num_samples}
-
 	notes := [440.0, 554.37, 659.25, 880.0]
-	samples_per_note := num_samples / notes.len
+	note_dur := 45
+	num_samples := (sample_rate * note_dur * notes.len) / 1000
+	mut pcm := []i16{len: num_samples}
+	samples_per_note := (sample_rate * note_dur) / 1000
+	attack_samples := sample_rate * 2 / 1000
 
-	for i in 0 .. num_samples {
-		note_idx := math.min(i / samples_per_note, notes.len - 1)
-		freq := notes[note_idx]
-		t := f64(i % samples_per_note) / f64(sample_rate)
-		env := math.exp(-12.0 * t)
-		val := math.sin(2.0 * math.pi * freq * t) * env * 20000.0
-		pcm[i] = i16(val)
+	for note_idx, freq in notes {
+		start_sample := note_idx * samples_per_note
+		for i in 0 .. samples_per_note {
+			sample_idx := start_sample + i
+			if sample_idx >= num_samples { break }
+			t := f64(i) / f64(sample_rate)
+			env := math.exp(-12.0 * t)
+			attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+			harm := math.sin(2.0 * math.pi * freq * t) + 0.3 * math.sin(4.0 * math.pi * freq * t)
+			pcm[sample_idx] = i16(harm * env * attack * 20000.0)
+		}
 	}
-
-	sdl.queue_audio(sm.dev, pcm.data, u32(num_samples * 2))
+	sm.play_pcm(pcm)
 }
 
 fn (sm &SoundManager) play_emp_sound() {
@@ -141,19 +155,20 @@ fn (sm &SoundManager) play_emp_sound() {
 		return
 	}
 	sample_rate := 44100
-	duration_ms := 400
+	duration_ms := 380
 	num_samples := (sample_rate * duration_ms) / 1000
 	mut pcm := []i16{len: num_samples}
+	attack_samples := sample_rate * 2 / 1000
 
 	for i in 0 .. num_samples {
 		t := f64(i) / f64(sample_rate)
-		freq := 1500.0 * math.exp(-6.0 * t) + 80.0
+		freq := 1600.0 * math.exp(-6.0 * t) + 80.0
 		noise := (rand.f64() * 2.0) - 1.0
-		val := (math.sin(2.0 * math.pi * freq * t) * 0.7 + noise * 0.3) * math.exp(-4.0 * t) * 24000.0
-		pcm[i] = i16(val)
+		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+		harm := (math.sin(2.0 * math.pi * freq * t) * 0.7 + noise * 0.3)
+		pcm[i] = i16(harm * math.exp(-4.0 * t) * attack * 24000.0)
 	}
-
-	sdl.queue_audio(sm.dev, pcm.data, u32(num_samples * 2))
+	sm.play_pcm(pcm)
 }
 
 fn (sm &SoundManager) play_warp_sound() {
@@ -161,19 +176,20 @@ fn (sm &SoundManager) play_warp_sound() {
 		return
 	}
 	sample_rate := 44100
-	duration_ms := 250
+	duration_ms := 240
 	num_samples := (sample_rate * duration_ms) / 1000
 	mut pcm := []i16{len: num_samples}
+	attack_samples := sample_rate * 4 / 1000
 
 	for i in 0 .. num_samples {
 		t := f64(i) / f64(sample_rate)
 		freq := 200.0 + (1600.0 * math.sin(math.pi * f64(i) / f64(num_samples)))
 		env := math.sin(math.pi * f64(i) / f64(num_samples))
-		val := math.sin(2.0 * math.pi * freq * t) * env * 20000.0
+		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+		val := math.sin(2.0 * math.pi * freq * t) * env * attack * 20000.0
 		pcm[i] = i16(val)
 	}
-
-	sdl.queue_audio(sm.dev, pcm.data, u32(num_samples * 2))
+	sm.play_pcm(pcm)
 }
 
 fn (sm &SoundManager) play_shield_sound() {
@@ -184,14 +200,15 @@ fn (sm &SoundManager) play_shield_sound() {
 	duration_ms := 120
 	num_samples := (sample_rate * duration_ms) / 1000
 	mut pcm := []i16{len: num_samples}
+	attack_samples := sample_rate * 2 / 1000
 
 	for i in 0 .. num_samples {
 		t := f64(i) / f64(sample_rate)
-		freq := 220.0 + math.sin(60.0 * t) * 50.0
+		freq := 240.0 + math.sin(60.0 * t) * 60.0
 		env := math.exp(-15.0 * t)
-		val := math.sin(2.0 * math.pi * freq * t) * env * 18000.0
-		pcm[i] = i16(val)
+		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
+		harm := math.sin(2.0 * math.pi * freq * t) + 0.3 * math.sin(4.0 * math.pi * freq * t)
+		pcm[i] = i16(harm * env * attack * 18000.0)
 	}
-
-	sdl.queue_audio(sm.dev, pcm.data, u32(num_samples * 2))
+	sm.play_pcm(pcm)
 }

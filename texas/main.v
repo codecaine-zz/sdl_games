@@ -75,6 +75,9 @@ fn (app &App) run() {
 					]
 					mutable_app.game.stage = .round_over
 					mutable_app.game.celebration = 'YOU (P1) WINS $380 WITH ROYAL FLUSH!'
+					mutable_app.game.spawn_confetti(400, 240, 50)
+					mutable_app.game.spawn_shockwave(400, 240, Color{ r: 255, g: 215, b: 0 })
+					mutable_app.game.spawn_floating_text(400, 310, '★ ROYAL FLUSH! +$380 ★', Color{ r: 255, g: 220, b: 50 }, 1)
 					draw_texas_game(sw_rend, &mutable_app.game)
 					sdl.save_bmp(surface, 'screenshots/texas.bmp'.str)
 					sdl.destroy_renderer(sw_rend)

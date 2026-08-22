@@ -54,17 +54,26 @@ fn render_galaga_game(renderer &sdl.Renderer, mut g GalagaGame) {
 		}
 	}
 
-	// 6. Draw Bullets
+	// 6. Draw Bullets with glowing laser corona
 	for b in g.player_bullets {
 		if !b.active { continue }
-		sdl.set_render_draw_color(renderer, 255, 255, 100, 255)
+		// Yellow-orange photon aura
+		sdl.set_render_draw_color(renderer, 255, 180, 40, 130)
+		glow := sdl.Rect{ x: int(b.x) - 4, y: int(b.y) - 8, w: 8, h: 16 }
+		sdl.render_fill_rect(renderer, &glow)
+
+		sdl.set_render_draw_color(renderer, 255, 255, 200, 255)
 		rect := sdl.Rect{ x: int(b.x) - 2, y: int(b.y) - 6, w: 4, h: 12 }
 		sdl.render_fill_rect(renderer, &rect)
 	}
 
 	for eb in g.enemy_bullets {
 		if !eb.active { continue }
-		sdl.set_render_draw_color(renderer, 255, 50, 50, 255)
+		sdl.set_render_draw_color(renderer, 255, 30, 30, 120)
+		glow := sdl.Rect{ x: int(eb.x) - 3, y: int(eb.y) - 5, w: 6, h: 10 }
+		sdl.render_fill_rect(renderer, &glow)
+
+		sdl.set_render_draw_color(renderer, 255, 180, 180, 255)
 		rect := sdl.Rect{ x: int(eb.x) - 2, y: int(eb.y) - 4, w: 4, h: 8 }
 		sdl.render_fill_rect(renderer, &rect)
 	}
@@ -139,10 +148,16 @@ fn draw_player_ship(renderer &sdl.Renderer, x f32, y f32, mini bool, color Color
 	cockpit := sdl.Rect{ x: px - int(2.0 * scale), y: py - int(4.0 * scale), w: int(5.0 * scale), h: int(7.0 * scale) }
 	sdl.render_fill_rect(renderer, &cockpit)
 
-	// Cyan Thruster Flame if full size
+	// Dynamic Cyan & Orange Thruster Flame if full size
 	if !mini {
-		sdl.set_render_draw_color(renderer, 0, 240, 255, 220)
-		thrust := sdl.Rect{ x: px - 2, y: py + 9, w: 5, h: 6 }
+		ticks := sdl.get_ticks()
+		f_height := 6 + int(ticks % 5)
+		sdl.set_render_draw_color(renderer, 255, 140, 30, 200)
+		outer_flame := sdl.Rect{ x: px - 3, y: py + 8, w: 7, h: f_height + 2 }
+		sdl.render_fill_rect(renderer, &outer_flame)
+
+		sdl.set_render_draw_color(renderer, 0, 240, 255, 240)
+		thrust := sdl.Rect{ x: px - 2, y: py + 8, w: 5, h: f_height }
 		sdl.render_fill_rect(renderer, &thrust)
 	}
 }

@@ -4,16 +4,30 @@ import math
 import sdl
 
 fn draw_texas_game(renderer &sdl.Renderer, g &TexasGame) {
-	// Deep Casino Floor Carpet
-	draw_casino_room_background(renderer)
+	// Screen shake calculation
+	mut shake_x := 0
+	mut shake_y := 0
+	if g.shake_timer > 0.0 && g.shake_intensity > 0.0 {
+		decay := g.shake_timer / 0.45
+		s := g.shake_intensity * decay
+		shake_x = int(math.sin(g.anim_timer * 45.0) * s)
+		shake_y = int(math.cos(g.anim_timer * 40.0) * s)
+	}
 
-	draw_poker_table(renderer, g)
-	draw_community_cards(renderer, g)
-	draw_player_seats(renderer, g)
-	draw_control_panel(renderer, g)
+	// Deep Walnut outer floor
+	sdl.set_render_draw_color(renderer, 14, 16, 24, 255)
+	sdl.render_clear(renderer)
+
+	draw_casino_room_background(renderer)
+	draw_poker_table(renderer, shake_x, shake_y, g)
+	draw_community_cards(renderer, shake_x, shake_y, g)
+	draw_player_seats(renderer, shake_x, shake_y, g)
+	draw_flying_cards(renderer, shake_x, shake_y, g)
+	draw_special_effects(renderer, shake_x, shake_y, g)
+	draw_control_panel(renderer, shake_x, shake_y, g)
 
 	if g.celebration != '' {
-		draw_celebration_banner(renderer, g)
+		draw_celebration_banner(renderer, shake_x, shake_y, g)
 	}
 }
 
@@ -21,24 +35,32 @@ fn draw_casino_room_background(renderer &sdl.Renderer) {
 	// Deep navy casino floor with carpet diamond motifs
 	for y := 0; y < 600; y += 4 {
 		shade := u8(10 + (y * 8) / 600)
-		sdl.set_render_draw_color(renderer, shade + 2, shade, shade + 10, 255)
+		sdl.set_render_draw_color(renderer, shade + 2, shade, shade + 12, 255)
 		rect := sdl.Rect{ x: 0, y: y, w: 800, h: 4 }
 		sdl.render_fill_rect(renderer, &rect)
 	}
+
+	// Outer polished mahogany border
+	for i := 0; i < 6; i++ {
+		shade := u8(36 + i * 4)
+		sdl.set_render_draw_color(renderer, shade, shade / 2, shade / 4, 255)
+		rect := sdl.Rect{ x: i, y: i, w: 800 - i * 2, h: 600 - i * 2 }
+		sdl.render_draw_rect(renderer, &rect)
+	}
 }
 
-fn draw_poker_table(renderer &sdl.Renderer, g &TexasGame) {
-	rx := 50
-	ry := 50
-	rw := 700
-	rh := 460
+fn draw_poker_table(renderer &sdl.Renderer, sx int, sy int, g &TexasGame) {
+	rx := 45 + sx
+	ry := 45 + sy
+	rw := 710
+	rh := 470
 
-	// 1. Outer Padded Armrest (Dark Stitched Mahogany Leather)
+	// 1. Padded Mahogany Leather Armrest
 	sdl.set_render_draw_color(renderer, 48, 22, 14, 255)
 	rail := sdl.Rect{ x: rx, y: ry, w: rw, h: rh }
 	sdl.render_fill_rect(renderer, &rail)
 
-	// Gold Inlay Rail Trim
+	// Gold Inlay Rail Trim & Corner Rivets
 	sdl.set_render_draw_color(renderer, 215, 175, 45, 255)
 	sdl.render_draw_rect(renderer, &rail)
 
@@ -46,44 +68,41 @@ fn draw_poker_table(renderer &sdl.Renderer, g &TexasGame) {
 	inner_rail := sdl.Rect{ x: rx + 4, y: ry + 4, w: rw - 8, h: rh - 8 }
 	sdl.render_draw_rect(renderer, &inner_rail)
 
-	// 2. Tournament Wool Baize Felt (Emerald Green with Center Spotlight Vignette)
+	// 2. Tournament Wool Baize Felt (Emerald Green with Center Spotlight)
 	fx := rx + 16
 	fy := ry + 16
 	fw := rw - 32
 	fh := rh - 32
 
-	for y := 0; y < fh; y += 4 {
-		norm_y := f64(y) / f64(fh) - 0.5
-		vignette := math.max(0.0, 1.0 - (norm_y * norm_y * 2.0))
+	for y := 0; y < fh; y += 3 {
+		norm_y := f64(y - fh / 2) / f64(fh / 2)
+		vignette := math.max(0.0, 1.0 - (norm_y * norm_y * 1.3))
 
-		r := u8(12.0 + vignette * 8.0)
-		gr := u8(65.0 + vignette * 30.0)
-		b := u8(35.0 + vignette * 18.0)
+		r := u8(10.0 + vignette * 8.0)
+		gr := u8(55.0 + vignette * 28.0)
+		b := u8(28.0 + vignette * 16.0)
 
 		sdl.set_render_draw_color(renderer, r, gr, b, 255)
-		strip := sdl.Rect{ x: fx, y: fy + y, w: fw, h: 4 }
+		strip := sdl.Rect{ x: fx, y: fy + y, w: fw, h: 3 }
 		sdl.render_fill_rect(renderer, &strip)
 	}
 
 	// Inner Felt Betting Line Ring
-	sdl.set_render_draw_color(renderer, 230, 190, 50, 110)
-	bet_line := sdl.Rect{ x: fx + 50, y: fy + 35, w: fw - 100, h: fh - 70 }
+	sdl.set_render_draw_color(renderer, 230, 190, 50, 120)
+	bet_line := sdl.Rect{ x: fx + 40, y: fy + 30, w: fw - 80, h: fh - 60 }
 	sdl.render_draw_rect(renderer, &bet_line)
 
-	// Felt Logo & Pot Display
-	draw_text_centered(renderer, 400, 185, '★ TEXAS HOLD\'EM NO-LIMIT ★', 1, Color{ r: 240, g: 215, b: 60 })
-
 	// Main Pot Golden Chip Box
-	draw_pot_display(renderer, 400, 215, g.pot)
+	draw_pot_display(renderer, 400 + sx, 205 + sy, g.pot)
 }
 
 fn draw_pot_display(renderer &sdl.Renderer, cx int, cy int, pot int) {
-	pot_w := 180
+	pot_w := 190
 	pot_h := 24
 	px := cx - pot_w / 2
 	py := cy - pot_h / 2
 
-	sdl.set_render_draw_color(renderer, 10, 28, 16, 220)
+	sdl.set_render_draw_color(renderer, 10, 28, 16, 230)
 	box := sdl.Rect{ x: px, y: py, w: pot_w, h: pot_h }
 	sdl.render_fill_rect(renderer, &box)
 
@@ -91,17 +110,17 @@ fn draw_pot_display(renderer &sdl.Renderer, cx int, cy int, pot int) {
 	sdl.render_draw_rect(renderer, &box)
 
 	// Gold chip icon
-	draw_filled_circle(renderer, px + 14, cy, 7, Color{ r: 250, g: 210, b: 40 })
-	draw_circle_ring(renderer, px + 14, cy, 5, 1, Color{ r: 255, g: 255, b: 255 })
+	draw_filled_circle(renderer, px + 16, cy, 7, Color{ r: 250, g: 210, b: 40 })
+	draw_circle_ring(renderer, px + 16, cy, 5, 1, Color{ r: 255, g: 255, b: 255 })
 
-	draw_text_centered(renderer, cx + 6, cy - 4, 'POT: $$${pot}', 1, Color{ r: 255, g: 255, b: 255 })
+	draw_text_centered(renderer, cx + 6, cy - 4, '\$${pot} POT', 1, Color{ r: 255, g: 255, b: 255 })
 }
 
-fn draw_community_cards(renderer &sdl.Renderer, g &TexasGame) {
+fn draw_community_cards(renderer &sdl.Renderer, sx int, sy int, g &TexasGame) {
 	card_w := 54
-	card_h := 78
-	cy := 245
-	start_x := 400 - (5 * 62 - 8) / 2
+	card_h := 76
+	cy := 236 + sy
+	start_x := 400 + sx - (5 * 62 - 8) / 2
 
 	for i := 0; i < 5; i++ {
 		cx := start_x + i * 62
@@ -121,33 +140,33 @@ fn draw_community_cards(renderer &sdl.Renderer, g &TexasGame) {
 	}
 }
 
-fn draw_player_seats(renderer &sdl.Renderer, g &TexasGame) {
+fn draw_player_seats(renderer &sdl.Renderer, sx int, sy int, g &TexasGame) {
 	// 0: Bottom (Human), 1: Left, 2: Top, 3: Right
 	seat_pos := [
-		[400, 420],
-		[130, 260],
-		[400, 100],
-		[670, 260],
+		[400 + sx, 428 + sy],
+		[125 + sx, 255 + sy],
+		[400 + sx, 76 + sy],
+		[675 + sx, 255 + sy],
 	]
 
 	for i, p in g.players {
-		sx := seat_pos[i][0]
-		sy := seat_pos[i][1]
+		px := seat_pos[i][0]
+		py := seat_pos[i][1]
 		is_turn := i == g.current_turn_idx && g.stage != .showdown && g.stage != .round_over
 		is_dealer := i == g.dealer_idx
 
-		draw_player_pod(renderer, sx, sy, p, is_turn, is_dealer, g.stage == .showdown || g.stage == .round_over)
+		draw_player_pod(renderer, px, py, p, is_turn, is_dealer, g.stage == .showdown || g.stage == .round_over)
 	}
 }
 
 fn draw_player_pod(renderer &sdl.Renderer, cx int, cy int, p PokerPlayer, is_turn bool, is_dealer bool, is_showdown bool) {
-	w := 148
-	h := 80
+	w := 154
+	h := 76
 	x := cx - w / 2
 	y := cy - h / 2
 
 	// Pod Background with 3D Bevel
-	bg_col := if is_turn { Color{ r: 28, g: 45, b: 72 } } else { Color{ r: 16, g: 20, b: 30 } }
+	bg_col := if is_turn { Color{ r: 25, g: 45, b: 75 } } else { Color{ r: 16, g: 20, b: 30 } }
 	sdl.set_render_draw_color(renderer, bg_col.r, bg_col.g, bg_col.b, 245)
 	pod := sdl.Rect{ x: x, y: y, w: w, h: h }
 	sdl.render_fill_rect(renderer, &pod)
@@ -159,20 +178,20 @@ fn draw_player_pod(renderer &sdl.Renderer, cx int, cy int, p PokerPlayer, is_tur
 	// Name & Chip Count
 	name_col := if p.is_folded { Color{ r: 110, g: 110, b: 110 } } else { Color{ r: 255, g: 255, b: 255 } }
 	draw_text_centered(renderer, cx, y + 6, p.name, 1, name_col)
-	draw_text_centered(renderer, cx, y + 18, '$$${p.chips}', 1, Color{ r: 255, g: 215, b: 50 })
+	draw_text_centered(renderer, cx, y + 18, '\$${p.chips}', 1, Color{ r: 255, g: 215, b: 50 })
 
 	// Action status badge
 	if p.last_action != '' {
-		draw_text_centered(renderer, cx, y + 30, p.last_action, 1, Color{ r: 80, g: 220, b: 255 })
+		draw_status_pill(renderer, cx, y + 32, p.last_action, Color{ r: 20, g: 30, b: 45 }, Color{ r: 80, g: 220, b: 255 })
 	}
 
 	// Hole Cards
 	card_w := 34
-	card_h := 48
+	card_h := 46
 	if p.hole_cards.len == 2 {
 		c1_x := cx - card_w - 2
 		c2_x := cx + 2
-		cards_y := y + 44
+		cards_y := y + 42
 
 		if !p.is_ai || is_showdown {
 			draw_poker_card(renderer, c1_x, cards_y, card_w, card_h, p.hole_cards[0])
@@ -194,25 +213,93 @@ fn draw_player_pod(renderer &sdl.Renderer, cx int, cy int, p PokerPlayer, is_tur
 }
 
 // -------------------------------------------------------------
-// 16-Bit Poker Playing Card Renderer
+// Flying Cards, VFX, and Particles
+// -------------------------------------------------------------
+
+fn draw_flying_cards(renderer &sdl.Renderer, sx int, sy int, g &TexasGame) {
+	card_w := 56
+	card_h := 80
+	for fc in g.flying_cards {
+		fx := int(fc.x) + sx
+		fy := int(fc.y) + sy
+
+		if fc.is_face_up {
+			flip_factor := math.abs(math.cos(fc.flip_progress * math.pi))
+			cur_w := int(f64(card_w) * (0.2 + flip_factor * 0.8))
+			cur_x := fx + (card_w - cur_w) / 2
+			draw_poker_card(renderer, cur_x, fy, cur_w, card_h, fc.card)
+		} else {
+			draw_poker_card_back(renderer, fx, fy, card_w, card_h)
+		}
+	}
+}
+
+fn draw_special_effects(renderer &sdl.Renderer, sx int, sy int, g &TexasGame) {
+	for sw in g.shockwaves {
+		alpha := u8(255.0 * (1.0 - sw.life / sw.max_life))
+		c := Color{ r: sw.color.r, g: sw.color.g, b: sw.color.b, a: alpha }
+		draw_circle_ring(renderer, int(sw.cx) + sx, int(sw.cy) + sy, int(sw.radius), int(sw.thickness), c)
+	}
+
+	for p in g.particles {
+		alpha := u8(255.0 * (1.0 - p.life / p.max_life))
+		col := Color{ r: p.color.r, g: p.color.g, b: p.color.b, a: alpha }
+		px := int(p.x) + sx
+		py := int(p.y) + sy
+		sz := int(p.size)
+
+		if p.shape_type == 0 {
+			sdl.set_render_draw_color(renderer, col.r, col.g, col.b, col.a)
+			sdl.render_draw_line(renderer, px, py, px + int(p.vx * 0.04), py + int(p.vy * 0.04))
+			draw_filled_circle(renderer, px, py, sz, col)
+		} else if p.shape_type == 2 {
+			c_rect := sdl.Rect{ x: px - sz, y: py - sz / 2, w: sz * 2, h: sz }
+			sdl.set_render_draw_color(renderer, col.r, col.g, col.b, col.a)
+			sdl.render_fill_rect(renderer, &c_rect)
+		} else {
+			draw_filled_circle(renderer, px, py, sz, col)
+		}
+	}
+
+	for ft in g.floating_texts {
+		alpha := u8(255.0 * (1.0 - ft.life / ft.max_life))
+		col := Color{ r: ft.color.r, g: ft.color.g, b: ft.color.b, a: alpha }
+		tx := int(ft.x) + sx
+		ty := int(ft.y) + sy
+
+		draw_status_pill(renderer, tx, ty, ft.text, Color{ r: 10, g: 15, b: 25 }, col)
+	}
+}
+
+// -------------------------------------------------------------
+// High-Definition Poker Card Graphics
 // -------------------------------------------------------------
 
 fn draw_poker_card(renderer &sdl.Renderer, x int, y int, w int, h int, c Card) {
+	if w <= 4 { return }
+
 	// Drop Shadow
-	sdl.set_render_draw_color(renderer, 0, 0, 0, 100)
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 110)
 	shadow := sdl.Rect{ x: x + 2, y: y + 3, w: w, h: h }
 	sdl.render_fill_rect(renderer, &shadow)
 
 	// Ivory Card Body
 	bg := sdl.Rect{ x: x, y: y, w: w, h: h }
-	sdl.set_render_draw_color(renderer, 252, 250, 245, 255)
+	sdl.set_render_draw_color(renderer, 252, 250, 244, 255)
 	sdl.render_fill_rect(renderer, &bg)
 
-	sdl.set_render_draw_color(renderer, 40, 42, 50, 255)
+	sdl.set_render_draw_color(renderer, 35, 38, 45, 255)
 	sdl.render_draw_rect(renderer, &bg)
 
+	// Inner Margin
+	if w > 20 {
+		inner := sdl.Rect{ x: x + 2, y: y + 2, w: w - 4, h: h - 4 }
+		sdl.set_render_draw_color(renderer, 220, 205, 175, 255)
+		sdl.render_draw_rect(renderer, &inner)
+	}
+
 	is_red := c.suit == .hearts || c.suit == .diamonds
-	suit_col := if is_red { Color{ r: 215, g: 30, b: 40 } } else { Color{ r: 24, g: 26, b: 32 } }
+	suit_col := if is_red { Color{ r: 215, g: 30, b: 40 } } else { Color{ r: 24, g: 28, b: 36 } }
 
 	rank_s := match c.rank {
 		14 { 'A' }
@@ -226,9 +313,7 @@ fn draw_poker_card(renderer &sdl.Renderer, x int, y int, w int, h int, c Card) {
 	// Corner Index
 	draw_text(renderer, x + 3, y + 3, rank_s, 1, suit_col)
 
-	// Small vs Large card layout
 	if w >= 50 {
-		// Community card size
 		draw_suit_pip(renderer, c.suit, x + 8, y + 16, 4)
 		draw_text(renderer, x + w - 11, y + h - 12, rank_s, 1, suit_col)
 		draw_suit_pip(renderer, c.suit, x + w - 8, y + h - 20, 4)
@@ -237,51 +322,48 @@ fn draw_poker_card(renderer &sdl.Renderer, x int, y int, w int, h int, c Card) {
 		cy := y + h / 2
 
 		if c.rank == 14 {
-			// Ace: Large Centerpiece
-			draw_suit_pip(renderer, c.suit, cx, cy, 12)
-			draw_circle_ring(renderer, cx, cy, 16, 1, Color{ r: suit_col.r, g: suit_col.g, b: suit_col.b, a: 70 })
+			draw_circle_ring(renderer, cx, cy, 18, 1, Color{ r: suit_col.r, g: suit_col.g, b: suit_col.b, a: 60 })
+			draw_suit_pip(renderer, c.suit, cx, cy, 13)
+			draw_circle_ring(renderer, cx, cy, 22, 1, Color{ r: 212, g: 175, b: 55, a: 160 })
 		} else if c.rank >= 11 && c.rank <= 13 {
-			// Court Portrait
-			draw_court_portrait(renderer, x + 12, y + 18, w - 24, h - 36, c.rank, suit_col)
+			draw_court_portrait_hd(renderer, x + 10, y + 16, w - 20, h - 32, c.rank, suit_col)
 		} else {
-			// Center Pip Layout
-			draw_suit_pip(renderer, c.suit, cx, cy, 8)
+			draw_suit_pip(renderer, c.suit, cx, cy, 10)
 		}
 	} else {
-		// Mini Hole Card (34x48)
-		draw_suit_pip(renderer, c.suit, x + w / 2, y + h / 2 + 2, 5)
+		// Hole card mini pip
+		draw_suit_pip(renderer, c.suit, x + w - 10, y + h - 12, 4)
 	}
 }
 
-fn draw_court_portrait(renderer &sdl.Renderer, px int, py int, pw int, ph int, rank int, col Color) {
+fn draw_court_portrait_hd(renderer &sdl.Renderer, px int, py int, pw int, ph int, rank int, col Color) {
+	if pw <= 8 || ph <= 8 { return }
+
 	p_rect := sdl.Rect{ x: px, y: py, w: pw, h: ph }
-	sdl.set_render_draw_color(renderer, 245, 240, 225, 255)
+	sdl.set_render_draw_color(renderer, 248, 244, 230, 255)
 	sdl.render_fill_rect(renderer, &p_rect)
 
-	sdl.set_render_draw_color(renderer, 200, 165, 60, 255)
+	sdl.set_render_draw_color(renderer, 212, 175, 55, 255)
 	sdl.render_draw_rect(renderer, &p_rect)
 
 	cx := px + pw / 2
 	cy := py + ph / 2
 
 	if rank == 11 {
-		// Jack: Helmet
-		sdl.set_render_draw_color(renderer, 140, 150, 170, 255)
-		helm := sdl.Rect{ x: cx - 6, y: cy - 10, w: 12, h: 10 }
+		helm := sdl.Rect{ x: cx - 8, y: cy - 12, w: 16, h: 10 }
+		sdl.set_render_draw_color(renderer, 150, 160, 180, 255)
 		sdl.render_fill_rect(renderer, &helm)
-		draw_text_centered(renderer, cx, cy + 8, 'J', 1, col)
+		draw_text_centered(renderer, cx, cy + 6, 'J', 1, col)
 	} else if rank == 12 {
-		// Queen: Crown
-		sdl.set_render_draw_color(renderer, 245, 205, 40, 255)
-		crown := sdl.Rect{ x: cx - 8, y: cy - 12, w: 16, h: 6 }
-		sdl.render_fill_rect(renderer, &crown)
-		draw_text_centered(renderer, cx, cy + 8, 'Q', 1, col)
+		tiara := sdl.Rect{ x: cx - 10, y: cy - 14, w: 20, h: 6 }
+		sdl.set_render_draw_color(renderer, 245, 210, 45, 255)
+		sdl.render_fill_rect(renderer, &tiara)
+		draw_text_centered(renderer, cx, cy + 6, 'Q', 1, col)
 	} else if rank == 13 {
-		// King: Imperial Crown
+		crown := sdl.Rect{ x: cx - 12, y: cy - 16, w: 24, h: 8 }
 		sdl.set_render_draw_color(renderer, 245, 205, 40, 255)
-		k_crown := sdl.Rect{ x: cx - 10, y: cy - 13, w: 20, h: 7 }
-		sdl.render_fill_rect(renderer, &k_crown)
-		draw_text_centered(renderer, cx, cy + 8, 'K', 1, col)
+		sdl.render_fill_rect(renderer, &crown)
+		draw_text_centered(renderer, cx, cy + 6, 'K', 1, col)
 	}
 }
 
@@ -310,33 +392,33 @@ fn draw_suit_pip(renderer &sdl.Renderer, suit CardSuit, cx int, cy int, size int
 		.diamonds {
 			sdl.set_render_draw_color(renderer, 215, 30, 40, 255)
 			for dy := -size; dy <= size; dy++ {
-				span := int(f64(size - int(math.abs(f64(dy)))) * 0.8)
+				span := int(f64(size - int(math.abs(f64(dy)))) * 0.85)
 				for dx := -span; dx <= span; dx++ {
 					sdl.render_draw_point(renderer, cx + dx, cy + dy)
 				}
 			}
 		}
 		.clubs {
-			sdl.set_render_draw_color(renderer, 24, 26, 32, 255)
+			sdl.set_render_draw_color(renderer, 24, 28, 36, 255)
 			r_lobe := size / 2
-			draw_filled_circle(renderer, cx, cy - r_lobe, r_lobe, Color{ r: 24, g: 26, b: 32 })
-			draw_filled_circle(renderer, cx - r_lobe, cy + r_lobe / 2, r_lobe, Color{ r: 24, g: 26, b: 32 })
-			draw_filled_circle(renderer, cx + r_lobe, cy + r_lobe / 2, r_lobe, Color{ r: 24, g: 26, b: 32 })
+			draw_filled_circle(renderer, cx, cy - r_lobe, r_lobe, Color{ r: 24, g: 28, b: 36 })
+			draw_filled_circle(renderer, cx - r_lobe, cy + r_lobe / 2, r_lobe, Color{ r: 24, g: 28, b: 36 })
+			draw_filled_circle(renderer, cx + r_lobe, cy + r_lobe / 2, r_lobe, Color{ r: 24, g: 28, b: 36 })
 			stem := sdl.Rect{ x: cx - 1, y: cy + r_lobe / 2, w: 3, h: size - r_lobe / 2 + 1 }
 			sdl.render_fill_rect(renderer, &stem)
 		}
 		.spades {
-			sdl.set_render_draw_color(renderer, 24, 26, 32, 255)
+			sdl.set_render_draw_color(renderer, 24, 28, 36, 255)
 			for dy := -size; dy <= size / 2; dy++ {
-				mut span := int(f64(dy + size) * 0.7)
+				mut span := int(f64(dy + size) * 0.75)
 				if span > size { span = size }
 				for dx := -span; dx <= span; dx++ {
 					sdl.render_draw_point(renderer, cx + dx, cy + dy)
 				}
 			}
 			r_lobe := size / 2
-			draw_filled_circle(renderer, cx - r_lobe / 2, cy + r_lobe / 2, r_lobe, Color{ r: 24, g: 26, b: 32 })
-			draw_filled_circle(renderer, cx + r_lobe / 2, cy + r_lobe / 2, r_lobe, Color{ r: 24, g: 26, b: 32 })
+			draw_filled_circle(renderer, cx - r_lobe / 2, cy + r_lobe / 2, r_lobe, Color{ r: 24, g: 28, b: 36 })
+			draw_filled_circle(renderer, cx + r_lobe / 2, cy + r_lobe / 2, r_lobe, Color{ r: 24, g: 28, b: 36 })
 			stem := sdl.Rect{ x: cx - 1, y: cy + r_lobe / 2, w: 3, h: size - r_lobe / 2 + 2 }
 			sdl.render_fill_rect(renderer, &stem)
 		}
@@ -344,8 +426,8 @@ fn draw_suit_pip(renderer &sdl.Renderer, suit CardSuit, cx int, cy int, size int
 }
 
 fn draw_poker_card_back(renderer &sdl.Renderer, x int, y int, w int, h int) {
-	// Drop Shadow
-	sdl.set_render_draw_color(renderer, 0, 0, 0, 90)
+	// Shadow
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 100)
 	shadow := sdl.Rect{ x: x + 2, y: y + 3, w: w, h: h }
 	sdl.render_fill_rect(renderer, &shadow)
 
@@ -370,8 +452,18 @@ fn draw_poker_card_back(renderer &sdl.Renderer, x int, y int, w int, h int) {
 	}
 }
 
-fn draw_control_panel(renderer &sdl.Renderer, g &TexasGame) {
-	bar_rect := sdl.Rect{ x: 20, y: 562, w: 760, h: 32 }
+fn draw_status_pill(renderer &sdl.Renderer, cx int, cy int, text string, bg_col Color, txt_col Color) {
+	tw := text.len * 8 + 18
+	pill := sdl.Rect{ x: cx - tw / 2, y: cy - 9, w: tw, h: 18 }
+	sdl.set_render_draw_color(renderer, bg_col.r, bg_col.g, bg_col.b, 240)
+	sdl.render_fill_rect(renderer, &pill)
+	sdl.set_render_draw_color(renderer, txt_col.r, txt_col.g, txt_col.b, 255)
+	sdl.render_draw_rect(renderer, &pill)
+	draw_text_centered(renderer, cx, cy - 4, text, 1, txt_col)
+}
+
+fn draw_control_panel(renderer &sdl.Renderer, sx int, sy int, g &TexasGame) {
+	bar_rect := sdl.Rect{ x: 20 + sx, y: 562 + sy, w: 760, h: 32 }
 	sdl.set_render_draw_color(renderer, 10, 15, 25, 245)
 	sdl.render_fill_rect(renderer, &bar_rect)
 	sdl.set_render_draw_color(renderer, 220, 180, 50, 255)
@@ -391,14 +483,14 @@ fn draw_control_panel(renderer &sdl.Renderer, g &TexasGame) {
 		'OPPONENT IS THINKING... | [M] SOUND'
 	}
 
-	draw_text_centered(renderer, 400, 572, prompt_str, 1, Color{ r: 255, g: 235, b: 120 })
+	draw_text_centered(renderer, 400 + sx, 572 + sy, prompt_str, 1, Color{ r: 255, g: 235, b: 120 })
 }
 
-fn draw_celebration_banner(renderer &sdl.Renderer, g &TexasGame) {
+fn draw_celebration_banner(renderer &sdl.Renderer, sx int, sy int, g &TexasGame) {
 	box_w := 580
-	box_h := 50
-	bx := (800 - box_w) / 2
-	by := 160
+	box_h := 36
+	bx := (800 - box_w) / 2 + sx
+	by := 158 + sy
 
 	sdl.set_render_draw_color(renderer, 12, 18, 30, 250)
 	b_rect := sdl.Rect{ x: bx, y: by, w: box_w, h: box_h }
@@ -407,7 +499,7 @@ fn draw_celebration_banner(renderer &sdl.Renderer, g &TexasGame) {
 	sdl.set_render_draw_color(renderer, 255, 215, 50, 255)
 	sdl.render_draw_rect(renderer, &b_rect)
 
-	draw_text_centered(renderer, 400, by + 18, g.celebration, 1, Color{ r: 255, g: 230, b: 70 })
+	draw_text_centered(renderer, 400 + sx, by + 12, g.celebration, 1, Color{ r: 255, g: 230, b: 70 })
 }
 
 fn draw_filled_circle(renderer &sdl.Renderer, cx int, cy int, r int, c Color) {

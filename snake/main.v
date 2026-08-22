@@ -1,6 +1,7 @@
 module main
 
 import math
+import os
 import rand
 import sdl
 
@@ -29,6 +30,7 @@ mut:
 	game          SnakeGame
 	sound_mgr     SoundManager
 	particles     []Particle
+	shake_timer   f64
 	last_step_t   u32
 	step_interval u32 = 110 // milliseconds per snake step
 	mouse_x       int
@@ -184,6 +186,13 @@ fn (mut app App) spawn_eat_particles(pt Point, is_gold bool) {
 }
 
 fn (mut app App) update_particles() {
+	if app.shake_timer > 0 {
+		app.shake_timer -= 0.016
+		if app.shake_timer < 0 {
+			app.shake_timer = 0
+		}
+	}
+
 	for i := app.particles.len - 1; i >= 0; i-- {
 		app.particles[i].x += app.particles[i].vx
 		app.particles[i].y += app.particles[i].vy
@@ -201,13 +210,19 @@ fn (mut app App) update_game_step() {
 
 		ate_reg, ate_gold := app.game.step()
 		if ate_reg {
-			app.sound_mgr.play_eat_sound()
+			app.sound_mgr.play_eat_sound(app.game.body.len)
 			app.spawn_eat_particles(app.game.body[0], false)
+			app.shake_timer = 0.08
 		} else if ate_gold {
 			app.sound_mgr.play_gold_sound()
 			app.spawn_eat_particles(app.game.body[0], true)
+			app.shake_timer = 0.16
 		} else if app.game.game_over {
 			app.sound_mgr.play_die_sound()
+			app.shake_timer = 0.35
+			if app.game.body.len > 0 {
+				app.spawn_eat_particles(app.game.body[0], false)
+			}
 		}
 	}
 }
@@ -325,10 +340,18 @@ fn (mut app App) render() {
 	draw_glass_card(app.renderer, win_width / 2 - 170, 50, 340, 42, badge_border)
 	draw_text_centered(app.renderer, win_width / 2, 62, status_text, 2, status_color)
 
-	// Draw Main Grid Matrix Area
+	// Main Grid Matrix Area with Screen Shake
+	mut gx := grid_start_x
+	mut gy := grid_start_y
+	if app.shake_timer > 0 {
+		shake_mag := app.shake_timer * 18.0
+		gx += int((rand.f64() * 2.0 - 1.0) * shake_mag)
+		gy += int((rand.f64() * 2.0 - 1.0) * shake_mag)
+	}
+
 	grid_rect := sdl.Rect{
-		x: grid_start_x
-		y: grid_start_y
+		x: gx
+		y: gy
 		w: grid_cols * cell_px
 		h: grid_rows * cell_px
 	}
@@ -342,45 +365,55 @@ fn (mut app App) render() {
 	// Subtle Grid Lines
 	sdl.set_render_draw_color(app.renderer, 25, 33, 54, 255)
 	for c in 1 .. grid_cols {
-		gx := grid_start_x + c * cell_px
-		sdl.render_draw_line(app.renderer, gx, grid_start_y, gx, grid_start_y + grid_rows * cell_px)
+		line_x := gx + c * cell_px
+		sdl.render_draw_line(app.renderer, line_x, gy, line_x, gy + grid_rows * cell_px)
 	}
 	for r in 1 .. grid_rows {
-		gy := grid_start_y + r * cell_px
-		sdl.render_draw_line(app.renderer, grid_start_x, gy, grid_start_x + grid_cols * cell_px,
-			gy)
+		line_y := gy + r * cell_px
+		sdl.render_draw_line(app.renderer, gx, line_y, gx + grid_cols * cell_px, line_y)
 	}
 
-	// Draw Regular Food (Glowing Red Apple)
-	fx := grid_start_x + app.game.food.x * cell_px + cell_px / 2
-	fy := grid_start_y + app.game.food.y * cell_px + cell_px / 2
-	draw_filled_circle(app.renderer, fx, fy, cell_px / 2 - 3, Color{ r: 245, g: 45, b: 65 })
-	draw_filled_circle(app.renderer, fx - 3, fy - 3, cell_px / 6, Color{ r: 255, g: 140, b: 150 })
-	draw_circle_outline(app.renderer, fx, fy, cell_px / 2 - 3, 2, Color{ r: 180, g: 15, b: 30 })
+	// Draw Regular Food (Glowing Crimson-Ruby Orb)
+	fx := gx + app.game.food.x * cell_px + cell_px / 2
+	fy := gy + app.game.food.y * cell_px + cell_px / 2
+	ticks := sdl.get_ticks()
+	food_pulse := int(math.sin(f64(ticks) * 0.008) * 2.0)
+	draw_filled_circle(app.renderer, fx, fy, cell_px / 2 - 3 + food_pulse, Color{ r: 245, g: 45, b: 65 })
+	draw_filled_circle(app.renderer, fx - 3, fy - 3, cell_px / 6, Color{ r: 255, g: 160, b: 170 })
+	draw_circle_outline(app.renderer, fx, fy, cell_px / 2 - 3 + food_pulse, 2, Color{ r: 180, g: 15, b: 30 })
 
 	// Draw Golden Star Apple (if active)
 	if app.game.has_gold {
-		gx := grid_start_x + app.game.gold_food.x * cell_px + cell_px / 2
-		gy := grid_start_y + app.game.gold_food.y * cell_px + cell_px / 2
-		ticks := sdl.get_ticks()
-		pulse := int(math.sin(f64(ticks) * 0.01) * 3.0)
-		draw_filled_circle(app.renderer, gx, gy, cell_px / 2 - 2 + pulse, Color{
+		gold_x := gx + app.game.gold_food.x * cell_px + cell_px / 2
+		gold_y := gy + app.game.gold_food.y * cell_px + cell_px / 2
+		gold_pulse := int(math.sin(f64(ticks) * 0.012) * 3.0)
+		draw_filled_circle(app.renderer, gold_x, gold_y, cell_px / 2 - 2 + gold_pulse, Color{
 			r: 255
 			g: 215
 			b: 0
 		})
-		draw_filled_circle(app.renderer, gx - 3, gy - 3, cell_px / 6, Color{ r: 255, g: 255, b: 200 })
-		draw_circle_outline(app.renderer, gx, gy, cell_px / 2 - 1 + pulse, 2, Color{
+		draw_filled_circle(app.renderer, gold_x - 3, gold_y - 3, cell_px / 6, Color{ r: 255, g: 255, b: 200 })
+		draw_circle_outline(app.renderer, gold_x, gold_y, cell_px / 2 - 1 + gold_pulse, 2, Color{
 			r: 255
 			g: 255
 			b: 255
 		})
+
+		// Orbiting golden sparks
+		for spark_i in 0 .. 4 {
+			ang := f64(ticks) * 0.006 + f64(spark_i) * math.pi / 2.0
+			sx := gold_x + int(f64(cell_px / 2 + 3) * math.cos(ang))
+			sy := gold_y + int(f64(cell_px / 2 + 3) * math.sin(ang))
+			sdl.set_render_draw_color(app.renderer, 255, 240, 100, 255)
+			sdl.render_draw_point(app.renderer, sx, sy)
+			sdl.render_draw_point(app.renderer, sx + 1, sy)
+		}
 	}
 
-	// Draw Snake Body & Head
+	// Draw Snake Body & Cyber Head
 	for idx, pt in app.game.body {
-		sx := grid_start_x + pt.x * cell_px + 2
-		sy := grid_start_y + pt.y * cell_px + 2
+		sx := gx + pt.x * cell_px + 2
+		sy := gy + pt.y * cell_px + 2
 		sw := cell_px - 4
 		sh := cell_px - 4
 
@@ -392,23 +425,54 @@ fn (mut app App) render() {
 		}
 
 		if idx == 0 {
-			// Snake Head: Vibrant Neon Cyan
+			// Snake Head: Vibrant Neon Cyan Cyber Visor
 			sdl.set_render_draw_color(app.renderer, 40, 230, 220, 255)
 			sdl.render_fill_rect(app.renderer, &seg_rect)
-			sdl.set_render_draw_color(app.renderer, 150, 255, 250, 255)
+			sdl.set_render_draw_color(app.renderer, 180, 255, 250, 255)
 			sdl.render_draw_rect(app.renderer, &seg_rect)
 
-			// Eyes
-			cx := grid_start_x + pt.x * cell_px + cell_px / 2
-			cy := grid_start_y + pt.y * cell_px + cell_px / 2
-			draw_filled_circle(app.renderer, cx - 4, cy - 4, 3, Color{ r: 15, g: 20, b: 35 })
-			draw_filled_circle(app.renderer, cx + 4, cy - 4, 3, Color{ r: 15, g: 20, b: 35 })
+			// Directional Eyes / Cyber Sensors
+			head_cx := gx + pt.x * cell_px + cell_px / 2
+			head_cy := gy + pt.y * cell_px + cell_px / 2
+			mut eye1_x, mut eye1_y := head_cx - 4, head_cy - 4
+			mut eye2_x, mut eye2_y := head_cx + 4, head_cy - 4
+
+			match app.game.dir {
+				.up {
+					eye1_x, eye1_y = head_cx - 4, head_cy - 5
+					eye2_x, eye2_y = head_cx + 4, head_cy - 5
+				}
+				.down {
+					eye1_x, eye1_y = head_cx - 4, head_cy + 5
+					eye2_x, eye2_y = head_cx + 4, head_cy + 5
+				}
+				.left {
+					eye1_x, eye1_y = head_cx - 5, head_cy - 4
+					eye2_x, eye2_y = head_cx - 5, head_cy + 4
+				}
+				.right {
+					eye1_x, eye1_y = head_cx + 5, head_cy - 4
+					eye2_x, eye2_y = head_cx + 5, head_cy + 4
+				}
+			}
+
+			draw_filled_circle(app.renderer, eye1_x, eye1_y, 3, Color{ r: 15, g: 25, b: 45 })
+			draw_filled_circle(app.renderer, eye2_x, eye2_y, 3, Color{ r: 15, g: 25, b: 45 })
+			draw_filled_circle(app.renderer, eye1_x, eye1_y, 1, Color{ r: 120, g: 255, b: 240 })
+			draw_filled_circle(app.renderer, eye2_x, eye2_y, 1, Color{ r: 120, g: 255, b: 240 })
 		} else {
-			// Snake Body Segments: Gradient Green-Cyan
-			green_val := u8(220 - math.min(120, idx * 6))
-			sdl.set_render_draw_color(app.renderer, 30, green_val, 160, 255)
+			// Snake Body Segments: Gradient Cyber Green-Cyan with central spine glow
+			green_val := u8(220 - math.min(120, idx * 5))
+			blue_val := u8(130 + math.min(90, idx * 4))
+			sdl.set_render_draw_color(app.renderer, 30, green_val, blue_val, 255)
 			sdl.render_fill_rect(app.renderer, &seg_rect)
-			sdl.set_render_draw_color(app.renderer, 15, 120, 90, 255)
+
+			// Glowing spine core
+			sdl.set_render_draw_color(app.renderer, 160, 255, 220, 200)
+			sdl.render_draw_line(app.renderer, sx + sw / 2, sy + 3, sx + sw / 2, sy + sh - 3)
+			sdl.render_draw_line(app.renderer, sx + 3, sy + sh / 2, sx + sw - 3, sy + sh / 2)
+
+			sdl.set_render_draw_color(app.renderer, 20, 140, 110, 255)
 			sdl.render_draw_rect(app.renderer, &seg_rect)
 		}
 	}
@@ -494,6 +558,36 @@ fn (mut app App) cleanup() {
 }
 
 fn main() {
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		sdl.init(sdl.init_video)
+		surface := sdl.create_rgb_surface(0, win_width, win_height, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut app := new_app()
+		app.renderer = s_renderer
+		app.game.score = 280
+		app.game.high_score = 450
+		app.game.has_gold = true
+		app.game.gold_food = Point{x: 14, y: 8}
+		// Create a nice winding snake body for the preview
+		app.game.body = [
+			Point{x: 12, y: 8},
+			Point{x: 11, y: 8},
+			Point{x: 10, y: 8},
+			Point{x: 10, y: 9},
+			Point{x: 9, y: 9},
+			Point{x: 8, y: 9},
+			Point{x: 8, y: 10},
+			Point{x: 7, y: 10},
+			Point{x: 6, y: 10},
+		]
+		app.render()
+		sdl.save_bmp(surface, 'screenshots/snake.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		sdl.quit()
+		return
+	}
+
 	mut app := new_app()
 	if !app.init_sdl() {
 		return

@@ -148,9 +148,30 @@ pub fn draw_ufo_saucer(renderer &sdl.Renderer, x int, y int) {
 }
 
 pub fn render_space_invaders(renderer &sdl.Renderer, game &SpaceInvadersGame) {
-	// Deep space dark background
-	sdl.set_render_draw_color(renderer, 10, 10, 15, 255)
+	// Deep space dark background with twinkling starfield
+	sdl.set_render_draw_color(renderer, 8, 10, 18, 255)
 	sdl.render_clear(renderer)
+
+	ticks := sdl.get_ticks()
+
+	// 2-Layer Parallax Animated Starfield
+	for star_i in 0 .. 60 {
+		seed := (star_i * 1234567 + 98765) % 1000000
+		base_x := seed % world_w
+		base_y := (seed / world_w + int(f64(ticks) * (0.015 + f64(star_i % 3) * 0.015))) % (world_h - 50)
+		twinkle := math.sin(f64(ticks) * 0.005 + f64(star_i)) * 0.5 + 0.5
+		star_alpha := u8(80.0 + twinkle * 160.0)
+
+		if star_i % 4 == 0 {
+			// Bright cyan/blue star
+			sdl.set_render_draw_color(renderer, 140, 220, 255, star_alpha)
+			sdl.render_draw_point(renderer, base_x, base_y)
+			sdl.render_draw_point(renderer, base_x + 1, base_y)
+		} else {
+			sdl.set_render_draw_color(renderer, 200, 210, 235, star_alpha)
+			sdl.render_draw_point(renderer, base_x, base_y)
+		}
+	}
 
 	// Top HUD
 	draw_text(renderer, 40, 15, 'SCORE <1>', 2, Color{r: 255, g: 255, b: 255})
@@ -194,7 +215,6 @@ pub fn render_space_invaders(renderer &sdl.Renderer, game &SpaceInvadersGame) {
 
 	// Render Bunker Shields
 	for s in game.shields {
-		sdl.set_render_draw_color(renderer, 50, 220, 90, 255)
 		for row in 0 .. bunker_rows {
 			for col in 0 .. bunker_cols {
 				if s.grid[row][col] {
@@ -204,26 +224,36 @@ pub fn render_space_invaders(renderer &sdl.Renderer, game &SpaceInvadersGame) {
 						w: bunker_block_sz
 						h: bunker_block_sz
 					}
+					// Gradient emerald armor blocks
+					sdl.set_render_draw_color(renderer, 50, u8(200 + col % 3 * 15), 90, 255)
 					sdl.render_fill_rect(renderer, &b_rect)
 				}
 			}
 		}
 	}
 
-	// Render Bullets
+	// Render Bullets with glowing laser corona
 	for b in game.bullets {
 		if !b.alive {
 			continue
 		}
 		if b.is_player {
-			// Red/Orange laser bolt
-			sdl.set_render_draw_color(renderer, 255, 220, 80, 255)
-			b_rect := sdl.Rect{x: int(b.x), y: int(b.y), w: 3, h: 10}
+			// Orange/Red laser core with outer glow
+			sdl.set_render_draw_color(renderer, 255, 100, 30, 140)
+			glow_rect := sdl.Rect{x: int(b.x) - 1, y: int(b.y) - 1, w: 5, h: 14}
+			sdl.render_fill_rect(renderer, &glow_rect)
+
+			sdl.set_render_draw_color(renderer, 255, 240, 160, 255)
+			b_rect := sdl.Rect{x: int(b.x), y: int(b.y), w: 3, h: 12}
 			sdl.render_fill_rect(renderer, &b_rect)
 		} else {
-			// Cyan zigzag alien projectile
-			sdl.set_render_draw_color(renderer, 80, 240, 255, 255)
-			b_rect := sdl.Rect{x: int(b.x), y: int(b.y), w: 3, h: 8}
+			// Cyan zigzag alien projectile with photon aura
+			sdl.set_render_draw_color(renderer, 40, 180, 255, 140)
+			glow_rect := sdl.Rect{x: int(b.x) - 1, y: int(b.y) - 1, w: 5, h: 12}
+			sdl.render_fill_rect(renderer, &glow_rect)
+
+			sdl.set_render_draw_color(renderer, 200, 250, 255, 255)
+			b_rect := sdl.Rect{x: int(b.x), y: int(b.y), w: 3, h: 10}
 			sdl.render_fill_rect(renderer, &b_rect)
 		}
 	}

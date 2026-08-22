@@ -1,6 +1,7 @@
 module main
 
 import math
+import os
 import rand
 import sdl
 
@@ -18,6 +19,8 @@ mut:
 	game        TetrisGame
 	sound_mgr   SoundManager
 	particles   []Particle
+	float_texts []FloatText
+	shake_timer f64
 	last_drop_t u32
 	mouse_x     int
 	mouse_y     int
@@ -169,6 +172,13 @@ fn (mut app App) spawn_line_particles(cleared_lines int) {
 }
 
 fn (mut app App) update_particles() {
+	if app.shake_timer > 0 {
+		app.shake_timer -= 0.016
+		if app.shake_timer < 0 {
+			app.shake_timer = 0
+		}
+	}
+
 	for i := app.particles.len - 1; i >= 0; i-- {
 		app.particles[i].x += app.particles[i].vx
 		app.particles[i].y += app.particles[i].vy
@@ -176,6 +186,65 @@ fn (mut app App) update_particles() {
 		if app.particles[i].life <= 0 {
 			app.particles.delete(i)
 		}
+	}
+
+	for i := app.float_texts.len - 1; i >= 0; i-- {
+		app.float_texts[i].y -= 0.6
+		app.float_texts[i].life -= 0.02
+		if app.float_texts[i].life <= 0 {
+			app.float_texts.delete(i)
+		}
+	}
+}
+
+fn (mut app App) handle_piece_locked(prev_level int) {
+	cleared := app.game.last_cleared
+	cx := f64(matrix_start_x + (grid_cols * cell_px) / 2)
+	cy := f64(matrix_start_y + 220)
+
+	if cleared > 0 {
+		app.spawn_line_particles(cleared)
+		app.sound_mgr.play_clear_sound(cleared)
+
+		match cleared {
+			1 {
+				app.shake_timer = 0.12
+				app.float_texts << FloatText{
+					x: cx, y: cy, text: '+100 SINGLE', life: 1.0, color: Color{r: 255, g: 230, b: 80}, scale: 2
+				}
+			}
+			2 {
+				app.shake_timer = 0.20
+				app.float_texts << FloatText{
+					x: cx, y: cy, text: '+300 DOUBLE!', life: 1.2, color: Color{r: 80, g: 240, b: 140}, scale: 2
+				}
+			}
+			3 {
+				app.shake_timer = 0.28
+				app.float_texts << FloatText{
+					x: cx, y: cy, text: '+500 TRIPLE!!', life: 1.4, color: Color{r: 70, g: 200, b: 255}, scale: 2
+				}
+			}
+			else {
+				app.shake_timer = 0.45
+				app.float_texts << FloatText{
+					x: cx, y: cy, text: '★ +800 TETRIS! ★', life: 1.8, color: Color{r: 255, g: 90, b: 240}, scale: 3
+				}
+			}
+		}
+
+		if app.game.level > prev_level {
+			app.sound_mgr.play_level_up_sound()
+			app.float_texts << FloatText{
+				x: cx, y: cy - 40, text: 'LEVEL UP!', life: 1.6, color: Color{r: 255, g: 215, b: 0}, scale: 2
+			}
+		}
+	} else {
+		app.sound_mgr.play_drop_sound()
+		app.shake_timer = 0.06
+	}
+	if app.game.game_over {
+		app.sound_mgr.play_game_over_sound()
 	}
 }
 
@@ -185,12 +254,10 @@ fn (mut app App) update_game_step() {
 	if now - app.last_drop_t >= delay {
 		app.last_drop_t = now
 
+		prev_level := app.game.level
 		locked := app.game.step_down()
 		if locked {
-			app.sound_mgr.play_drop_sound()
-			if app.game.game_over {
-				app.sound_mgr.play_tetris_sound()
-			}
+			app.handle_piece_locked(prev_level)
 		}
 	}
 }
@@ -347,10 +414,18 @@ fn (mut app App) render() {
 	draw_text_centered(app.renderer, 140, 336, 'STATS', 2, Color{ r: 200, g: 215, b: 240 })
 	draw_text(app.renderer, 55, 380, 'LINES: ${app.game.lines}', 2, Color{ r: 255, g: 255, b: 255 })
 
-	// Main 10x20 Matrix Grid Fill & Frame
+	// Main 10x20 Matrix Grid Fill & Frame with Screen Shake
+	mut mx := matrix_start_x
+	mut my := matrix_start_y
+	if app.shake_timer > 0 {
+		shake_mag := app.shake_timer * 22.0
+		mx += int((rand.f64() * 2.0 - 1.0) * shake_mag)
+		my += int((rand.f64() * 2.0 - 1.0) * shake_mag)
+	}
+
 	matrix_rect := sdl.Rect{
-		x: matrix_start_x
-		y: matrix_start_y
+		x: mx
+		y: my
 		w: grid_cols * cell_px
 		h: grid_rows * cell_px
 	}
@@ -364,13 +439,13 @@ fn (mut app App) render() {
 	// Subtle Grid Background Lines
 	sdl.set_render_draw_color(app.renderer, 25, 33, 54, 255)
 	for c in 1 .. grid_cols {
-		gx := matrix_start_x + c * cell_px
-		sdl.render_draw_line(app.renderer, gx, matrix_start_y, gx, matrix_start_y +
+		gx := mx + c * cell_px
+		sdl.render_draw_line(app.renderer, gx, my, gx, my +
 			grid_rows * cell_px)
 	}
 	for r in 1 .. grid_rows {
-		gy := matrix_start_y + r * cell_px
-		sdl.render_draw_line(app.renderer, matrix_start_x, gy, matrix_start_x + grid_cols * cell_px,
+		gy := my + r * cell_px
+		sdl.render_draw_line(app.renderer, mx, gy, mx + grid_cols * cell_px,
 			gy)
 	}
 
@@ -379,7 +454,7 @@ fn (mut app App) render() {
 		for c in 0 .. grid_cols {
 			k := app.game.grid[r][c]
 			if k != 0 {
-				draw_block(app.renderer, matrix_start_x + c * cell_px, matrix_start_y + r * cell_px,
+				draw_block(app.renderer, mx + c * cell_px, my + r * cell_px,
 					cell_px, k, false)
 			}
 		}
@@ -394,8 +469,8 @@ fn (mut app App) render() {
 			for c in 0 .. size {
 				k := p.matrix[r][c]
 				if k != 0 {
-					bx := matrix_start_x + (p.x + c) * cell_px
-					by := matrix_start_y + (ghost_y + r) * cell_px
+					bx := mx + (p.x + c) * cell_px
+					by := my + (ghost_y + r) * cell_px
 					draw_block(app.renderer, bx, by, cell_px, k, true)
 				}
 			}
@@ -406,8 +481,8 @@ fn (mut app App) render() {
 			for c in 0 .. size {
 				k := p.matrix[r][c]
 				if k != 0 {
-					bx := matrix_start_x + (p.x + c) * cell_px
-					by := matrix_start_y + (p.y + r) * cell_px
+					bx := mx + (p.x + c) * cell_px
+					by := my + (p.y + r) * cell_px
 					draw_block(app.renderer, bx, by, cell_px, k, false)
 				}
 			}
@@ -422,6 +497,11 @@ fn (mut app App) render() {
 			b: p.color.b
 			a: u8(p.life * 255.0)
 		})
+	}
+
+	// Render Floating Reward Texts
+	for ft in app.float_texts {
+		draw_text_centered(app.renderer, int(ft.x), int(ft.y), ft.text, ft.scale, ft.color)
 	}
 
 	// Draw Control Buttons
@@ -462,7 +542,7 @@ fn (mut app App) run() {
 						app.toggle_sound()
 					} else if sym == int(sdl.KeyCode.c) {
 						if app.game.hold() {
-							app.sound_mgr.play_move_sound()
+							app.sound_mgr.play_hold_sound()
 						}
 					} else if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) {
 						if app.game.move_left() {
@@ -483,9 +563,10 @@ fn (mut app App) run() {
 							app.sound_mgr.play_move_sound()
 						}
 					} else if sym == int(sdl.KeyCode.space) {
+						prev_level := app.game.level
 						drop_dist := app.game.hard_drop()
 						if drop_dist > 0 {
-							app.sound_mgr.play_drop_sound()
+							app.handle_piece_locked(prev_level)
 						}
 					} else if sym == int(sdl.KeyCode.escape) {
 						should_close = true
@@ -514,6 +595,32 @@ fn (mut app App) cleanup() {
 }
 
 fn main() {
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		sdl.init(sdl.init_video)
+		surface := sdl.create_rgb_surface(0, win_width, win_height, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut app := new_app()
+		app.renderer = s_renderer
+		app.game.score = 12450
+		app.game.level = 4
+		app.game.lines = 28
+		for c in 0 .. 9 {
+			app.game.grid[19][c] = (c % 7) + 1
+			if c % 2 == 0 {
+				app.game.grid[18][c] = ((c + 2) % 7) + 1
+			}
+			if c % 3 == 0 {
+				app.game.grid[17][c] = ((c + 4) % 7) + 1
+			}
+		}
+		app.render()
+		sdl.save_bmp(surface, 'screenshots/tetris.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		sdl.quit()
+		return
+	}
+
 	mut app := new_app()
 	if !app.init_sdl() {
 		return

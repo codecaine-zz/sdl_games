@@ -1,6 +1,7 @@
 module main
 
 import math
+import os
 import rand
 import sdl
 
@@ -188,6 +189,21 @@ fn (mut app App) update(dt f64) {
 }
 
 fn main() {
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		sdl.init(sdl.init_video)
+		surface := sdl.create_rgb_surface(0, world_w, world_h, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut app := new_app()
+		app.renderer = s_renderer
+		app.game.score = 5400
+		render_asteroids_game(app.renderer, &app.game, app.particles)
+		sdl.save_bmp(surface, 'screenshots/asteroids.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		sdl.quit()
+		return
+	}
+
 	if sdl.init(sdl.init_video | sdl.init_audio) < 0 {
 		eprintln('Failed to initialize SDL')
 		return

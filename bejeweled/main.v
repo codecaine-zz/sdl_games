@@ -75,6 +75,7 @@ mut:
 	hint_p2        Point = Point{r: -1, c: -1}
 	show_hint      bool
 	hint_timer     f64
+	shake_timer    f64
 	game_over      bool
 	btn_reset      Button
 	btn_hint       Button
@@ -251,9 +252,11 @@ fn (mut app App) process_matches() bool {
 
 	if flame_created {
 		app.sound_mgr.play_flame_explosion_sound()
+		app.shake_timer = 0.22
 	}
 	if hypercube_created {
 		app.sound_mgr.play_hypercube_zap_sound()
+		app.shake_timer = 0.28
 	}
 
 	// Clear matched gems (except newly created specials)
@@ -274,6 +277,13 @@ fn (mut app App) process_matches() bool {
 }
 
 fn (mut app App) update(dt f64) {
+	if app.shake_timer > 0 {
+		app.shake_timer -= dt
+		if app.shake_timer < 0 {
+			app.shake_timer = 0
+		}
+	}
+
 	// Update particles
 	for i := app.particles.len - 1; i >= 0; i-- {
 		mut p := unsafe { &app.particles[i] }
@@ -394,92 +404,232 @@ fn (mut app App) update(dt f64) {
 fn draw_gem_shape(renderer &sdl.Renderer, cx int, cy int, size int, kind int, special SpecialType) {
 	color := get_gem_color(kind)
 	r := size / 2
+	ticks := sdl.get_ticks()
+
+	// High & Shadow colors for 3D facets
+	hi_r := u8(math.min(255, int(color.r) + 85))
+	hi_g := u8(math.min(255, int(color.g) + 85))
+	hi_b := u8(math.min(255, int(color.b) + 85))
+
+	sh_r := u8(math.max(0, int(color.r) - 75))
+	sh_g := u8(math.max(0, int(color.g) - 75))
+	sh_b := u8(math.max(0, int(color.b) - 75))
 
 	match kind {
-		1 { // Ruby: Octagon / Diamond Bevel
+		1 { // Ruby: Octagon with 3D Beveled facets
 			pad := r / 3
-			rect := sdl.Rect{x: cx - r + pad, y: cy - r + pad, w: (r - pad) * 2, h: (r - pad) * 2}
+			// Outer dark drop shadow
+			sdl.set_render_draw_color(renderer, sh_r, sh_g, sh_b, 255)
+			rect_shadow := sdl.Rect{x: cx - r + 1, y: cy - r + 1, w: r * 2, h: r * 2}
+			sdl.render_fill_rect(renderer, &rect_shadow)
+
+			// Base fill
+			rect := sdl.Rect{x: cx - r, y: cy - r, w: r * 2, h: r * 2}
 			sdl.set_render_draw_color(renderer, color.r, color.g, color.b, 255)
 			sdl.render_fill_rect(renderer, &rect)
-			// Diamond outer corners
+
+			// 3D Highlight top/left
+			sdl.set_render_draw_color(renderer, hi_r, hi_g, hi_b, 255)
 			sdl.render_draw_line(renderer, cx - r, cy, cx, cy - r)
 			sdl.render_draw_line(renderer, cx, cy - r, cx + r, cy)
+			sdl.render_draw_line(renderer, cx - r + 1, cy, cx, cy - r + 1)
+
+			// 3D Shadow bottom/right
+			sdl.set_render_draw_color(renderer, sh_r, sh_g, sh_b, 255)
 			sdl.render_draw_line(renderer, cx + r, cy, cx, cy + r)
 			sdl.render_draw_line(renderer, cx, cy + r, cx - r, cy)
-		}
-		2 { // Sapphire: Hexagon
+
+			// Raised Center Table Facet
+			inner := sdl.Rect{x: cx - r + pad, y: cy - r + pad, w: (r - pad) * 2, h: (r - pad) * 2}
+			sdl.set_render_draw_color(renderer, hi_r, hi_g, hi_b, 200)
+			sdl.render_fill_rect(renderer, &inner)
 			sdl.set_render_draw_color(renderer, color.r, color.g, color.b, 255)
+			inner_core := sdl.Rect{x: inner.x + 2, y: inner.y + 2, w: inner.w - 4, h: inner.h - 4}
+			sdl.render_fill_rect(renderer, &inner_core)
+		}
+		2 { // Sapphire: Hexagon Brilliant Cut
+			// Base fill with horizontal scanlines
 			for i := -r; i <= r; i++ {
-				w := int(f64(r) * (1.0 - math.abs(f64(i)) / f64(r * 2)))
+				w := int(f64(r) * (1.0 - math.abs(f64(i)) / (f64(r) * 2.2)))
+				shade := if i < 0 { 40 } else { -40 }
+				cr := u8(math.clamp(int(color.r) + shade, 0, 255))
+				cg := u8(math.clamp(int(color.g) + shade, 0, 255))
+				cb := u8(math.clamp(int(color.b) + shade, 0, 255))
+				sdl.set_render_draw_color(renderer, cr, cg, cb, 255)
 				rect := sdl.Rect{x: cx - w, y: cy + i, w: w * 2, h: 1}
 				sdl.render_fill_rect(renderer, &rect)
 			}
+			// Hexagonal inner facet lines
+			sdl.set_render_draw_color(renderer, hi_r, hi_g, hi_b, 230)
+			sdl.render_draw_line(renderer, cx - r / 2, cy - r / 2, cx + r / 2, cy - r / 2)
+			sdl.render_draw_line(renderer, cx - r / 2, cy - r / 2, cx - r / 2, cy + r / 2)
+			sdl.set_render_draw_color(renderer, sh_r, sh_g, sh_b, 230)
+			sdl.render_draw_line(renderer, cx + r / 2, cy - r / 2, cx + r / 2, cy + r / 2)
+			sdl.render_draw_line(renderer, cx - r / 2, cy + r / 2, cx + r / 2, cy + r / 2)
 		}
-		3 { // Emerald: Beveled Square
-			rect := sdl.Rect{x: cx - r + 3, y: cy - r + 3, w: (r - 3) * 2, h: (r - 3) * 2}
+		3 { // Emerald: Classic Step Cut Beveled Square
+			rect := sdl.Rect{x: cx - r, y: cy - r, w: r * 2, h: r * 2}
 			sdl.set_render_draw_color(renderer, color.r, color.g, color.b, 255)
 			sdl.render_fill_rect(renderer, &rect)
-			sdl.set_render_draw_color(renderer, 180, 255, 200, 255)
+
+			// Step 1: Outer Chamfer
+			sdl.set_render_draw_color(renderer, hi_r, hi_g, hi_b, 255)
+			for t in 0 .. 3 {
+				sdl.render_draw_line(renderer, cx - r + t, cy - r + t, cx + r - t, cy - r + t)
+				sdl.render_draw_line(renderer, cx - r + t, cy - r + t, cx - r + t, cy + r - t)
+			}
+			sdl.set_render_draw_color(renderer, sh_r, sh_g, sh_b, 255)
+			for t in 0 .. 3 {
+				sdl.render_draw_line(renderer, cx - r + t, cy + r - t, cx + r - t, cy + r - t)
+				sdl.render_draw_line(renderer, cx + r - t, cy - r + t, cx + r - t, cy + r - t)
+			}
+
+			// Step 2: Inner Emerald Table
 			inner := sdl.Rect{x: cx - r / 2, y: cy - r / 2, w: r, h: r}
+			sdl.set_render_draw_color(renderer, hi_r, hi_g, hi_b, 180)
 			sdl.render_draw_rect(renderer, &inner)
+			sdl.set_render_draw_color(renderer, 160, 255, 200, 240)
+			core := sdl.Rect{x: inner.x + 2, y: inner.y + 2, w: inner.w - 4, h: inner.h - 4}
+			sdl.render_fill_rect(renderer, &core)
 		}
-		4 { // Topaz: Triangle
-			sdl.set_render_draw_color(renderer, color.r, color.g, color.b, 255)
+		4 { // Topaz: Triangular Brilliant Pyramid
 			for y := -r; y <= r; y++ {
 				prog := f64(y + r) / f64(r * 2)
 				w := int(f64(r) * prog)
+				shade := if y < 0 { 50 } else { -30 }
+				cr := u8(math.clamp(int(color.r) + shade, 0, 255))
+				cg := u8(math.clamp(int(color.g) + shade, 0, 255))
+				cb := u8(math.clamp(int(color.b) + shade, 0, 255))
+				sdl.set_render_draw_color(renderer, cr, cg, cb, 255)
 				rect := sdl.Rect{x: cx - w, y: cy + y, w: w * 2, h: 1}
 				sdl.render_fill_rect(renderer, &rect)
 			}
+			// Pyramid facet ridge lines meeting at center
+			sdl.set_render_draw_color(renderer, 255, 255, 200, 240)
+			sdl.render_draw_line(renderer, cx, cy - r, cx, cy + r / 3)
+			sdl.render_draw_line(renderer, cx - r, cy + r, cx, cy + r / 3)
+			sdl.set_render_draw_color(renderer, sh_r, sh_g, sh_b, 240)
+			sdl.render_draw_line(renderer, cx + r, cy + r, cx, cy + r / 3)
 		}
-		5 { // Amethyst: Circle / Star
-			sdl.set_render_draw_color(renderer, color.r, color.g, color.b, 255)
+		5 { // Amethyst: Radiant Circular Jewel
 			for y := -r; y <= r; y++ {
 				norm_y := f64(y) / f64(r)
 				w := int(f64(r) * math.sqrt(math.max(0.0, 1.0 - norm_y * norm_y)))
+				shade := if y < 0 { 40 } else { -40 }
+				cr := u8(math.clamp(int(color.r) + shade, 0, 255))
+				cg := u8(math.clamp(int(color.g) + shade, 0, 255))
+				cb := u8(math.clamp(int(color.b) + shade, 0, 255))
+				sdl.set_render_draw_color(renderer, cr, cg, cb, 255)
 				rect := sdl.Rect{x: cx - w, y: cy + y, w: w * 2, h: 1}
 				sdl.render_fill_rect(renderer, &rect)
 			}
+			// Star-cut facet ring
+			sdl.set_render_draw_color(renderer, hi_r, hi_g, hi_b, 200)
+			for rad_i in 0 .. 8 {
+				ang := f64(rad_i) * math.pi / 4.0
+				x1 := cx + int(f64(r / 3) * math.cos(ang))
+				y1 := cy + int(f64(r / 3) * math.sin(ang))
+				x2 := cx + int(f64(r - 2) * math.cos(ang))
+				y2 := cy + int(f64(r - 2) * math.sin(ang))
+				sdl.render_draw_line(renderer, x1, y1, x2, y2)
+			}
 		}
-		6 { // Diamond: Brilliant Rhombus
-			sdl.set_render_draw_color(renderer, color.r, color.g, color.b, 255)
+		6 { // Diamond: Kite Rhombus Brilliant
 			for y := -r; y <= r; y++ {
 				prog := 1.0 - math.abs(f64(y)) / f64(r)
 				w := int(f64(r) * prog)
+				shade := if y < 0 { 60 } else { -40 }
+				cr := u8(math.clamp(int(color.r) + shade, 0, 255))
+				cg := u8(math.clamp(int(color.g) + shade, 0, 255))
+				cb := u8(math.clamp(int(color.b) + shade, 0, 255))
+				sdl.set_render_draw_color(renderer, cr, cg, cb, 255)
 				rect := sdl.Rect{x: cx - w, y: cy + y, w: w * 2, h: 1}
 				sdl.render_fill_rect(renderer, &rect)
 			}
+			// Diamond cross-facet star
+			sdl.set_render_draw_color(renderer, 255, 255, 255, 240)
+			sdl.render_draw_line(renderer, cx, cy - r, cx, cy + r)
+			sdl.render_draw_line(renderer, cx - r, cy, cx + r, cy)
+			sdl.set_render_draw_color(renderer, 180, 230, 255, 200)
+			inner_d := sdl.Rect{x: cx - r / 3, y: cy - r / 3, w: (r / 3) * 2, h: (r / 3) * 2}
+			sdl.render_draw_rect(renderer, &inner_d)
 		}
-		7 { // Amber: Pentagon
-			rect := sdl.Rect{x: cx - r + 4, y: cy - r / 2, w: (r - 4) * 2, h: r + r / 2}
+		7 { // Amber: Star Pentagon Cut
+			rect := sdl.Rect{x: cx - r + 3, y: cy - r / 2, w: (r - 3) * 2, h: r + r / 2}
 			sdl.set_render_draw_color(renderer, color.r, color.g, color.b, 255)
 			sdl.render_fill_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, hi_r, hi_g, hi_b, 255)
+			sdl.render_draw_line(renderer, cx, cy - r, cx - r, cy)
+			sdl.render_draw_line(renderer, cx, cy - r, cx + r, cy)
+			sdl.set_render_draw_color(renderer, sh_r, sh_g, sh_b, 255)
+			sdl.render_draw_line(renderer, cx - r, cy, cx - r / 2, cy + r)
+			sdl.render_draw_line(renderer, cx + r, cy, cx + r / 2, cy + r)
+			sdl.render_draw_line(renderer, cx - r / 2, cy + r, cx + r / 2, cy + r)
 		}
 		else {}
 	}
 
-	// Facet gloss shine
-	sdl.set_render_draw_color(renderer, 255, 255, 255, 180)
-	shine_rect := sdl.Rect{x: cx - r / 3, y: cy - r / 2, w: r / 3, h: r / 4}
-	if shine_rect.h > 0 && shine_rect.w > 0 {
-		sdl.render_fill_rect(renderer, &shine_rect)
+	// Dynamic Specular Star Glint (sparkles periodically)
+	sparkle := math.sin(f64(ticks) * 0.006 + f64(cx + cy) * 0.05) * 0.5 + 0.5
+	if sparkle > 0.4 {
+		alpha := u8(sparkle * 240.0)
+		sdl.set_render_draw_color(renderer, 255, 255, 255, alpha)
+		gx := cx - r / 3
+		gy := cy - r / 2
+		// 4-point cross starburst glint
+		sdl.render_draw_point(renderer, gx, gy)
+		sdl.render_draw_point(renderer, gx - 1, gy)
+		sdl.render_draw_point(renderer, gx + 1, gy)
+		sdl.render_draw_point(renderer, gx, gy - 1)
+		sdl.render_draw_point(renderer, gx, gy + 1)
+		if sparkle > 0.8 {
+			sdl.render_draw_point(renderer, gx - 2, gy)
+			sdl.render_draw_point(renderer, gx + 2, gy)
+			sdl.render_draw_point(renderer, gx, gy - 2)
+			sdl.render_draw_point(renderer, gx, gy + 2)
+		}
 	}
 
-	// Special Gem Overlays
+	// Special Gem Effects
 	if special == .flame {
-		// Fiery outer glow
-		sdl.set_render_draw_color(renderer, 255, 100, 20, 255)
-		glow := sdl.Rect{x: cx - r - 2, y: cy - r - 2, w: (r + 2) * 2, h: (r + 2) * 2}
-		sdl.render_draw_rect(renderer, &glow)
+		// Multi-layered pulsating flame aura with orbiting embers
+		pulse := math.sin(f64(ticks) * 0.012) * 0.5 + 0.5
+		glow_size := r + 2 + int(pulse * 3.0)
+
+		sdl.set_render_draw_color(renderer, 255, u8(100 + pulse * 100.0), 30, 200)
+		g1 := sdl.Rect{x: cx - glow_size, y: cy - glow_size, w: glow_size * 2, h: glow_size * 2}
+		sdl.render_draw_rect(renderer, &g1)
+
+		sdl.set_render_draw_color(renderer, 255, 220, 60, 240)
+		g2 := sdl.Rect{x: cx - glow_size + 1, y: cy - glow_size + 1, w: (glow_size - 1) * 2, h: (glow_size - 1) * 2}
+		sdl.render_draw_rect(renderer, &g2)
+
+		// Orbiting flame sparks
+		for spark_i in 0 .. 4 {
+			ang := f64(ticks) * 0.008 + f64(spark_i) * math.pi / 2.0
+			sx := cx + int(f64(r + 4) * math.cos(ang))
+			sy := cy + int(f64(r + 4) * math.sin(ang))
+			sdl.set_render_draw_color(renderer, 255, 230, 70, 255)
+			sdl.render_draw_point(renderer, sx, sy)
+			sdl.render_draw_point(renderer, sx + 1, sy)
+		}
 	} else if special == .hypercube {
-		// Rainbow border
-		ticks := sdl.get_ticks()
-		rainbow_r := u8((math.sin(f64(ticks) * 0.005) * 0.5 + 0.5) * 255.0)
-		rainbow_g := u8((math.sin(f64(ticks) * 0.005 + 2.0) * 0.5 + 0.5) * 255.0)
-		rainbow_b := u8((math.sin(f64(ticks) * 0.005 + 4.0) * 0.5 + 0.5) * 255.0)
-		sdl.set_render_draw_color(renderer, rainbow_r, rainbow_g, rainbow_b, 255)
-		cube := sdl.Rect{x: cx - r - 3, y: cy - r - 3, w: (r + 3) * 2, h: (r + 3) * 2}
-		sdl.render_draw_rect(renderer, &cube)
+		// Prismatic Rotating Rainbow Vortex
+		for ring in 0 .. 3 {
+			t_shift := f64(ticks) * 0.006 + f64(ring) * 1.8
+			rr := u8((math.sin(t_shift) * 0.5 + 0.5) * 255.0)
+			rg := u8((math.sin(t_shift + 2.09) * 0.5 + 0.5) * 255.0)
+			rb := u8((math.sin(t_shift + 4.18) * 0.5 + 0.5) * 255.0)
+			sdl.set_render_draw_color(renderer, rr, rg, rb, 255)
+
+			offset := ring * 2
+			cube := sdl.Rect{x: cx - r - 2 + offset, y: cy - r - 2 + offset, w: (r + 2 - offset) * 2, h: (r + 2 - offset) * 2}
+			sdl.render_draw_rect(renderer, &cube)
+		}
+		// Bright center crystal star
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+		sdl.render_draw_line(renderer, cx - 4, cy, cx + 4, cy)
+		sdl.render_draw_line(renderer, cx, cy - 4, cx, cy + 4)
 	}
 }
 
@@ -494,11 +644,20 @@ fn (mut app App) render() {
 	draw_text_centered(renderer, win_width / 2, 25, 'BEJEWELED // GEM MATCH-3', 3, Color{r: 90, g: 190, b: 255})
 	draw_text_centered(renderer, win_width / 2, 65, 'CASCADING GEMS & SPECIAL COMBOS', 2, Color{r: 170, g: 190, b: 230})
 
+	// Screen Shake on Flame / Hypercube explosions
+	mut bx := board_x
+	mut by := board_y
+	if app.shake_timer > 0 {
+		shake_mag := app.shake_timer * 20.0
+		bx += int((rand.f64() * 2.0 - 1.0) * shake_mag)
+		by += int((rand.f64() * 2.0 - 1.0) * shake_mag)
+	}
+
 	// Outer Board Bevel
 	pad := 14
 	board_rect := sdl.Rect{
-		x: board_x - pad
-		y: board_y - pad
+		x: bx - pad
+		y: by - pad
 		w: grid_w + pad * 2
 		h: grid_h + pad * 2
 	}
@@ -511,8 +670,8 @@ fn (mut app App) render() {
 	for r in 0 .. grid_size {
 		for c in 0 .. grid_size {
 			cell_rect := sdl.Rect{
-				x: board_x + c * cell_size
-				y: board_y + r * cell_size
+				x: bx + c * cell_size
+				y: by + r * cell_size
 				w: cell_size
 				h: cell_size
 			}
@@ -529,8 +688,8 @@ fn (mut app App) render() {
 		pulse := u8((math.sin(f64(sdl.get_ticks()) * 0.008) * 0.5 + 0.5) * 150.0 + 105.0)
 		sdl.set_render_draw_color(renderer, pulse, pulse, 60, 255)
 
-		h1 := sdl.Rect{x: board_x + app.hint_p1.c * cell_size + 2, y: board_y + app.hint_p1.r * cell_size + 2, w: cell_size - 4, h: cell_size - 4}
-		h2 := sdl.Rect{x: board_x + app.hint_p2.c * cell_size + 2, y: board_y + app.hint_p2.r * cell_size + 2, w: cell_size - 4, h: cell_size - 4}
+		h1 := sdl.Rect{x: bx + app.hint_p1.c * cell_size + 2, y: by + app.hint_p1.r * cell_size + 2, w: cell_size - 4, h: cell_size - 4}
+		h2 := sdl.Rect{x: bx + app.hint_p2.c * cell_size + 2, y: by + app.hint_p2.r * cell_size + 2, w: cell_size - 4, h: cell_size - 4}
 		sdl.render_draw_rect(renderer, &h1)
 		sdl.render_draw_rect(renderer, &h2)
 	}
@@ -538,8 +697,8 @@ fn (mut app App) render() {
 	// Selected Cell Highlight
 	if app.selected_r >= 0 && app.selected_c >= 0 {
 		sel_rect := sdl.Rect{
-			x: board_x + app.selected_c * cell_size + 2
-			y: board_y + app.selected_r * cell_size + 2
+			x: bx + app.selected_c * cell_size + 2
+			y: by + app.selected_r * cell_size + 2
 			w: cell_size - 4
 			h: cell_size - 4
 		}
@@ -557,8 +716,8 @@ fn (mut app App) render() {
 				continue
 			}
 
-			mut cx := board_x + int(gem.curr_x * f64(cell_size)) + cell_size / 2
-			mut cy := board_y + int(gem.curr_y * f64(cell_size)) + cell_size / 2
+			mut cx := bx + int(gem.curr_x * f64(cell_size)) + cell_size / 2
+			mut cy := by + int(gem.curr_y * f64(cell_size)) + cell_size / 2
 
 			// Handle Swap Interpolation
 			if app.swap_anim.active {
@@ -566,19 +725,19 @@ fn (mut app App) render() {
 					prog := if app.swap_anim.revert { 1.0 - app.swap_anim.progress } else { app.swap_anim.progress }
 					dx := f64(app.swap_anim.c2 - app.swap_anim.c1) * f64(cell_size) * prog
 					dy := f64(app.swap_anim.r2 - app.swap_anim.r1) * f64(cell_size) * prog
-					cx = board_x + c * cell_size + cell_size / 2 + int(dx)
-					cy = board_y + r * cell_size + cell_size / 2 + int(dy)
+					cx = bx + c * cell_size + cell_size / 2 + int(dx)
+					cy = by + r * cell_size + cell_size / 2 + int(dy)
 				} else if r == app.swap_anim.r2 && c == app.swap_anim.c2 {
 					prog := if app.swap_anim.revert { 1.0 - app.swap_anim.progress } else { app.swap_anim.progress }
 					dx := f64(app.swap_anim.c1 - app.swap_anim.c2) * f64(cell_size) * prog
 					dy := f64(app.swap_anim.r1 - app.swap_anim.r2) * f64(cell_size) * prog
-					cx = board_x + c * cell_size + cell_size / 2 + int(dx)
-					cy = board_y + r * cell_size + cell_size / 2 + int(dy)
+					cx = bx + c * cell_size + cell_size / 2 + int(dx)
+					cy = by + r * cell_size + cell_size / 2 + int(dy)
 				}
 			}
 
 			// Don't render above board during refill spawn
-			if cy < board_y {
+			if cy < by {
 				continue
 			}
 

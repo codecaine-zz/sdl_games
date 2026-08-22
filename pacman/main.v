@@ -1,5 +1,6 @@
 module main
 
+import os
 import sdl
 
 struct App {
@@ -13,6 +14,7 @@ mut:
 	btn_pause Button
 	mouse_x   int
 	mouse_y   int
+	siren_timer f64
 }
 
 fn new_app() App {
@@ -221,6 +223,42 @@ fn (mut app App) run() {
 			app.sound_mgr.play_extra_life_sound()
 		}
 
+		// Ambient Ghost Mode Sirens
+		if app.game.status == .playing && !pac_died && !level_win {
+			mut has_eaten := false
+			for g in app.game.ghosts {
+				if g.mode == .eaten {
+					has_eaten = true
+					break
+				}
+			}
+			if has_eaten {
+				app.siren_timer += dt
+				if app.siren_timer >= 0.11 {
+					app.siren_timer = 0
+					app.sound_mgr.play_eyes_siren()
+				}
+			} else if app.game.frightened_timer > 2.0 {
+				// Blue ghosts active
+				app.siren_timer += dt
+				if app.siren_timer >= 0.15 {
+					app.siren_timer = 0
+					app.sound_mgr.play_frightened_siren()
+				}
+			} else if app.game.frightened_timer > 0.0 {
+				// Flashing warning (about to revert to normal)
+				app.siren_timer += dt
+				if app.siren_timer >= 0.085 {
+					app.siren_timer = 0
+					app.sound_mgr.play_frightened_warning_siren()
+				}
+			} else {
+				app.siren_timer = 0
+			}
+		} else {
+			app.siren_timer = 0
+		}
+
 		// Render frame
 		draw_game(app.renderer, app.game, app.mouse_x, app.mouse_y, app.btn_reset, app.btn_sound,
 			app.btn_pause)
@@ -242,6 +280,23 @@ fn (mut app App) cleanup() {
 }
 
 fn main() {
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		sdl.init(sdl.init_video)
+		surface := sdl.create_rgb_surface(0, win_w, win_h, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut app := new_app()
+		app.renderer = s_renderer
+		app.game.score = 3680
+		app.game.frightened_timer = 4.5
+		draw_game(app.renderer, app.game, app.mouse_x, app.mouse_y, app.btn_reset, app.btn_sound,
+			app.btn_pause)
+		sdl.save_bmp(surface, 'screenshots/pacman.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		sdl.quit()
+		return
+	}
+
 	mut app := new_app()
 	if !app.init_sdl() {
 		return

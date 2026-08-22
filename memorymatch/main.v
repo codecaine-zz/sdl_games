@@ -29,7 +29,7 @@ fn main() {
 	}
 	defer { sdl.quit() }
 
-	if os.args.contains('--snap') {
+	if os.args.contains('--snap') || os.getenv('SNAPSHOT') == '1' {
 		surface := sdl.create_rgb_surface(0, win_w, win_h, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
 		if unsafe { surface == nil } { return }
 		defer { sdl.free_surface(surface) }
@@ -44,6 +44,7 @@ fn main() {
 		snap_game.turns = 7
 		snap_game.matches = 3
 		snap_game.timer = 18.4
+		snap_game.combo = 2
 
 		// Uncover a few cards for showcase
 		snap_game.cards[0].is_face_up = true
@@ -59,6 +60,10 @@ fn main() {
 
 		snap_game.cards[9].is_face_up = true
 		snap_game.cards[9].flip_progress = 0.7
+
+		snap_game.spawn_sparks(450, 320, 30, Color{ r: 100, g: 255, b: 180 })
+		snap_game.spawn_shockwave(450, 320, Color{ r: 80, g: 220, b: 255 })
+		snap_game.spawn_floating_text(450, 260, '★ 2X COMBO! MATCH! ★', Color{ r: 255, g: 215, b: 0 }, 1)
 
 		render_memory_match(renderer, &snap_game, win_w, win_h, 6)
 		sdl.save_bmp(surface, 'screenshots/memorymatch.bmp'.str)

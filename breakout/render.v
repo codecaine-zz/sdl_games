@@ -1,5 +1,6 @@
 module main
 
+import math
 import sdl
 
 struct Particle {
@@ -101,48 +102,68 @@ fn render_breakout_game(renderer &sdl.Renderer, game &BreakoutGame, particles []
 		sdl.render_draw_line(renderer, 0, world_h - 5, world_w, world_h - 5)
 	}
 
-	// Render Bricks
+	// Render Bricks with 3D Beveled Jewel & Cracking
 	for b in game.bricks {
 		if !b.alive {
 			continue
 		}
 
-		// Base brick fill
-		draw_rect_filled(renderer, b.x, b.y, b.w, b.h, b.color)
+		color := match b.kind {
+			.tnt { Color{r: 255, g: 60, b: 0} }
+			.steel { Color{r: 160, g: 170, b: 190} }
+			.armored {
+				match b.hp {
+					1 { Color{r: 240, g: 140, b: 40} }
+					2 { Color{r: 255, g: 210, b: 30} }
+					else { Color{r: 140, g: 240, b: 80} }
+				}
+			}
+			.mystery { Color{r: 180, g: 70, b: 255} }
+			else { b.color }
+		}
 
-		// Bevel highlight top/left
-		draw_rect_filled(renderer, b.x, b.y, b.w, 2, Color{r: 255, g: 255, b: 255, a: 120})
-		draw_rect_filled(renderer, b.x, b.y, 2, b.h, Color{r: 255, g: 255, b: 255, a: 120})
+		// Base fill
+		draw_rect_filled(renderer, b.x, b.y, b.w, b.h, color)
 
-		// Bevel shadow bottom/right
-		draw_rect_filled(renderer, b.x, b.y + b.h - 2, b.w, 2, Color{r: 0, g: 0, b: 0, a: 100})
-		draw_rect_filled(renderer, b.x + b.w - 2, b.y, 2, b.h, Color{r: 0, g: 0, b: 0, a: 100})
+		// 3D Top/Left Bevel Highlight
+		hi_r := u8(math.min(255, int(color.r) + 60))
+		hi_g := u8(math.min(255, int(color.g) + 60))
+		hi_b := u8(math.min(255, int(color.b) + 60))
+		sdl.set_render_draw_color(renderer, hi_r, hi_g, hi_b, 255)
+		sdl.render_draw_line(renderer, b.x, b.y, b.x + b.w - 1, b.y)
+		sdl.render_draw_line(renderer, b.x, b.y, b.x, b.y + b.h - 1)
 
-		// Kind overlay labels / cracks
-		if b.kind == .tnt {
-			draw_text_centered(renderer, b.x + b.w / 2, b.y + 4, 'TNT', 1, Color{
+		// 3D Bottom/Right Shadow
+		sh_r := u8(math.max(0, int(color.r) - 60))
+		sh_g := u8(math.max(0, int(color.g) - 60))
+		sh_b := u8(math.max(0, int(color.b) - 60))
+		sdl.set_render_draw_color(renderer, sh_r, sh_g, sh_b, 255)
+		sdl.render_draw_line(renderer, b.x, b.y + b.h - 1, b.x + b.w - 1, b.y + b.h - 1)
+		sdl.render_draw_line(renderer, b.x + b.w - 1, b.y, b.x + b.w - 1, b.y + b.h - 1)
+
+		if b.kind == .steel {
+			// Metal cross hash
+			sdl.set_render_draw_color(renderer, 60, 70, 90, 255)
+			sdl.render_draw_line(renderer, b.x + 4, b.y + 4, b.x + b.w - 4, b.y + b.h - 4)
+			sdl.render_draw_line(renderer, b.x + 4, b.y + b.h - 4, b.x + b.w - 4, b.y + 4)
+		} else if b.kind == .tnt {
+			draw_text_centered(renderer, b.x + b.w / 2, b.y + 3, 'TNT', 1, Color{
+				r: 255
+				g: 240
+				b: 200
+			})
+		} else if b.kind == .mystery {
+			draw_text_centered(renderer, b.x + b.w / 2, b.y + 3, '?', 1, Color{
 				r: 255
 				g: 255
 				b: 255
-			})
-		} else if b.kind == .steel {
-			draw_rect_outline(renderer, b.x + 3, b.y + 3, b.w - 6, b.h - 6, Color{
-				r: 220
-				g: 220
-				b: 240
-			})
-		} else if b.kind == .mystery {
-			draw_text_centered(renderer, b.x + b.w / 2, b.y + 4, '?', 1, Color{
-				r: 0
-				g: 0
-				b: 0
 			})
 		}
 
 		// Cracks for multi-hp bricks
 		if b.max_hp > 1 && b.hp < b.max_hp {
-			sdl.set_render_draw_color(renderer, 30, 30, 30, 200)
-			sdl.render_draw_line(renderer, b.x + 4, b.y + 4, b.x + b.w - 6, b.y + b.h - 4)
+			sdl.set_render_draw_color(renderer, 30, 30, 30, 220)
+			sdl.render_draw_line(renderer, b.x + 6, b.y + 3, b.x + b.w - 8, b.y + b.h - 3)
 		}
 	}
 
@@ -185,10 +206,14 @@ fn render_breakout_game(renderer &sdl.Renderer, game &BreakoutGame, particles []
 
 	// Render Lasers
 	for laser in game.lasers {
+		sdl.set_render_draw_color(renderer, 255, 60, 60, 160)
+		laser_glow := sdl.Rect{x: int(laser.x) - 4, y: int(laser.y), w: 8, h: 14}
+		sdl.render_fill_rect(renderer, &laser_glow)
+
 		draw_rect_filled(renderer, int(laser.x) - 2, int(laser.y), 4, 12, Color{
 			r: 255
-			g: 40
-			b: 80
+			g: 240
+			b: 200
 		})
 	}
 
@@ -202,10 +227,11 @@ fn render_breakout_game(renderer &sdl.Renderer, game &BreakoutGame, particles []
 			a: alpha
 		}
 		sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
-		sdl.render_draw_point(renderer, int(part.x), int(part.y))
+		rect := sdl.Rect{x: int(part.x) - 1, y: int(part.y) - 1, w: 3, h: 3}
+		sdl.render_fill_rect(renderer, &rect)
 	}
 
-	// Render Paddle
+	// Render Paddle with Bevel & Glow
 	paddle_color := if game.paddle.fireball_timer > 0.0 {
 		Color{r: 255, g: 140, b: 0}
 	} else if game.paddle.has_lasers {
@@ -215,6 +241,11 @@ fn render_breakout_game(renderer &sdl.Renderer, game &BreakoutGame, particles []
 	} else {
 		Color{r: 0, g: 220, b: 255}
 	}
+
+	// Under-glow
+	sdl.set_render_draw_color(renderer, paddle_color.r, paddle_color.g, paddle_color.b, 80)
+	p_glow := sdl.Rect{x: int(game.paddle.x) - 2, y: int(game.paddle.y) - 1, w: int(game.paddle.w) + 4, h: int(game.paddle.h) + 4}
+	sdl.render_draw_rect(renderer, &p_glow)
 
 	draw_rect_filled(renderer, int(game.paddle.x), int(game.paddle.y), int(game.paddle.w),
 		int(game.paddle.h), paddle_color)
@@ -229,12 +260,21 @@ fn render_breakout_game(renderer &sdl.Renderer, game &BreakoutGame, particles []
 			6, 6, Color{r: 255, g: 40, b: 40})
 	}
 
-	// Render Balls
+	// Render Balls with motion trail & fire core
 	is_fireball := game.paddle.fireball_timer > 0.0
-	ball_color := if is_fireball { Color{r: 255, g: 100, b: 0} } else { Color{r: 255, g: 255, b: 255} }
+	ball_color := if is_fireball { Color{r: 255, g: 120, b: 20} } else { Color{r: 255, g: 255, b: 255} }
 
 	for ball in game.balls {
+		if is_fireball {
+			// Fire aura halo
+			sdl.set_render_draw_color(renderer, 255, 100, 0, 120)
+			f_glow := sdl.Rect{x: int(ball.x - ball.radius - 3), y: int(ball.y - ball.radius - 3), w: int((ball.radius + 3) * 2), h: int((ball.radius + 3) * 2)}
+			sdl.render_fill_rect(renderer, &f_glow)
+		}
 		draw_circle_filled(renderer, ball.x, ball.y, ball.radius, ball_color)
+		// Specular glint
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+		sdl.render_draw_point(renderer, int(ball.x) - 1, int(ball.y) - 1)
 	}
 
 	// HUD Top Banner
