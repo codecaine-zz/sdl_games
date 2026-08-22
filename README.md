@@ -56,6 +56,9 @@ v install sdl
 | **Cyber Simon** | `simon/` | Electronic memory light & sound synthesizer! 4 glowing quadrant pads, authentic pitch harmonics (G#4, D#4, B3, G#3), 3 brain-training modes (Classic, Reverse Sequence, Speed Simon), streak counters, and digital 7-segment LED hub. | `Click`/`1-4`/`Q-S` pads, `Space` start, `M` mode, `R` reset, `S` sound | [Preview](#30-cyber-simon) |
 | **Memory Match Pro** | `memorymatch/` | 3D card-flipping pair memory game! 3 grid modes (4x4, 6x4, 6x6), 18 handcrafted geometric icons (Gems, Crowns, Stars, Keys, Potions, Atoms, Shields, Rockets), combo multiplier streaks, mistake shake physics, and 3-star rating evaluation. | `Left Click` flip card, `G` grid mode, `R` new game, `S` sound | [Preview](#31-memory-match-pro) |
 | **Chimp Test Pro** | `chimptest/` | Famous spatial working memory benchmark from cognitive primate neuroscience! Numbers 1 through N scatter on an 8x5 grid, instantly masking into blank squares on first click. 3 strikes system, working memory capacity scoring (4 to 15+ digits), and cognitive percentile ranking. | `Left Click` select tiles in order, `Space` continue, `R` reset | [Preview](#32-chimp-test-pro) |
+| **Etch A Sketch Deluxe** | `etchasketch/` | The iconic mechanical drawing toy + creative studio! Authentic red bezel, dual rotary knobs, powder shake-to-erase physics, Spirograph mathematical gear studio, 5-stencil trace academy with star scoring, 4-way symmetry CAD, 6 color themes, and time-lapse replay! | `Arrows`/`WASD`/`Drag` draw, `Space` shake/erase, `1-4` modes, `Tab` preset, `C` theme, `R` replay | [Preview](#33-etch-a-sketch-deluxe) |
+| **SkiFree Extreme** | `skifree/` | Classic 1991 Windows shareware winter sports recreation! Downhill slalom, jump ramps, mid-air stunt combos (Daffy, 360 Spin, Backflip, Spread Eagle), snow puff particles, 4 game modes, and the terrifying fast-running Yeti monster! | `Arrows`/`WASD` steer & tricks, `Space` jump & tuck, `M` mode, `R` restart | [Preview](#34-skifree-extreme) |
+| **JezzBall Pro** | `jezzball/` | Legendary 1992 Windows Entertainment Pack containment puzzle! Red and blue bouncing kinetic energy atoms, horizontal & vertical laser wall expansion, flood-fill isolated territory capture, 75%+ containment goal, and procedural FM audio. | `Left Click` build wall, `Right Click`/`Space` toggle orientation, `R` restart | [Preview](#35-jezzball-pro) |
 
 ---
 
@@ -260,6 +263,24 @@ v run chimptest
 ```
 ![Chimp Test Pro Screenshot](screenshots/chimptest.png)
 
+### 33. Etch A Sketch Deluxe
+```bash
+v run etchasketch
+```
+![Etch A Sketch Deluxe Screenshot](screenshots/etchasketch.png)
+
+### 34. SkiFree Extreme
+```bash
+v run skifree
+```
+![SkiFree Extreme Screenshot](screenshots/skifree.png)
+
+### 35. JezzBall Pro
+```bash
+v run jezzball
+```
+![JezzBall Pro Screenshot](screenshots/jezzball.png)
+
 ---
 
 ## 🚀 How to Run
@@ -267,6 +288,9 @@ v run chimptest
 From the root repository directory:
 
 ```bash
+v run etchasketch
+v run skifree
+v run jezzball
 v run simon
 v run memorymatch
 v run chimptest
@@ -308,6 +332,9 @@ v run cyberrunner
 Run unit tests for game modules:
 
 ```bash
+v test etchasketch/
+v test skifree/
+v test jezzball/
 v test simon/
 v test memorymatch/
 v test chimptest/
@@ -339,6 +366,9 @@ v test cyberrunner/
 
 ```
 sdl_games/
+├── etchasketch/            # Etch A Sketch Deluxe (Rotary Knobs, Shake Erase, Spirograph, Stencils, Symmetry)
+├── skifree/                # SkiFree Extreme (Downhill Slalom, Jump Ramps, Stunt Combos, Yeti Monster AI)
+├── jezzball/               # JezzBall Pro (Kinetic Atoms, Laser Wall Building, Flood-Fill Containment)
 ├── simon/                  # Cyber Simon (Electronic Light & Sound Memory, Classic/Reverse/Speed Modes)
 ├── memorymatch/            # Memory Match Pro (3D Card Flip Pair Matching, 4x4/6x4/6x6 Grids, Star Rating)
 ├── chimptest/              # Chimp Test Pro (Spatial Working Memory Benchmark, Primate Cognitive Score)
@@ -371,6 +401,6 @@ sdl_games/
 ├── centipede/              # Cyber Centipede Pro Arcade Game
 ├── rain/                   # Monsoon Overdrive Realistic Rain & M4 Benchmark Game
 ├── cyberrunner/            # Neon Vector Run 3D High-Speed Highway Runner Engine
-├── screenshots/            # Showcase screenshots of all 32 games
+├── screenshots/            # Showcase screenshots of all 35 games
 └── README.md
 ```
