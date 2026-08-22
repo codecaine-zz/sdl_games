@@ -1,5 +1,7 @@
 module main
 
+import os
+
 import sdl
 
 struct Button {
@@ -89,6 +91,20 @@ fn main() {
 		return
 	}
 	defer { sdl.quit() }
+
+	if os.args.contains('--snapshot') || os.args.contains('--snap') || os.getenv('SNAPSHOT') == '1' {
+		surface := sdl.create_rgb_surface(0, 960, 640, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut app := new_app()
+		app.game.update(0.1, true, false, false, false, false)
+		app.game.render(s_renderer)
+		app.btn_restart.draw(s_renderer, 0, 0)
+		app.btn_sound.draw(s_renderer, 0, 0)
+		sdl.save_bmp(surface, 'screenshots/racer.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 
 	window := sdl.create_window(
 		'Cyber Drift Racer 2D Engine'.str,

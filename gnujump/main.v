@@ -1,5 +1,7 @@
 module main
 
+import os
+
 import math
 import rand
 import sdl
@@ -631,6 +633,20 @@ fn (mut app App) cleanup() {
 }
 
 fn main() {
+	if os.args.contains("--snapshot") || os.args.contains("--snap") || os.getenv("SNAPSHOT") == "1" {
+		if sdl.init(sdl.init_video) != 0 { return }
+		defer { sdl.quit() }
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut app := new_app()
+		app.renderer = s_renderer
+		app.game.start_game()
+		app.render()
+		sdl.save_bmp(surface, 'screenshots/gnujump.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 	mut app := new_app()
 	if !app.init_sdl() {
 		return

@@ -43,7 +43,7 @@ fn main() {
 	defer { sdl.quit() }
 
 	// Snapshot mode for README showcase
-	if os.args.contains('--snap') {
+	if os.args.contains('--snap') || os.args.contains('--snapshot') || os.getenv('SNAPSHOT') == '1' {
 		surface := sdl.create_rgb_surface(0, win_w, win_h, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
 		if unsafe { surface == nil } { return }
 		defer { sdl.free_surface(surface) }

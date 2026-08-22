@@ -1924,42 +1924,78 @@ sdl_games/
 ---
 
 ## 75. Sega Columns (`columns/`)
-- **Folder**: `columns/` | **Run**: `v run columns`
+*1990 Sega Mega Drive & Arcade Match-3 Gem Drop Classic*
+
+```bash
+v run columns
+```
+![Sega Columns](screenshots/columns.png)
+
 - **Goal**: Align falling columns of 3 jewels to match 3 or more jewels horizontally, vertically, or diagonally.
 - **Controls**: `A`/`D` or `Left`/`Right` to move, `W`/`Up`/`Space` to cycle gems in flight, `S`/`Down` for soft drop, `Enter` for instant hard drop.
 
 ---
 
 ## 76. Atari Klax (`klax/`)
-- **Folder**: `klax/` | **Run**: `v run klax`
+*1989 Atari Games 3D Conveyor Ramp Tile Matching Classic*
+
+```bash
+v run klax
+```
+![Atari Klax](screenshots/klax.png)
+
 - **Goal**: Catch falling tumbling tiles off the 3D conveyor ramp onto your paddle and flip them into a 5x5 bin to form 3-in-a-row Klaxes.
 - **Controls**: `A`/`D` to steer paddle, `S`/`Space` to flip top tile into the bin, `W`/`Up` to push the tile back up the conveyor ramp.
 
 ---
 
 ## 77. Super Puzzle Fighter II Turbo (`puzzlefighter/`)
-- **Folder**: `puzzlefighter/` | **Run**: `v run puzzlefighter`
+*1996 Capcom 1v1 Split-Screen Arcade Gem Battler*
+
+```bash
+v run puzzlefighter
+```
+![Super Puzzle Fighter II Turbo](screenshots/puzzlefighter.png)
+
 - **Goal**: Drop gem pairs, merge giant power blocks (2x2, 2x3, 3x3), and detonate connected clusters with glowing Crash Orbs to bury your opponent under counter garbage gems!
 - **Controls**: `A`/`D` to move pair, `W`/`Up` to rotate clockwise, `S`/`Down` for soft drop, `Space` for hard drop.
 
 ---
 
 ## 78. Zuma: Temple of the Stone Idol (`zuma/`)
-- **Folder**: `zuma/` | **Run**: `v run zuma`
+*2003 PopCap Aztec Temple Track Sphere Shooter*
+
+```bash
+v run zuma
+```
+![Zuma](screenshots/zuma.png)
+
 - **Goal**: Rotate the central Stone Frog 360 degrees to fire colored marbles into a continuous rolling train, creating 3+ matches and triggering magnetic gap-pull combos before the train reaches the golden skull!
 - **Controls**: `Mouse Aim` 360 degrees, `Left Click` or `Space` to shoot marble, `Right Click` or `Tab` to swap current and next ball.
 
 ---
 
 ## 79. Panel de Pon / Puzzle League (`paneldepon/`)
-- **Folder**: `paneldepon/` | **Run**: `v run paneldepon`
+*1995 Intelligent Systems / Nintendo Horizontal Swap Match-3*
+
+```bash
+v run paneldepon
+```
+![Panel de Pon](screenshots/paneldepon.png)
+
 - **Goal**: Control a 2-panel horizontal cursor to swap adjacent colored glyph blocks, clear match-3+ lines horizontally and vertically, trigger cascading combos to freeze the rising stack!
 - **Controls**: `WASD` or `Arrows` to move 2-tile cursor, `Space` or `J` to swap panels, `LShift` or `K` to manually raise stack.
 
 ---
 
 ## 80. SameGame / Collapse (`samegame/`)
-- **Folder**: `samegame/` | **Run**: `v run samegame`
+*1985 / 1998 Gem Cluster Elimination Puzzle & Arcade Collapse*
+
+```bash
+v run samegame
+```
+![SameGame](screenshots/samegame.png)
+
 - **Goal**: Hover over connected clusters of 2 or more identical crystal gems and click to shatter them, causing upper gems to fall and empty columns to collapse leftward. Clear all gems for a massive +20,000 pt perfect clear bonus!
 - **Controls**: `Mouse Hover` to select cluster, `Left Click` to shatter cluster, `T` to toggle between Classic Puzzle and Continuous Collapse Arcade mode.
 

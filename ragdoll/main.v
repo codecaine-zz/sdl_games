@@ -1,5 +1,7 @@
 module main
 
+import os
+
 import sdl
 
 struct Button {
@@ -86,6 +88,20 @@ fn main() {
 		return
 	}
 	defer { sdl.quit() }
+
+	if os.args.contains('--snapshot') || os.args.contains('--snap') || os.getenv('SNAPSHOT') == '1' {
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut app := new_app()
+		app.game.update(0.1, 400, 300, false, false)
+		app.game.render(s_renderer, 400, 300)
+		app.btn_restart.draw(s_renderer, 0, 0)
+		app.btn_sound.draw(s_renderer, 0, 0)
+		sdl.save_bmp(surface, 'screenshots/ragdoll.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 
 	window := sdl.create_window(
 		'Advanced Ragdoll Physics Playground'.str,

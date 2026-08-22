@@ -1,8 +1,26 @@
 module main
 
+import os
+
 import sdl
 
 fn main() {
+	if os.args.contains("--snapshot") || os.args.contains("--snap") || os.getenv("SNAPSHOT") == "1" {
+		if sdl.init(sdl.init_video) != 0 { return }
+		defer { sdl.quit() }
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut game := new_towerdefense_game()
+		game.state = .playing
+		game.score = 12400
+		game.place_turret(1, 1, .laser)
+		game.place_turret(3, 4, .cannon)
+		render_towerdefense_game(s_renderer, mut game)
+		sdl.save_bmp(surface, 'screenshots/towerdefense.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 	sdl.init(sdl.init_video | sdl.init_audio)
 	defer { sdl.quit() }
 

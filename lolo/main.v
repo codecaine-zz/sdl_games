@@ -1,5 +1,7 @@
 module main
 
+import os
+
 import sdl
 
 struct App {
@@ -307,6 +309,18 @@ fn (mut app App) cleanup() {
 }
 
 fn main() {
+	if os.args.contains("--snapshot") || os.args.contains("--snap") || os.getenv("SNAPSHOT") == "1" {
+		if sdl.init(sdl.init_video) != 0 { return }
+		defer { sdl.quit() }
+		surface := sdl.create_rgb_surface(0, 960, 700, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut app := new_app()
+		draw_game(s_renderer, app.game, 0, 0, app.btn_editor, app.btn_restart, app.btn_sound, app.btn_prev, app.btn_next, app.btn_test, app.btn_clear)
+		sdl.save_bmp(surface, 'screenshots/lolo.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 	mut app := new_app()
 	if !app.init_sdl() {
 		return

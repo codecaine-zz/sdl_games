@@ -1,5 +1,7 @@
 module main
 
+import os
+
 import sdl
 
 struct App {
@@ -141,6 +143,20 @@ fn (app &App) run() {
 }
 
 fn main() {
+	if os.args.contains("--snapshot") || os.args.contains("--snap") || os.getenv("SNAPSHOT") == "1" {
+		if sdl.init(sdl.init_video) != 0 { return }
+		defer { sdl.quit() }
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut game := new_game_engine()
+		game.start_game(.mode_a_1p)
+		game.score = 4850
+		draw_game(s_renderer, &game)
+		sdl.save_bmp(surface, 'screenshots/balloonfight.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 	mut app := new_app()
 	if app.init() {
 		app.run()
