@@ -47,6 +47,11 @@ v install sdl
 | **Sokoban Master** | `sokoban/` | The Japanese warehouse box-pushing puzzle masterpiece! 15+ handcrafted classic levels, smooth movement interpolation, unlimited undo history, 3-star rating mastery system, and resonant goal chime audio. | `WASD`/`Arrows` move, `U`/`Z` undo, `R` reset level, `N`/`P` next/prev level, `S` sound | [Preview](#21-sokoban-master) |
 | **2048 Neon Pulse** | `game2048/` | Cyberpunk sliding number merge sensation! 4x4 rounded beveled grid, dynamic glowing neon color grading (2 to 4096+), ascending pentatonic musical merge chimes, undo history, score persistence, and endless play mode. | `WASD`/`Arrows`/`Mouse Drag` slide, `U` undo, `R` restart, `Space` keep playing, `S` sound | [Preview](#22-2048-neon-pulse) |
 | **Tron Light Cycles** | `lightcycles/` | High-speed cyber arena light cycle racing leaving solid neon light ribbon walls! 1P vs Intelligent Lookahead AI (3 difficulties) and 2P Local Versus mode, turbo boost thrusters, and explosive cycle crash disintegration effects. | `WASD`/`Arrows` P1 move, `Space` P1 boost, `IJKL` P2 move, `RShift` P2 boost, `M` mode, `D` diff, `R` restart | [Preview](#23-tron-light-cycles) |
+| **Bubble Shooter Pro** | `bubbleshooter/` | Classic arcade bubble puzzle! Hexagonal offset grid, wall-reflection trajectory laser, match-3+ BFS cluster popping, detached floating bubble gravity fall, descending ceiling timer, and glossy 3D spheres. | `Mouse Aim` / `Left Click` or `Space` shoot, `S` sound, `R` restart | [Preview](#24-bubble-shooter-pro) |
+| **Flappy Bird Pro** | `flappy/` | Phenomenon tap-to-flap physics arcade! Real-time rotational pitch dynamics, procedural pipe gaps, parallax scrolling city skyline and cloud layers, bronze/silver/gold medal scoring system, and retro chimes. | `Space` / `Up` / `Click` flap, `S` sound, `R` restart | [Preview](#25-flappy-bird-pro) |
+| **Q*bert 2.5D Isometric** | `qbert/` | The 1982 2.5D isometric pyramid classic! 28 shaded 3D cubes, diagonal hopping physics, purple Coily snake chase AI, bouncing red balls, flying escape discs, and `@!#?@!` comic curse synthesizer. | `Q/E/A/D` or `Keypad 7/9/1/3` or `Arrows` hop, `S` sound, `R` restart | [Preview](#26-qbert-25d-isometric) |
+| **Puyo Puyo Cascade** | `puyopuyo/` | Japanese match-4 combo sensation! Bouncy jelly Puyos with expressive directional eyes, 4-way BFS group connectivity, multi-step gravity cascade chaining, ascending pentatonic combo chords, and next queue. | `A/D` move, `W/Up/Z` rotate CW, `X` rotate CCW, `S/Down` soft drop, `Space` hard drop, `M` sound, `R` restart | [Preview](#27-puyo-puyo-cascade) |
+| **Gold Miner Classic** | `goldminer/` | Timeless mining winch & shop arcade! Oscillating pendulum claw, precision cable launch, mass/weight-based reel physics (Gold, Diamonds, Heavy Rocks, TNT Barrels, Mystery Bags), and dynamite stick detonation. | `Down/Space/Click` drop claw, `Up/W` use dynamite, `S` sound, `R` restart | [Preview](#28-gold-miner-classic) |
 
 ---
 
@@ -190,6 +195,36 @@ v run lightcycles
 ```
 ![Tron Light Cycles Screenshot](screenshots/lightcycles.png)
 
+### 24. Bubble Shooter Pro
+```bash
+v run bubbleshooter
+```
+![Bubble Shooter Pro Screenshot](screenshots/bubbleshooter.png)
+
+### 25. Flappy Bird Pro
+```bash
+v run flappy
+```
+![Flappy Bird Pro Screenshot](screenshots/flappy.png)
+
+### 26. Q*bert 2.5D Isometric
+```bash
+v run qbert
+```
+![Q*bert Screenshot](screenshots/qbert.png)
+
+### 27. Puyo Puyo Cascade
+```bash
+v run puyopuyo
+```
+![Puyo Puyo Cascade Screenshot](screenshots/puyopuyo.png)
+
+### 28. Gold Miner Classic
+```bash
+v run goldminer
+```
+![Gold Miner Classic Screenshot](screenshots/goldminer.png)
+
 ---
 
 ## 🚀 How to Run
@@ -197,6 +232,11 @@ v run lightcycles
 From the root repository directory:
 
 ```bash
+v run bubbleshooter
+v run flappy
+v run qbert
+v run puyopuyo
+v run goldminer
 v run minesweeper
 v run spaceinvaders
 v run sokoban
@@ -229,6 +269,11 @@ v run cyberrunner
 Run unit tests for game modules:
 
 ```bash
+v test bubbleshooter/
+v test flappy/
+v test qbert/
+v test puyopuyo/
+v test goldminer/
 v test minesweeper/
 v test spaceinvaders/
 v test sokoban/
@@ -251,6 +296,11 @@ v test cyberrunner/
 
 ```
 sdl_games/
+├── bubbleshooter/          # Bubble Shooter Pro (Hex Grid, Raycast Laser, Match-3 BFS, 3D Shaded Bubbles)
+├── flappy/                 # Flappy Bird Pro (Rotational Pitch Dynamics, Procedural Pipes, Parallax City)
+├── qbert/                  # Q*bert 2.5D Isometric (28-Cube Pyramid, Coily Snake AI, Escape Discs, Curse Audio)
+├── puyopuyo/               # Puyo Puyo Cascade (Bouncy Jelly Puyos, 4-Way BFS, Gravity Cascades, Combos)
+├── goldminer/              # Gold Miner Classic (Pendulum Winch Claw, Weight Physics, Minerals, Dynamite)
 ├── minesweeper/            # Minesweeper Pro (3 Difficulties, First-Click Safety, 7-Seg LED, Chording)
 ├── spaceinvaders/          # Space Invaders 1978 Arcade Pro (55 Aliens, Heartbeat Audio, Voxel Shields, UFO)
 ├── sokoban/                # Sokoban Master (15+ Handcrafted Levels, Undo Stack, 3-Star Rating)
@@ -274,6 +324,6 @@ sdl_games/
 ├── centipede/              # Cyber Centipede Pro Arcade Game
 ├── rain/                   # Monsoon Overdrive Realistic Rain & M4 Benchmark Game
 ├── cyberrunner/            # Neon Vector Run 3D High-Speed Highway Runner Engine
-├── screenshots/            # Showcase screenshots of all 23 games
+├── screenshots/            # Showcase screenshots of all 28 games
 └── README.md
 ```
