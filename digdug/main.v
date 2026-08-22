@@ -1,10 +1,37 @@
 module main
 
+import os
 import sdl
 
 fn main() {
-	sdl.init(sdl.init_video | sdl.init_audio)
+	if sdl.init(sdl.init_video | sdl.init_audio) != 0 {
+		return
+	}
 	defer { sdl.quit() }
+
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut game := new_digdug_game()
+		game.state = .playing
+		game.score = 7850
+		game.player_x = 320.0
+		game.player_y = 280.0
+		game.pump = PumpHose{ active: true, dir: .right, length: 80.0 }
+
+		// Inflating enemy
+		if game.enemies.len > 0 {
+			game.enemies[0].x = 420.0
+			game.enemies[0].y = 280.0
+			game.enemies[0].inflate_stage = 2
+		}
+
+		render_digdug_game(s_renderer, mut game)
+		sdl.save_bmp(surface, 'screenshots/digdug.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 
 	window := sdl.create_window(
 		'Dig Dug Underground Excavation'.str,

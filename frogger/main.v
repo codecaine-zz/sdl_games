@@ -1,10 +1,34 @@
 module main
 
+import os
 import sdl
 
 fn main() {
-	sdl.init(sdl.init_video | sdl.init_audio)
+	if sdl.init(sdl.init_video | sdl.init_audio) != 0 {
+		return
+	}
 	defer { sdl.quit() }
+
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut game := new_frogger_game()
+		game.state = .playing
+		game.score = 4650
+		game.frog_row = 4
+		game.frog_x = 360.0
+		game.frog_y = 60.0 + f32(game.frog_row) * 40.0
+		if game.docks.len > 2 {
+			game.docks[0].filled = true
+			game.docks[2].filled = true
+		}
+
+		render_frogger_game(s_renderer, mut game)
+		sdl.save_bmp(surface, 'screenshots/frogger.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 
 	window := sdl.create_window(
 		'Cyber Crosser Arcade'.str,

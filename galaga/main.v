@@ -1,10 +1,78 @@
 module main
 
+import os
 import sdl
 
 fn main() {
-	sdl.init(sdl.init_video | sdl.init_audio)
+	if sdl.init(sdl.init_video | sdl.init_audio) != 0 {
+		return
+	}
 	defer { sdl.quit() }
+
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut game := new_galaga_game()
+		game.state = .playing
+		game.score = 24800
+		game.high_score = 50000
+		game.player.is_dual = true
+		game.player.x = 400.0
+		game.player.y = 520.0
+		game.player.invuln_timer = 0.0
+
+		// Set enemies in iconic battle formation
+		game.enemies.clear()
+		mut id_c := 0
+		// 4 Boss Commanders
+		for col in 0 .. 4 {
+			game.enemies << Enemy{
+				id: id_c, enemy_type: .boss, mode: .formation,
+				home_x: 280.0 + f32(col) * 80.0, home_y: 100.0,
+				x: 280.0 + f32(col) * 80.0, y: 100.0,
+				hp: 2, active: true
+			}
+			id_c++
+		}
+		// 8 Red Goei Moths
+		for col in 0 .. 8 {
+			game.enemies << Enemy{
+				id: id_c, enemy_type: .goei, mode: .formation,
+				home_x: 190.0 + f32(col) * 60.0, home_y: 150.0,
+				x: 190.0 + f32(col) * 60.0, y: 150.0,
+				hp: 1, active: true
+			}
+			id_c++
+		}
+		// 10 Blue Zako Bees
+		for col in 0 .. 10 {
+			game.enemies << Enemy{
+				id: id_c, enemy_type: .zako, mode: .formation,
+				home_x: 130.0 + f32(col) * 60.0, home_y: 200.0,
+				x: 130.0 + f32(col) * 60.0, y: 200.0,
+				hp: 1, active: true
+			}
+			id_c++
+		}
+		// Swooping Boss Attacking
+		game.enemies << Enemy{
+			id: id_c, enemy_type: .boss, mode: .swooping,
+			home_x: 360.0, home_y: 100.0,
+			x: 360.0, y: 320.0,
+			hp: 2, active: true
+		}
+		// Player Dual Lasers
+		game.player_bullets << Bullet{ x: 388.0, y: 380.0, vy: -600.0, is_enemy: false, active: true }
+		game.player_bullets << Bullet{ x: 412.0, y: 380.0, vy: -600.0, is_enemy: false, active: true }
+		game.player_bullets << Bullet{ x: 388.0, y: 260.0, vy: -600.0, is_enemy: false, active: true }
+		game.player_bullets << Bullet{ x: 412.0, y: 260.0, vy: -600.0, is_enemy: false, active: true }
+
+		render_galaga_game(s_renderer, mut game)
+		sdl.save_bmp(surface, 'screenshots/galaga.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 
 	window := sdl.create_window(
 		'Galaga Arcade Space Shooter'.str,

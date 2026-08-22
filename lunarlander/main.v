@@ -1,10 +1,34 @@
 module main
 
+import os
 import sdl
 
 fn main() {
-	sdl.init(sdl.init_video | sdl.init_audio)
+	if sdl.init(sdl.init_video | sdl.init_audio) != 0 {
+		return
+	}
 	defer { sdl.quit() }
+
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut game := new_lunarlander_game()
+		game.state = .playing
+		game.score = 2350
+		game.x = 420.0
+		game.y = 360.0
+		game.vx = 4.0
+		game.vy = 12.0
+		game.angle = 0.08
+		game.fuel = 78.0
+		game.key_thrust = true
+
+		render_lunarlander_game(s_renderer, mut game)
+		sdl.save_bmp(surface, 'screenshots/lunarlander.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 
 	window := sdl.create_window(
 		'Lunar Lander Simulator'.str,

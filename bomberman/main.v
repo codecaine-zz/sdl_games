@@ -1,10 +1,40 @@
 module main
 
+import os
 import sdl
 
 fn main() {
-	sdl.init(sdl.init_video | sdl.init_audio)
+	if sdl.init(sdl.init_video | sdl.init_audio) != 0 {
+		return
+	}
 	defer { sdl.quit() }
+
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut game := new_bomberman_game()
+		game.state = .playing
+		if game.players.len > 1 {
+			game.players[0].x = 220.0
+			game.players[0].y = 160.0
+			game.players[1].x = 580.0
+			game.players[1].y = 440.0
+		}
+		// Active ticking bomb
+		game.bombs << Bomb{ grid_x: 4, grid_y: 3, owner_id: 1, fuse_timer: 1.2, radius: 3, active: true }
+		// Crossfire flame explosion
+		game.flames << FlameRay{ grid_x: 7, grid_y: 5, timer: 0.4 }
+		game.flames << FlameRay{ grid_x: 6, grid_y: 5, timer: 0.4 }
+		game.flames << FlameRay{ grid_x: 8, grid_y: 5, timer: 0.4 }
+		game.flames << FlameRay{ grid_x: 7, grid_y: 4, timer: 0.4 }
+		game.flames << FlameRay{ grid_x: 7, grid_y: 6, timer: 0.4 }
+
+		render_bomberman_game(s_renderer, mut game)
+		sdl.save_bmp(surface, 'screenshots/bomberman.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 
 	window := sdl.create_window(
 		'Cyber Bomberman Tactical Maze'.str,

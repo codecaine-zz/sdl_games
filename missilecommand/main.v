@@ -1,10 +1,37 @@
 module main
 
+import os
 import sdl
 
 fn main() {
-	sdl.init(sdl.init_video | sdl.init_audio)
+	if sdl.init(sdl.init_video | sdl.init_audio) != 0 {
+		return
+	}
 	defer { sdl.quit() }
+
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut game := new_missilecommand_game()
+		game.state = .playing
+		game.score = 15400
+		// Descending enemy missiles
+		game.icbms.clear()
+		game.icbms << ICBM{ start_x: 100.0, start_y: 0.0, target_x: 220.0, target_y: 540.0, x: 160.0, y: 270.0, speed: 45.0, active: true }
+		game.icbms << ICBM{ start_x: 400.0, start_y: 0.0, target_x: 400.0, target_y: 540.0, x: 400.0, y: 180.0, speed: 50.0, active: true }
+		game.icbms << ICBM{ start_x: 700.0, start_y: 0.0, target_x: 580.0, target_y: 540.0, x: 640.0, y: 270.0, speed: 45.0, active: true }
+		// Rising interceptor
+		game.interceptors << Interceptor{ start_x: 400.0, start_y: 540.0, target_x: 400.0, target_y: 190.0, x: 400.0, y: 260.0, speed: 450.0, active: true }
+		// Explosive flak clouds
+		game.blasts << BlastCloud{ x: 300.0, y: 200.0, radius: 28.0, max_radius: 35.0, timer: 0.6, active: true }
+		game.blasts << BlastCloud{ x: 500.0, y: 220.0, radius: 22.0, max_radius: 35.0, timer: 0.8, active: true }
+
+		render_missilecommand_game(s_renderer, mut game)
+		sdl.save_bmp(surface, 'screenshots/missilecommand.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 
 	window := sdl.create_window(
 		'Missile Command Air Defense'.str,

@@ -1,10 +1,43 @@
 module main
 
+import os
 import sdl
 
 fn main() {
-	sdl.init(sdl.init_video | sdl.init_audio)
+	if sdl.init(sdl.init_video | sdl.init_audio) != 0 {
+		return
+	}
 	defer { sdl.quit() }
+
+	if os.args.contains('--snapshot') || os.args.contains('--snap') {
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		s_renderer := sdl.create_software_renderer(surface)
+		mut game := new_donkeykong_game()
+		game.state = .playing
+		game.score = 14200
+		game.high_score = 30000
+		game.player_x = 220.0
+		game.player_y = 420.0
+		game.hammer_timer = 4.0
+		game.dk_anim_timer = 1.0
+
+		// Active rolling barrels on multiple tiers
+		game.barrels.clear()
+		game.barrels << Barrel{ x: 480.0, y: 224.0, vx: -140.0, vy: 0.0, b_type: .normal, active: true }
+		game.barrels << Barrel{ x: 300.0, y: 324.0, vx: 140.0, vy: 0.0, b_type: .blue, active: true }
+		game.barrels << Barrel{ x: 550.0, y: 424.0, vx: -140.0, vy: 0.0, b_type: .normal, active: true }
+		game.barrels << Barrel{ x: 160.0, y: 524.0, vx: -140.0, vy: 0.0, b_type: .normal, active: true }
+
+		// Fireball climbing ladder
+		game.fireballs.clear()
+		game.fireballs << Fireball{ x: 120.0, y: 380.0, vx: 0.0, vy: -40.0, is_climbing: true, active: true }
+
+		render_donkeykong_game(s_renderer, mut game)
+		sdl.save_bmp(surface, 'screenshots/donkeykong.bmp'.str)
+		sdl.destroy_renderer(s_renderer)
+		sdl.free_surface(surface)
+		return
+	}
 
 	window := sdl.create_window(
 		'Donkey Kong Arcade Platformer'.str,
