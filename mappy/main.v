@@ -1,6 +1,7 @@
 module main
 
 import math
+import os
 import sdl
 
 struct App {
@@ -57,6 +58,21 @@ fn (app &App) run() {
 	mut running := true
 
 	for running {
+		if os.getenv('SNAPSHOT') == '1' {
+			surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+			if unsafe { surface != nil } {
+				sw_rend := sdl.create_software_renderer(surface)
+				if unsafe { sw_rend != nil } {
+					mutable_app.game.start_game(1)
+					mutable_app.game.update(0.5, false, false, false, mut mutable_app.sound_mgr)
+					draw_game(sw_rend, &mutable_app.game)
+					sdl.save_bmp(surface, 'screenshots/mappy.bmp'.str)
+					sdl.destroy_renderer(sw_rend)
+				}
+				sdl.free_surface(surface)
+			}
+			break
+		}
 		current_ticks := sdl.get_ticks()
 		raw_dt := f64(current_ticks - last_ticks) / 1000.0
 		last_ticks = current_ticks

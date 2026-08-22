@@ -1,5 +1,6 @@
 module main
 
+import os
 import sdl
 
 struct Button {
@@ -138,6 +139,20 @@ fn main() {
 	mut running := true
 
 	for running {
+		if os.getenv('SNAPSHOT') == '1' {
+			surface := sdl.create_rgb_surface(0, 960, 640, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+			if unsafe { surface != nil } {
+				sw_rend := sdl.create_software_renderer(surface)
+				if unsafe { sw_rend != nil } {
+					app.game.update(0.5)
+					render_rain_game(sw_rend, mut app.game)
+					sdl.save_bmp(surface, 'screenshots/rain.bmp'.str)
+					sdl.destroy_renderer(sw_rend)
+				}
+				sdl.free_surface(surface)
+			}
+			break
+		}
 		now := sdl.get_ticks()
 		dt := f64(now - app.last_ticks) / 1000.0
 		app.last_ticks = now
