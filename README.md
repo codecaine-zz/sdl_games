@@ -1,6 +1,6 @@
 # 🕹️ V Arcade SDL Games Suite
 
-A massive collection of **66 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
+A massive collection of **67 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
 
 Every single game is engineered with **zero external asset dependencies** — utilizing 100% procedural PCM sound synthesis, vector graphics rasterization, and embedded pixel/bitmap fonts.
 
@@ -22,7 +22,7 @@ v install sdl
 
 ---
 
-## 🎮 Master Game Index (66 Games)
+## 🎮 Master Game Index (67 Games)
 
 | # | Game | Folder | Genre | Quick Controls | How to Play |
 | :-: | :--- | :--- | :--- | :--- | :-: |
@@ -92,6 +92,7 @@ v install sdl
 | **64** | [Bowling Pro](#64-bowling-pro-bowling) | `bowling/` | 10-Pin Sports / Physics | `WASD`/`Arrows` aim pos & angle, `Space` power, `Z`/`X` hook | [Guide](#64-bowling-pro-bowling) |
 | **65** | [Darts Masters](#65-darts-masters-darts) | `darts/` | 501/301/Cricket Darts | `Mouse`/`WASD` aim reticle, `Space`/`Click` timing | [Guide](#65-darts-masters-darts) |
 | **66** | [Billiards Pro](#66-billiards-pro-pool) | `pool/` | 8-Ball & 9-Ball Pool | `Mouse`/`Arrows` aim cue, `Drag`/`Space` strike | [Guide](#66-billiards-pro-pool) |
+| **67** | [Vegas Jackpot Slots](#67-vegas-jackpot-slots-slots) | `slots/` | Casino / 777 Slots | `Space`/`Click` spin lever, `1-3` hold, `T` theme | [Guide](#67-vegas-jackpot-slots-slots) |
 
 ---
 
@@ -1622,12 +1623,45 @@ v run pool
 
 ---
 
+### 67. Vegas Jackpot Slots (`slots/`)
+*Authentic 777 Casino Slot Machine (3-Reel Classic & 5-Reel Cyber Multi-Line)*
+
+```bash
+v run slots
+```
+![Vegas Jackpot Slots](screenshots/slots.png)
+
+- **Objective**: Spin the mechanical reels, match classic fruit & casino symbols across active paylines, trigger Scatter Free Spins bonus rounds, and hit the Progressive Mega Jackpot!
+- **Controls**:
+  - `Space` or `Enter`: Pull mechanical arm lever / spin reels.
+  - `Left Click on Lever` (Right side): Click and pull down lever handle to spin.
+  - `Up` / `Down` or `W` / `S`: Adjust bet per payline ($1 to $500).
+  - `Left` / `Right` or `A` / `D`: Adjust number of active paylines (1 to 20 lines).
+  - `1`, `2`, `3`: Hold individual reels on 3-Reel Classic mode for the next spin.
+  - `T`: Toggle machine theme (**Vegas Classic 777** $\leftrightarrow$ **Neon Cyber 5-Reel**).
+  - `M`: Max Bet ($100 per line on all lines).
+  - `C`: Insert cash (+ $500 Credits).
+  - `Tab` or `P`: Open / Close full paytable & multiplier schedule.
+  - `S`: Toggle procedural casino audio.
+  - `Esc`: Close paytable / Exit game.
+- **Paytables & Bonus Features**:
+  - **Diamond ($$)**: Highest base payout (**1000x** on 5-reel, **500x** on 3-reel).
+  - **Lucky 7 (7)**: Classic jackpot symbol (**500x** on 5-reel, **200x** on 3-reel).
+  - **BARs**: Single, Double, Triple, and Any-3-BAR mix combinations.
+  - **Wilds**: Substitutes for all symbols (except Scatter) to complete winning paylines (**1500x** for 5x Wild).
+  - **Scatters & Free Spins**: 3+ Scatter stars trigger 10 to 25 Free Spins with a **3x Multiplier** on all wins!
+  - **Progressive Jackpot**: 5% of every wager feeds the growing jackpot meter.
+- **Pro Tip**: Use the Reel Hold feature (`1-3`) on 3-reel classic mode when two matching high-tier symbols (like Double 7s or Diamonds) appear on payline 1 to dramatically boost your odds of hitting the jackpot on the re-spin!
+
+---
+
 ## 🧪 Automated Unit Testing
 
 You can run automated test suites for the game modules using the V test runner:
 
 ```bash
 # Run tests across games
+v test slots/
 v test bowling/
 v test darts/
 v test pool/
@@ -1724,6 +1758,7 @@ sdl_games/
 ├── simon/                  # 53. Cyber Simon
 ├── sinksub/                # 54. SinkSub Pro
 ├── skifree/                # 55. SkiFree Extreme
+├── slots/                  # 67. Vegas Jackpot Slots (777 & Neon Cyber)
 ├── snake/                  # 56. Cyberpunk Snake
 ├── sokoban/                # 57. Sokoban Master
 ├── spaceinvaders/          # 58. Space Invaders Pro
