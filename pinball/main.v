@@ -23,8 +23,8 @@ fn new_app() App {
 }
 
 fn (app &App) init() bool {
-	if sdl.init(sdl.init_video) < 0 {
-		eprintln('Failed to init SDL Video')
+	if sdl.init(sdl.init_video | sdl.init_audio) < 0 {
+		eprintln('Failed to init SDL')
 		return false
 	}
 

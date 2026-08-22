@@ -84,8 +84,8 @@ fn new_app() App {
 }
 
 fn main() {
-	if sdl.init(sdl.init_video | sdl.init_events) < 0 {
-		eprintln('Failed to init SDL Video')
+	if sdl.init(sdl.init_video | sdl.init_audio | sdl.init_events) < 0 {
+		eprintln('Failed to init SDL')
 		return
 	}
 	defer { sdl.quit() }

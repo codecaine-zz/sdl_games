@@ -11,12 +11,8 @@ pub mut:
 }
 
 pub fn new_sound_manager() SoundManager {
-	if sdl.init(sdl.init_audio) < 0 {
-		eprintln('Failed to init SDL Audio')
-		return SoundManager{
-			dev:           0
-			sound_enabled: false
-		}
+	if sdl.was_init(sdl.init_audio) == 0 {
+		sdl.init_sub_system(sdl.init_audio)
 	}
 
 	desired := sdl.AudioSpec{

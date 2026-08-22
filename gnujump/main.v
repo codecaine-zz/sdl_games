@@ -170,7 +170,7 @@ fn new_app() App {
 }
 
 fn (mut app App) init_sdl() bool {
-	if sdl.init(sdl.init_video) < 0 {
+	if sdl.init(sdl.init_video | sdl.init_audio) < 0 {
 		eprintln('Failed to initialize SDL')
 		return false
 	}

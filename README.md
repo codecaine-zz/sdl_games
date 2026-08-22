@@ -53,6 +53,9 @@ v install sdl
 | **Puyo Puyo Cascade** | `puyopuyo/` | Japanese match-4 combo sensation! Bouncy jelly Puyos with expressive directional eyes, 4-way BFS group connectivity, multi-step gravity cascade chaining, ascending pentatonic combo chords, and next queue. | `A/D` move, `W/Up/Z` rotate CW, `X` rotate CCW, `S/Down` soft drop, `Space` hard drop, `M` sound, `R` restart | [Preview](#27-puyo-puyo-cascade) |
 | **Gold Miner Classic** | `goldminer/` | Timeless mining winch & shop arcade! Oscillating pendulum claw, precision cable launch, mass/weight-based reel physics (Gold, Diamonds, Heavy Rocks, TNT Barrels, Mystery Bags), and dynamite stick detonation. | `Down/Space/Click` drop claw, `Up/W` use dynamite, `S` sound, `R` restart | [Preview](#28-gold-miner-classic) |
 | **Duke Nukem: Cyber Outpost** | `duke/` | The 1991–1993 Apogee side-scrolling platformer legend! Somersault jumps, ladder & overhead pipe climbing, crouch shooting, 4 weapons (Blaster, Dual Laser, Flamethrower, Missiles), Red/Blue/Green keycard security doors, destructible cameras & crates, Robodroids, turrets, and Sound Blaster FM procedural synth. | `A`/`D` move, `W` climb/aim up, `S` crouch, `Space` jump, `Ctrl`/`J`/`F` fire, `R` restart | [Preview](#29-duke-nukem-cyber-outpost) |
+| **Cyber Simon** | `simon/` | Electronic memory light & sound synthesizer! 4 glowing quadrant pads, authentic pitch harmonics (G#4, D#4, B3, G#3), 3 brain-training modes (Classic, Reverse Sequence, Speed Simon), streak counters, and digital 7-segment LED hub. | `Click`/`1-4`/`Q-S` pads, `Space` start, `M` mode, `R` reset, `S` sound | [Preview](#30-cyber-simon) |
+| **Memory Match Pro** | `memorymatch/` | 3D card-flipping pair memory game! 3 grid modes (4x4, 6x4, 6x6), 18 handcrafted geometric icons (Gems, Crowns, Stars, Keys, Potions, Atoms, Shields, Rockets), combo multiplier streaks, mistake shake physics, and 3-star rating evaluation. | `Left Click` flip card, `G` grid mode, `R` new game, `S` sound | [Preview](#31-memory-match-pro) |
+| **Chimp Test Pro** | `chimptest/` | Famous spatial working memory benchmark from cognitive primate neuroscience! Numbers 1 through N scatter on an 8x5 grid, instantly masking into blank squares on first click. 3 strikes system, working memory capacity scoring (4 to 15+ digits), and cognitive percentile ranking. | `Left Click` select tiles in order, `Space` continue, `R` reset | [Preview](#32-chimp-test-pro) |
 
 ---
 
@@ -239,6 +242,24 @@ v run duke
 - **Sector 3: Orbital Fortress & Mega Mech Boss**:
 ![Duke Nukem: Sector 3 Boss Screenshot](screenshots/duke_sector3.png)
 
+### 30. Cyber Simon
+```bash
+v run simon
+```
+![Cyber Simon Screenshot](screenshots/simon.png)
+
+### 31. Memory Match Pro
+```bash
+v run memorymatch
+```
+![Memory Match Pro Screenshot](screenshots/memorymatch.png)
+
+### 32. Chimp Test Pro
+```bash
+v run chimptest
+```
+![Chimp Test Pro Screenshot](screenshots/chimptest.png)
+
 ---
 
 ## 🚀 How to Run
@@ -246,6 +267,9 @@ v run duke
 From the root repository directory:
 
 ```bash
+v run simon
+v run memorymatch
+v run chimptest
 v run duke
 v run bubbleshooter
 v run flappy
@@ -284,6 +308,9 @@ v run cyberrunner
 Run unit tests for game modules:
 
 ```bash
+v test simon/
+v test memorymatch/
+v test chimptest/
 v test duke/
 v test bubbleshooter/
 v test flappy/
@@ -312,6 +339,9 @@ v test cyberrunner/
 
 ```
 sdl_games/
+├── simon/                  # Cyber Simon (Electronic Light & Sound Memory, Classic/Reverse/Speed Modes)
+├── memorymatch/            # Memory Match Pro (3D Card Flip Pair Matching, 4x4/6x4/6x6 Grids, Star Rating)
+├── chimptest/              # Chimp Test Pro (Spatial Working Memory Benchmark, Primate Cognitive Score)
 ├── duke/                   # Duke Nukem: Cyber Outpost (Somersault Jump, 4 Weapons, Keycards, Cameras, Robodroids)
 ├── bubbleshooter/          # Bubble Shooter Pro (Hex Grid, Raycast Laser, Match-3 BFS, 3D Shaded Bubbles)
 ├── flappy/                 # Flappy Bird Pro (Rotational Pitch Dynamics, Procedural Pipes, Parallax City)
@@ -341,6 +371,6 @@ sdl_games/
 ├── centipede/              # Cyber Centipede Pro Arcade Game
 ├── rain/                   # Monsoon Overdrive Realistic Rain & M4 Benchmark Game
 ├── cyberrunner/            # Neon Vector Run 3D High-Speed Highway Runner Engine
-├── screenshots/            # Showcase screenshots of all 29 games
+├── screenshots/            # Showcase screenshots of all 32 games
 └── README.md
 ```

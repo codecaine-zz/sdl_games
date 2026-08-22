@@ -14,6 +14,9 @@ pub mut:
 
 pub fn new_sound_manager() SoundManager {
 	mut sm := SoundManager{}
+	if sdl.was_init(sdl.init_audio) == 0 {
+		sdl.init_sub_system(sdl.init_audio)
+	}
 	spec := sdl.AudioSpec{
 		freq:     audio_sample_rate
 		format:   sdl.AudioFormat(sdl.audio_s16sys)

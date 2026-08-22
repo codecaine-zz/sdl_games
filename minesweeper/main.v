@@ -399,7 +399,7 @@ fn (app &App) render() {
 }
 
 fn main() {
-	if sdl.init(sdl.init_video | sdl.init_events | sdl.init_timer) < 0 {
+	if sdl.init(sdl.init_video | sdl.init_audio | sdl.init_events | sdl.init_timer) < 0 {
 		eprintln('Failed to initialize SDL2')
 		return
 	}

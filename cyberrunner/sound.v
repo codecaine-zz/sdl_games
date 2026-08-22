@@ -11,8 +11,9 @@ mut:
 }
 
 fn new_sound_manager() SoundManager {
-	// Must initialize SDL audio subsystem first
-	sdl.init(sdl.init_audio)
+	if sdl.was_init(sdl.init_audio) == 0 {
+		sdl.init_sub_system(sdl.init_audio)
+	}
 
 	desired := sdl.AudioSpec{
 		freq:     44100

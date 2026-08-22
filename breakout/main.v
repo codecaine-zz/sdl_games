@@ -175,8 +175,8 @@ fn (mut app App) update(dt f64) {
 }
 
 fn main() {
-	if sdl.init(sdl.init_video) < 0 {
-		eprintln('Failed to initialize SDL Video')
+	if sdl.init(sdl.init_video | sdl.init_audio) < 0 {
+		eprintln('Failed to initialize SDL')
 		return
 	}
 	defer {

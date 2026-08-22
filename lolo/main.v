@@ -106,8 +106,8 @@ fn new_app() App {
 }
 
 fn (mut app App) init_sdl() bool {
-	if sdl.init(sdl.init_video) < 0 {
-		eprintln('Failed to init SDL video')
+	if sdl.init(sdl.init_video | sdl.init_audio) < 0 {
+		eprintln('Failed to init SDL')
 		return false
 	}
 
