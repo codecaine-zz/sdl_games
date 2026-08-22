@@ -52,6 +52,7 @@ v install sdl
 | **Q*bert 2.5D Isometric** | `qbert/` | The 1982 2.5D isometric pyramid classic! 28 shaded 3D cubes, diagonal hopping physics, purple Coily snake chase AI, bouncing red balls, flying escape discs, and `@!#?@!` comic curse synthesizer. | `Q/E/A/D` or `Keypad 7/9/1/3` or `Arrows` hop, `S` sound, `R` restart | [Preview](#26-qbert-25d-isometric) |
 | **Puyo Puyo Cascade** | `puyopuyo/` | Japanese match-4 combo sensation! Bouncy jelly Puyos with expressive directional eyes, 4-way BFS group connectivity, multi-step gravity cascade chaining, ascending pentatonic combo chords, and next queue. | `A/D` move, `W/Up/Z` rotate CW, `X` rotate CCW, `S/Down` soft drop, `Space` hard drop, `M` sound, `R` restart | [Preview](#27-puyo-puyo-cascade) |
 | **Gold Miner Classic** | `goldminer/` | Timeless mining winch & shop arcade! Oscillating pendulum claw, precision cable launch, mass/weight-based reel physics (Gold, Diamonds, Heavy Rocks, TNT Barrels, Mystery Bags), and dynamite stick detonation. | `Down/Space/Click` drop claw, `Up/W` use dynamite, `S` sound, `R` restart | [Preview](#28-gold-miner-classic) |
+| **Duke Nukem: Cyber Outpost** | `duke/` | The 1991–1993 Apogee side-scrolling platformer legend! Somersault jumps, ladder & overhead pipe climbing, crouch shooting, 4 weapons (Blaster, Dual Laser, Flamethrower, Missiles), Red/Blue/Green keycard security doors, destructible cameras & crates, Robodroids, turrets, and Sound Blaster FM procedural synth. | `A`/`D` move, `W` climb/aim up, `S` crouch, `Space` jump, `Ctrl`/`J`/`F` fire, `R` restart | [Preview](#29-duke-nukem-cyber-outpost) |
 
 ---
 
@@ -225,6 +226,19 @@ v run goldminer
 ```
 ![Gold Miner Classic Screenshot](screenshots/goldminer.png)
 
+### 29. Duke Nukem: Cyber Outpost
+```bash
+v run duke
+```
+- **Sector 1: Cyber Outpost (Night City)**:
+![Duke Nukem: Cyber Outpost Screenshot](screenshots/duke.png)
+
+- **Sector 2: Subterranean Reactor Core**:
+![Duke Nukem: Sector 2 Screenshot](screenshots/duke_sector2.png)
+
+- **Sector 3: Orbital Fortress & Mega Mech Boss**:
+![Duke Nukem: Sector 3 Boss Screenshot](screenshots/duke_sector3.png)
+
 ---
 
 ## 🚀 How to Run
@@ -232,6 +246,7 @@ v run goldminer
 From the root repository directory:
 
 ```bash
+v run duke
 v run bubbleshooter
 v run flappy
 v run qbert
@@ -269,6 +284,7 @@ v run cyberrunner
 Run unit tests for game modules:
 
 ```bash
+v test duke/
 v test bubbleshooter/
 v test flappy/
 v test qbert/
@@ -296,6 +312,7 @@ v test cyberrunner/
 
 ```
 sdl_games/
+├── duke/                   # Duke Nukem: Cyber Outpost (Somersault Jump, 4 Weapons, Keycards, Cameras, Robodroids)
 ├── bubbleshooter/          # Bubble Shooter Pro (Hex Grid, Raycast Laser, Match-3 BFS, 3D Shaded Bubbles)
 ├── flappy/                 # Flappy Bird Pro (Rotational Pitch Dynamics, Procedural Pipes, Parallax City)
 ├── qbert/                  # Q*bert 2.5D Isometric (28-Cube Pyramid, Coily Snake AI, Escape Discs, Curse Audio)
@@ -324,6 +341,6 @@ sdl_games/
 ├── centipede/              # Cyber Centipede Pro Arcade Game
 ├── rain/                   # Monsoon Overdrive Realistic Rain & M4 Benchmark Game
 ├── cyberrunner/            # Neon Vector Run 3D High-Speed Highway Runner Engine
-├── screenshots/            # Showcase screenshots of all 28 games
+├── screenshots/            # Showcase screenshots of all 29 games
 └── README.md
 ```
