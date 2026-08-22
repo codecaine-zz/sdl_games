@@ -42,6 +42,11 @@ v install sdl
 | **Cyber Centipede Pro** | `centipede/` | Advanced Atari Centipede recreation, multi-segment chain physics, Poison Mushrooms, Fleas, Spiders, Scorpions, 6 stackable power-ups, Armored Mega-Centipede Boss waves. | `WASD`/`Arrows` move, `Space` fire, `R` reset, `P` pause, `O` sound | [Preview](#16-cyber-centipede-pro) |
 | **Monsoon Overdrive** | `rain/` | Realistic rain simulator & M4 hardware benchmark game. Up to 1,000,000 active particles, up to 32GB RAM stress allocation, 2D fluid heightfield puddle wave dynamics, interactive umbrella shield, weather themes, procedural PCM audio. | `Mouse` umbrella, `1-5` presets, `WASD`/`Arrows` wind, `[`/`]` or `-`/`+` RAM stress, `Up`/`Dn` drops, `B` mode, `Tab` theme | [Preview](#17-monsoon-overdrive) |
 | **Neon Vector Run 3D** | `cyberrunner/` | High-speed 3D neon highway runner built natively with `sokol.sgl` & Apple Silicon Metal. Dynamic 3D perspective camera, low-poly 3D hovercraft physics, jumping, hyper boost, near-miss combo multiplier system, 3D particle thruster trails, and procedural PCM synth audio. | `A`/`D` or `Arrows` steer, `Space`/`W` jump, `Shift`/`S` boost, `R` restart, `P` pause, `M` sound | [Preview](#18-neon-vector-run-3d) |
+| **Minesweeper Pro** | `minesweeper/` | Classic Windows/Arcade puzzle recreation with 3 difficulty modes (Beginner, Intermediate, Expert), guaranteed first-click safety, BFS cascade reveal, chording, 7-segment digital LED timers, animated smiley face expressions, 3D beveled tiles, and procedural PCM sound synthesis. | `Left Click`/`Space` reveal & chord, `Right Click`/`F` flag, `1-3` difficulty, `T` theme, `R` reset, `S` sound | [Preview](#19-minesweeper-pro) |
+| **Space Invaders Pro** | `spaceinvaders/` | The 1978 arcade legend! 55-alien marching matrix (Squids, Crabs, Octopuses), dynamic 4-tone accelerating bass heartbeat march audio, Mystery Flying Saucer UFO (50-300 bonus pts), 4 destructible voxel bunker shields with pixel crater erosion, and procedural audio. | `A`/`D` or `Arrows` steer, `Space` fire laser, `R` restart, `S` sound | [Preview](#20-space-invaders-pro) |
+| **Sokoban Master** | `sokoban/` | The Japanese warehouse box-pushing puzzle masterpiece! 15+ handcrafted classic levels, smooth movement interpolation, unlimited undo history, 3-star rating mastery system, and resonant goal chime audio. | `WASD`/`Arrows` move, `U`/`Z` undo, `R` reset level, `N`/`P` next/prev level, `S` sound | [Preview](#21-sokoban-master) |
+| **2048 Neon Pulse** | `game2048/` | Cyberpunk sliding number merge sensation! 4x4 rounded beveled grid, dynamic glowing neon color grading (2 to 4096+), ascending pentatonic musical merge chimes, undo history, score persistence, and endless play mode. | `WASD`/`Arrows`/`Mouse Drag` slide, `U` undo, `R` restart, `Space` keep playing, `S` sound | [Preview](#22-2048-neon-pulse) |
+| **Tron Light Cycles** | `lightcycles/` | High-speed cyber arena light cycle racing leaving solid neon light ribbon walls! 1P vs Intelligent Lookahead AI (3 difficulties) and 2P Local Versus mode, turbo boost thrusters, and explosive cycle crash disintegration effects. | `WASD`/`Arrows` P1 move, `Space` P1 boost, `IJKL` P2 move, `RShift` P2 boost, `M` mode, `D` diff, `R` restart | [Preview](#23-tron-light-cycles) |
 
 ---
 
@@ -149,6 +154,41 @@ v run rain
 ```
 ![Monsoon Overdrive Screenshot](screenshots/rain.png)
 
+### 18. Neon Vector Run 3D
+```bash
+v run cyberrunner
+```
+![Neon Vector Run 3D](screenshots/cyberrunner.png)
+
+### 19. Minesweeper Pro
+```bash
+v run minesweeper
+```
+![Minesweeper Pro Screenshot](screenshots/minesweeper.png)
+
+### 20. Space Invaders Pro
+```bash
+v run spaceinvaders
+```
+![Space Invaders Pro Screenshot](screenshots/spaceinvaders.png)
+
+### 21. Sokoban Master
+```bash
+v run sokoban
+```
+![Sokoban Master Screenshot](screenshots/sokoban.png)
+
+### 22. 2048 Neon Pulse
+```bash
+v run game2048
+```
+![2048 Neon Pulse Screenshot](screenshots/game2048.png)
+
+### 23. Tron Light Cycles
+```bash
+v run lightcycles
+```
+![Tron Light Cycles Screenshot](screenshots/lightcycles.png)
 
 ---
 
@@ -157,6 +197,11 @@ v run rain
 From the root repository directory:
 
 ```bash
+v run minesweeper
+v run spaceinvaders
+v run sokoban
+v run game2048
+v run lightcycles
 v run pinball
 v run balloonfight
 v run sidescroller
@@ -184,6 +229,11 @@ v run cyberrunner
 Run unit tests for game modules:
 
 ```bash
+v test minesweeper/
+v test spaceinvaders/
+v test sokoban/
+v test game2048/
+v test lightcycles/
 v test pinball/
 v test balloonfight/
 v test sidescroller/
@@ -201,6 +251,11 @@ v test cyberrunner/
 
 ```
 sdl_games/
+├── minesweeper/            # Minesweeper Pro (3 Difficulties, First-Click Safety, 7-Seg LED, Chording)
+├── spaceinvaders/          # Space Invaders 1978 Arcade Pro (55 Aliens, Heartbeat Audio, Voxel Shields, UFO)
+├── sokoban/                # Sokoban Master (15+ Handcrafted Levels, Undo Stack, 3-Star Rating)
+├── game2048/               # 2048 Neon Pulse (Smooth Sliding, Pentatonic Merge Chimes, Undo)
+├── lightcycles/            # Tron Light Cycles (Lookahead AI, 1P/2P Local Versus, Turbo Boost)
 ├── pinball/                # NES Pinball Recreation (1984 Arcade Classic)
 ├── balloonfight/           # NES Balloon Fight Recreation (1984 Arcade Classic)
 ├── sidescroller/           # Cyberpunk Vanguard 2D Side-Scroller Shooter
@@ -219,6 +274,6 @@ sdl_games/
 ├── centipede/              # Cyber Centipede Pro Arcade Game
 ├── rain/                   # Monsoon Overdrive Realistic Rain & M4 Benchmark Game
 ├── cyberrunner/            # Neon Vector Run 3D High-Speed Highway Runner Engine
-├── screenshots/            # Showcase screenshots of all 18 games
+├── screenshots/            # Showcase screenshots of all 23 games
 └── README.md
 ```

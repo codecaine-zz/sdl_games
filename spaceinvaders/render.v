@@ -1,0 +1,241 @@
+module main
+
+import sdl
+
+// Pixel sprite patterns (8x8 or custom bitmap grids)
+// 1 = solid pixel, 0 = transparent
+
+// Squid Alien (8x8)
+const squid_f0 = [
+	0x18, 0x3C, 0x7E, 0xDB, 0xFF, 0x24, 0x5A, 0xA5
+]
+const squid_f1 = [
+	0x18, 0x3C, 0x7E, 0xDB, 0xFF, 0x24, 0x42, 0x24
+]
+
+// Crab Alien (11x8 mapped to 12-wide)
+const crab_f0 = [
+	0x92, 0x49, 0xFE, 0x6D, 0x7F, 0x24, 0x42, 0x81
+]
+const crab_f1 = [
+	0x92, 0x49, 0xFE, 0x6D, 0x7F, 0x24, 0x24, 0x42
+]
+
+// Octopus Alien (12x8)
+const octopus_f0 = [
+	0x3C, 0x7E, 0xFF, 0xDB, 0xFF, 0x3C, 0x66, 0xC3
+]
+const octopus_f1 = [
+	0x3C, 0x7E, 0xFF, 0xDB, 0xFF, 0x3C, 0x5A, 0x81
+]
+
+pub fn draw_alien_sprite(renderer &sdl.Renderer, x int, y int, kind AlienType, frame int, color Color) {
+	sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
+	scale := 3
+
+	pattern := match kind {
+		.squid {
+			if frame == 0 { squid_f0 } else { squid_f1 }
+		}
+		.crab {
+			if frame == 0 { crab_f0 } else { crab_f1 }
+		}
+		.octopus {
+			if frame == 0 { octopus_f0 } else { octopus_f1 }
+		}
+	}
+
+	for row_idx in 0 .. 8 {
+		row_bits := pattern[row_idx]
+		for col_idx in 0 .. 8 {
+			if (row_bits & (1 << u32(7 - col_idx))) != 0 {
+				rect := sdl.Rect{
+					x: x + col_idx * scale + 4
+					y: y + row_idx * scale
+					w: scale
+					h: scale
+				}
+				sdl.render_fill_rect(renderer, &rect)
+			}
+		}
+	}
+}
+
+pub fn draw_alien_explosion(renderer &sdl.Renderer, cx int, cy int, color Color) {
+	sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
+	scale := 3
+	lines := [
+		[0, -4, 0, -2],
+		[0, 2, 0, 4],
+		[-4, 0, -2, 0],
+		[2, 0, 4, 0],
+		[-3, -3, -1, -1],
+		[1, 1, 3, 3],
+		[-3, 3, -1, 1],
+		[1, -1, 3, -3],
+	]
+	for l in lines {
+		rect := sdl.Rect{
+			x: cx + l[0] * scale
+			y: cy + l[1] * scale
+			w: (l[2] - l[0] + 1) * scale
+			h: (l[3] - l[1] + 1) * scale
+		}
+		sdl.render_fill_rect(renderer, &rect)
+	}
+}
+
+pub fn draw_player_cannon(renderer &sdl.Renderer, x int, y int, w int, h int) {
+	// Classic Green Laser Cannon Base
+	sdl.set_render_draw_color(renderer, 50, 240, 70, 255)
+
+	// Bottom Base
+	base_rect := sdl.Rect{x: x, y: y + 10, w: w, h: h - 10}
+	sdl.render_fill_rect(renderer, &base_rect)
+
+	// Middle Turret
+	mid_w := w * 2 / 3
+	mid_rect := sdl.Rect{x: x + (w - mid_w) / 2, y: y + 4, w: mid_w, h: 6}
+	sdl.render_fill_rect(renderer, &mid_rect)
+
+	// Top Barrel
+	gun_rect := sdl.Rect{x: x + w / 2 - 2, y: y, w: 4, h: 4}
+	sdl.render_fill_rect(renderer, &gun_rect)
+}
+
+pub fn draw_ufo_saucer(renderer &sdl.Renderer, x int, y int) {
+	// Saucer Dome (White)
+	sdl.set_render_draw_color(renderer, 240, 240, 240, 255)
+	dome := sdl.Rect{x: x + 16, y: y, w: 16, h: 6}
+	sdl.render_fill_rect(renderer, &dome)
+
+	// Saucer Main Hull (Vibrant Crimson Red)
+	sdl.set_render_draw_color(renderer, 255, 40, 60, 255)
+	hull := sdl.Rect{x: x + 4, y: y + 6, w: 40, h: 8}
+	sdl.render_fill_rect(renderer, &hull)
+
+	// Saucer Lower Lip & Landing Thrusters
+	sdl.set_render_draw_color(renderer, 255, 180, 0, 255)
+	lip := sdl.Rect{x: x + 10, y: y + 14, w: 28, h: 4}
+	sdl.render_fill_rect(renderer, &lip)
+
+	// Lights
+	sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+	sdl.render_fill_rect(renderer, &sdl.Rect{x: x + 8, y: y + 8, w: 4, h: 4})
+	sdl.render_fill_rect(renderer, &sdl.Rect{x: x + 22, y: y + 8, w: 4, h: 4})
+	sdl.render_fill_rect(renderer, &sdl.Rect{x: x + 36, y: y + 8, w: 4, h: 4})
+}
+
+pub fn render_space_invaders(renderer &sdl.Renderer, game &SpaceInvadersGame) {
+	// Deep space dark background
+	sdl.set_render_draw_color(renderer, 10, 10, 15, 255)
+	sdl.render_clear(renderer)
+
+	// Top HUD
+	draw_text(renderer, 40, 15, 'SCORE <1>', 2, Color{r: 255, g: 255, b: 255})
+	draw_text(renderer, 40, 38, '${game.score:05d}', 2, Color{r: 80, g: 255, b: 120})
+
+	draw_text(renderer, 320, 15, 'HI-SCORE', 2, Color{r: 255, g: 255, b: 255})
+	draw_text(renderer, 330, 38, '${game.high_score:05d}', 2, Color{r: 255, g: 220, b: 80})
+
+	draw_text(renderer, 620, 15, 'WAVE', 2, Color{r: 255, g: 255, b: 255})
+	draw_text(renderer, 640, 38, '${game.wave:02d}', 2, Color{r: 80, g: 220, b: 255})
+
+	// Top header separator line
+	sdl.set_render_draw_color(renderer, 40, 45, 65, 255)
+	sdl.render_draw_line(renderer, 20, 65, world_w - 20, 65)
+
+	// UFO Flying Saucer
+	if game.ufo.active {
+		draw_ufo_saucer(renderer, int(game.ufo.x), int(game.ufo.y))
+	} else if game.ufo.show_score {
+		draw_text(renderer, int(game.ufo.x), int(game.ufo.y), '+${game.ufo.score_val}', 2, Color{r: 255, g: 50, b: 80})
+	}
+
+	// Render 55 Aliens
+	alien_colors := [
+		Color{r: 255, g: 70, b: 120},  // Squids: Magenta/Pink
+		Color{r: 80, g: 220, b: 255},  // Crabs: Cyan
+		Color{r: 255, g: 220, b: 60},  // Octopuses: Yellow
+	]
+
+	for r in 0 .. 5 {
+		col_idx := if r == 0 { 0 } else if r <= 2 { 1 } else { 2 }
+		for c in 0 .. 11 {
+			al := game.aliens[r][c]
+			if al.alive {
+				draw_alien_sprite(renderer, int(al.x), int(al.y), al.kind, al.frame, alien_colors[col_idx])
+			} else if al.exploding {
+				draw_alien_explosion(renderer, int(al.x) + 16, int(al.y) + 14, Color{r: 255, g: 255, b: 255})
+			}
+		}
+	}
+
+	// Render Bunker Shields
+	for s in game.shields {
+		sdl.set_render_draw_color(renderer, 50, 220, 90, 255)
+		for row in 0 .. bunker_rows {
+			for col in 0 .. bunker_cols {
+				if s.grid[row][col] {
+					b_rect := sdl.Rect{
+						x: int(s.x) + col * bunker_block_sz
+						y: int(s.y) + row * bunker_block_sz
+						w: bunker_block_sz
+						h: bunker_block_sz
+					}
+					sdl.render_fill_rect(renderer, &b_rect)
+				}
+			}
+		}
+	}
+
+	// Render Bullets
+	for b in game.bullets {
+		if !b.alive {
+			continue
+		}
+		if b.is_player {
+			// Red/Orange laser bolt
+			sdl.set_render_draw_color(renderer, 255, 220, 80, 255)
+			b_rect := sdl.Rect{x: int(b.x), y: int(b.y), w: 3, h: 10}
+			sdl.render_fill_rect(renderer, &b_rect)
+		} else {
+			// Cyan zigzag alien projectile
+			sdl.set_render_draw_color(renderer, 80, 240, 255, 255)
+			b_rect := sdl.Rect{x: int(b.x), y: int(b.y), w: 3, h: 8}
+			sdl.render_fill_rect(renderer, &b_rect)
+		}
+	}
+
+	// Render Player Cannon
+	if game.player.alive {
+		draw_player_cannon(renderer, int(game.player.x), int(game.player.y), int(game.player.w), int(game.player.h))
+	} else if game.lives > 0 {
+		// Player explosion animation
+		draw_alien_explosion(renderer, int(game.player.x) + int(game.player.w / 2), int(game.player.y) + 12, Color{r: 255, g: 80, b: 40})
+	}
+
+	// Bottom Green Ground Line
+	sdl.set_render_draw_color(renderer, 50, 240, 70, 255)
+	sdl.render_draw_line(renderer, 20, world_h - 45, world_w - 20, world_h - 45)
+
+	// Bottom Lives Display & Controls Prompt
+	draw_text(renderer, 30, world_h - 35, '${game.lives}', 2, Color{r: 255, g: 255, b: 255})
+	for i in 0 .. (game.lives - 1) {
+		lx := 60 + i * 36
+		draw_player_cannon(renderer, lx, world_h - 35, 26, 16)
+	}
+
+	draw_text_centered(renderer, world_w / 2 + 60, world_h - 32, '[A/D or ARROWS] MOVE  [SPACE] FIRE  [R] RESTART', 1, Color{r: 160, g: 180, b: 210})
+
+	// Game Over / Wave Clear Overlays
+	if game.state == .game_over {
+		draw_text_centered(renderer, world_w / 2, world_h / 2 - 20, 'GAME OVER', 4, Color{r: 255, g: 50, b: 50})
+		draw_text_centered(renderer, world_w / 2, world_h / 2 + 25, 'PRESS [R] OR [SPACE] TO RETRY', 2, Color{r: 255, g: 255, b: 255})
+	} else if game.state == .wave_clear {
+		draw_text_centered(renderer, world_w / 2, world_h / 2 - 20, 'WAVE CLEAR!', 4, Color{r: 80, g: 255, b: 120})
+		draw_text_centered(renderer, world_w / 2, world_h / 2 + 25, 'GET READY FOR WAVE ${game.wave + 1}...', 2, Color{r: 255, g: 255, b: 255})
+	}
+
+	sdl.render_present(renderer)
+}
