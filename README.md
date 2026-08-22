@@ -59,6 +59,7 @@ v install sdl
 | **Etch A Sketch Deluxe** | `etchasketch/` | The iconic mechanical drawing toy + creative studio! Authentic red bezel, dual rotary knobs, powder shake-to-erase physics, Spirograph mathematical gear studio, 5-stencil trace academy with star scoring, 4-way symmetry CAD, 6 color themes, and time-lapse replay! | `Arrows`/`WASD`/`Drag` draw, `Space` shake/erase, `1-4` modes, `Tab` preset, `C` theme, `R` replay | [Preview](#33-etch-a-sketch-deluxe) |
 | **SkiFree Extreme** | `skifree/` | Classic 1991 Windows shareware winter sports recreation! Downhill slalom, jump ramps, mid-air stunt combos (Daffy, 360 Spin, Backflip, Spread Eagle), snow puff particles, 4 game modes, and the terrifying fast-running Yeti monster! | `Arrows`/`WASD` steer & tricks, `Space` jump & tuck, `M` mode, `R` restart | [Preview](#34-skifree-extreme) |
 | **JezzBall Pro** | `jezzball/` | Legendary 1992 Windows Entertainment Pack containment puzzle! Red and blue bouncing kinetic energy atoms, horizontal & vertical laser wall expansion, flood-fill isolated territory capture, 75%+ containment goal, and procedural FM audio. | `Left Click` build wall, `Right Click`/`Space` toggle orientation, `R` restart | [Preview](#35-jezzball-pro) |
+| **Yahtzee Deluxe** | `yahtzee/` | Classic 5-dice strategy game! Tumbling ivory dice physics, official 13-category scorecard with Upper Bonus (+35) and Yahtzee Bonus (+100) Joker rules, expected-value AI bot opponent, 2P Local mode, shaker rattle sound, and confetti celebrations! | `Space`/`Click` roll, `1-5` toggle hold, `Click row` score, `M` sound | [Preview](#36-yahtzee-deluxe) |
 
 ---
 
@@ -281,6 +282,12 @@ v run jezzball
 ```
 ![JezzBall Pro Screenshot](screenshots/jezzball.png)
 
+### 36. Yahtzee Deluxe
+```bash
+v run yahtzee
+```
+![Yahtzee Deluxe Screenshot](screenshots/yahtzee.png)
+
 ---
 
 ## 🚀 How to Run
@@ -288,6 +295,7 @@ v run jezzball
 From the root repository directory:
 
 ```bash
+v run yahtzee
 v run etchasketch
 v run skifree
 v run jezzball
@@ -332,6 +340,7 @@ v run cyberrunner
 Run unit tests for game modules:
 
 ```bash
+v test yahtzee/
 v test etchasketch/
 v test skifree/
 v test jezzball/
@@ -366,41 +375,106 @@ v test cyberrunner/
 
 ```
 sdl_games/
+├── yahtzee/                # Yahtzee Deluxe (5-Dice Strategy, Full Scorecard, Upper/Yahtzee Bonus, AI Bot, 2P Local)
 ├── etchasketch/            # Etch A Sketch Deluxe (Rotary Knobs, Shake Erase, Spirograph, Stencils, Symmetry)
-├── skifree/                # SkiFree Extreme (Downhill Slalom, Jump Ramps, Stunt Combos, Yeti Monster AI)
-├── jezzball/               # JezzBall Pro (Kinetic Atoms, Laser Wall Building, Flood-Fill Containment)
-├── simon/                  # Cyber Simon (Electronic Light & Sound Memory, Classic/Reverse/Speed Modes)
-├── memorymatch/            # Memory Match Pro (3D Card Flip Pair Matching, 4x4/6x4/6x6 Grids, Star Rating)
-├── chimptest/              # Chimp Test Pro (Spatial Working Memory Benchmark, Primate Cognitive Score)
-├── duke/                   # Duke Nukem: Cyber Outpost (Somersault Jump, 4 Weapons, Keycards, Cameras, Robodroids)
-├── bubbleshooter/          # Bubble Shooter Pro (Hex Grid, Raycast Laser, Match-3 BFS, 3D Shaded Bubbles)
-├── flappy/                 # Flappy Bird Pro (Rotational Pitch Dynamics, Procedural Pipes, Parallax City)
-├── qbert/                  # Q*bert 2.5D Isometric (28-Cube Pyramid, Coily Snake AI, Escape Discs, Curse Audio)
-├── puyopuyo/               # Puyo Puyo Cascade (Bouncy Jelly Puyos, 4-Way BFS, Gravity Cascades, Combos)
-├── goldminer/              # Gold Miner Classic (Pendulum Winch Claw, Weight Physics, Minerals, Dynamite)
-├── minesweeper/            # Minesweeper Pro (3 Difficulties, First-Click Safety, 7-Seg LED, Chording)
-├── spaceinvaders/          # Space Invaders 1978 Arcade Pro (55 Aliens, Heartbeat Audio, Voxel Shields, UFO)
-├── sokoban/                # Sokoban Master (15+ Handcrafted Levels, Undo Stack, 3-Star Rating)
-├── game2048/               # 2048 Neon Pulse (Smooth Sliding, Pentatonic Merge Chimes, Undo)
-├── lightcycles/            # Tron Light Cycles (Lookahead AI, 1P/2P Local Versus, Turbo Boost)
-├── pinball/                # NES Pinball Recreation (1984 Arcade Classic)
-├── balloonfight/           # NES Balloon Fight Recreation (1984 Arcade Classic)
-├── sidescroller/           # Cyberpunk Vanguard 2D Side-Scroller Shooter
-├── lolo/                   # Adventures of Lolo & Level Designer
-├── racer/                  # 2D Top-Down Cyber Drift Racing Engine
-├── asteroids/              # Asteroids Pro Vector Space Shooter
-├── breakout/               # Breakout Overdrive Brick Breaker
-├── pacman/                 # Pac-Man Arcade Game
-├── gnujump/                # GNUjump Vertical Tower Jumper
-├── sinksub/                # SinkSub Pro Submarine Hunter
-├── connect4/               # Connect 4 Minimax AI
-├── snake/                  # Cyberpunk Snake Game
-├── tetris/                 # Modern Tetris Game
-├── pong/                   # Hyper Pong Game
-├── ragdoll/                # Ragdoll Physics Sandbox
-├── centipede/              # Cyber Centipede Pro Arcade Game
-├── rain/                   # Monsoon Overdrive Realistic Rain & M4 Benchmark Game
-├── cyberrunner/            # Neon Vector Run 3D High-Speed Highway Runner Engine
-├── screenshots/            # Showcase screenshots of all 35 games
-└── README.md
+---
+
+### 38. Scorched Earth Deluxe (`scorchedearth/`)
+*1991 MS-DOS Tank Ballistics War Classic*
+
+- **Destructible Voxel Terrain**: Real-time deformable 2D heightmap physics with gravity collapse and crater excavation.
+- **6-Weapon Arsenal**: Standard Artillery Shells, Baby Nukes, MIRV Death's Head (apex cluster warhead split), Mountain Movers (dirt wall barriers), Napalm Rollers, and Digger Drills.
+- **Ballistics Simulation**: Precision angle ($0^\circ-180^\circ$) and power ($50-1000$) dials with dynamic crosswinds ($-80$ to $+80$ mph) and bullet drop.
+- **In-Between Rounds Shop**: Spend battle bounty cash on high-yield nukes, cluster bombs, and shields.
+- **Smart AI Opponent**: Cyborg Bot recalculates firing angles and wind trajectories after every shot.
+- **Controls**: `Left`/`Right` or `A`/`D` to adjust angle, `Up`/`Down` or `W`/`S` to adjust power, `1-6` to select weapon, `Space` to fire, `M` to toggle sound.
+
+![Scorched Earth](screenshots/scorchedearth.png)
+
+```bash
+v run scorchedearth/
 ```
+
+---
+
+### 39. Lemmings Master (`lemmings/`)
+*1991 DMA Design Puzzle Classic*
+
+- **8 Assignable Lemming Skills**: Climber, Floater (umbrella parachute), Bomber (5s countdown "Oh No!" sacrifice), Blocker (turnaround barrier), Builder (12-step diagonal staircases), Basher (horizontal tunneling), Miner (diagonal excavation), and Digger (vertical shaft tunneling).
+- **Pixel-Accurate Destructible Map**: Voxel terrain mask with real-time dynamic carving and pathfinding.
+- **Complete Level Simulation**: Trapdoor drop hatch, home exit portal, save quota threshold, speed acceleration (`F`), pause (`P`), and Armageddon nuke countdown (`Space`).
+- **Sound Effects**: Procedural synthesized "Let's Go!", "Oh No!", explosive pops, and victory chimes.
+
+![Lemmings Master](screenshots/lemmings.png)
+
+```bash
+v run lemmings/
+```
+
+---
+
+### 40. Chip's Challenge Deluxe (`chipschallenge/`)
+*1989 Windows Entertainment Pack Classic*
+
+- **Grid Physics Mechanics**: 16x16 puzzle maze with microchips, red/blue/yellow/green keys, color-coded security doors, and socket barrier gates.
+- **Hazard Navigation**: Water pools, fire pits, dirt blocks, ice slides, force floors, and bomb triggers.
+- **Interactive Inventory & Equipment**: Flipper boots (swim through water) and Fire boots (walk on fire).
+- **Multiple Level Puzzles**: Handcrafted obstacle courses with countdown timers and victory exit portals.
+- **Controls**: `Arrows` or `WASD` to move, `R` to restart level, `N` for next level, `M` to toggle sound.
+
+![Chip's Challenge Deluxe](screenshots/chipschallenge.png)
+
+```bash
+v run chipschallenge/
+```
+
+---
+
+### 41. Rodent's Revenge (`rodentsrevenge/`)
+*1991 Microsoft Windows Cat-Trapping Classic*
+
+- **Block Pushing Mechanics**: Push movable wooden warehouse crates singly or in rows to maneuver around hazards.
+- **Cat AI & Trapping Algorithm**: Prowling and chasing cats that pathfind toward the mouse. When a cat has 0 movable adjacent squares (fully enclosed by blocks/walls), it instantly transforms into a giant edible cheese wedge (+1,000 pts)!
+- **Warehouse Hazards**: Mousetraps, sinkholes, sleeping cats, and escalating level difficulties.
+- **Controls**: `Arrows` or `WASD` to move mouse and push blocks, `R` to restart level, `M` to toggle sound.
+
+![Rodent's Revenge](screenshots/rodentsrevenge.png)
+
+```bash
+v run rodentsrevenge/
+```
+
+---
+
+### 42. Peggle Extreme (`peggle/`)
+*Pachinko Peg-Popper Physics Arcade*
+
+- **Pachinko Ballistics Physics**: Elastic bounce restitution on pegs, side wall reflections, and gravity trajectories.
+- **Dynamic Peg Colors**: Orange goal pegs (clear 25 for Extreme Fever), Blue score pegs, Purple score multipliers, and Green multi-ball power-ups.
+- **Moving Catcher Bucket**: Sliding bottom cart awards **+1 FREE BALL** on successful catches!
+- **Extreme Fever Finale**: Slow-motion celebration with *Ode to Joy* procedural fanfare, bottom score bins (10k-100k pts), and celebratory confetti explosions!
+- **Controls**: `Mouse` or `Left`/`Right` to aim cannon, `Left Click` or `Space` to shoot ball, `M` to toggle sound.
+
+![Peggle Extreme](screenshots/peggle.png)
+
+```bash
+v run peggle/
+```
+
+---
+
+### 43. Dope Wars 1990 (`dopewars/`)
+*Turn-Based NYC Economic Strategy Classic*
+
+- **30-Day Calendar & 6 NYC Boroughs**: Travel between Manhattan, The Bronx, Brooklyn, Queens, Staten Island, and Coney Island via the NYC Subway.
+- **Volatile Commodity Market**: 8 commodities (Acid, Cocaine, Hashish, Heroin, Ludes, MDA, Opium, Weed) with realistic market fluctuations and price surges/crashes.
+- **Financial Strategy**: 100-capacity trenchcoat, Loan Shark (compounding 10% daily debt interest), and 1st National Bank of NYC (5% daily deposit yield).
+- **Random Street Events**: Police chases by Officer Bob and deputies (Run / Bribe), DEA raids, and drug bust surges.
+- **Controls**: `1-8` to select commodity, `B` to buy, `S` to sell, `T` for subway transit, `K` for bank, `L` for loan shark, `M` to toggle sound.
+
+![Dope Wars 1990](screenshots/dopewars.png)
+
+```bash
+v run dopewars/
+```
+
