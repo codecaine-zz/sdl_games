@@ -1,10 +1,32 @@
 module main
 
+import os
 import sdl
 
 fn main() {
 	sdl.init(sdl.init_video | sdl.init_audio)
 	defer { sdl.quit() }
+
+	if os.getenv('SNAPSHOT') == '1' || os.args.contains('--snap') {
+		surface := sdl.create_rgb_surface(0, 800, 600, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+		if unsafe { surface == nil } { return }
+		defer { sdl.free_surface(surface) }
+
+		renderer := sdl.create_software_renderer(surface)
+		if unsafe { renderer == nil } { return }
+		defer { sdl.destroy_renderer(renderer) }
+
+		mut game := new_shinobi_game()
+		game.state = .playing
+		game.player_x = 180.0
+		game.player_y = 380.0
+		game.score = 1250
+		game.update(0.016)
+
+		render_shinobi_game(renderer, mut game)
+		sdl.save_bmp(surface, 'screenshots/shinobi.bmp'.str)
+		return
+	}
 
 	window := sdl.create_window(
 		'Cyber Shinobi Runner'.str,
