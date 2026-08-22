@@ -62,6 +62,10 @@ v install sdl
 | **Yahtzee Deluxe** | `yahtzee/` | Classic 5-dice strategy game! Tumbling ivory dice physics, official 13-category scorecard with Upper Bonus (+35) and Yahtzee Bonus (+100) Joker rules, expected-value AI bot opponent, 2P Local mode, shaker rattle sound, and confetti celebrations! | `Space`/`Click` roll, `1-5` toggle hold, `Click row` score, `M` sound | [Preview](#36-yahtzee-deluxe) |
 | **Mappy Arcade** | `mappy/` | Namco 1983 arcade classic! 6-floor mansion, trampoline bounce physics (wear states), door stun swings, microwave shockwaves, loot pair multipliers (2x-6x), Goro hide bonus, and balloon bonus rounds. | `A`/`D` or `Arrows` move/dismount, `Space`/`W` door, `1`/`2` start, `P` pause, `M` sound | [Preview](#44-mappy-arcade) |
 | **CyberType: Neon Typist** | `typing/` | High-speed arcade typing space shooter! Lock-on plasma lasers, EMP nuke words, time-freeze stasis, real-time WPM/Accuracy gauges, 100x combo streaks, 4 game modes (Arcade, 60s Blitz, Code Syntax, Endless). | `A-Z` type & lock-on, `Backspace`/`Esc` cancel, `1-4` modes, `P` pause, `M` sound | [Preview](#45-cybertype-neon-typist) |
+| **Picross Pro** | `picross/` | Classic Nonogram logic puzzle! Row/col run clues, 10+ handcrafted pixel art puzzles (5x5, 10x10, 15x15), drag fill & cross, auto-check, hints, timer, 3-strikes & Zen modes, and victory fanfare. | `Left Click`/`Space`/`Z` fill, `Right Click`/`X` cross, `H` hint, `P`/`N` level, `M` mode | [Preview](#46-picross-pro) |
+| **Reversi Master** | `reversi/` | Classic 8x8 disc-flipping strategy game! Minimax AI with Alpha-Beta pruning (3 difficulties), 3D flipping animation, legal move projection, move undo history, coordinate markers, and scoreboard. | `Left Click` place disc, `U` undo, `H` hint, `M` 1P/2P, `D` difficulty, `S` sound | [Preview](#47-reversi-master) |
+| **Bejeweled Match-3** | `bejeweled/` | Cascading gem match-3 sensation! 7 vibrant faceted gem types, Flame Gem (4-match explosion) & Hypercube (5-match laser zap), chain combos, Classic & 60s Time Attack modes. | `Click`/`Drag` swap gems, `H` hint, `M` mode, `R` reset, `S` sound | [Preview](#48-bejeweled-match-3) |
+| **Boulder Dash Retro** | `boulderdash/` | Action cave puzzle legend! Dig dirt paths, falling & rolling boulder physics, diamond collection quotas, Fireflies & Butterflies that explode into diamonds, Amoeba core, and 5 caves. | `WASD`/`Arrows` dig & move, `P`/`N` cave select, `R` reset, `S` sound | [Preview](#49-boulder-dash-retro) |
 
 ---
 
@@ -523,6 +527,93 @@ v run mappy/
 ```bash
 v run typing/
 ```
+
+---
+
+### 46. Picross Pro (`picross/`)
+*Classic Nonogram Logic Grid Puzzle*
+
+- **Dynamic Clue Calculation**: Automatic generation of row and column consecutive block run clues for any grid size (5x5, 10x10, 15x15).
+- **10+ Handcrafted Pixel Art Puzzles**: Heart, Duck, Music Note, Space Invader, Power Mushroom, Hero Sword, Retro Ghost, Coffee Cup, Skull & Crossbones, and Castle Bastion.
+- **Dual Play Modes**:
+  - **Zen Logic Mode**: Relaxed logic puzzle solving with freeform filling and crossing.
+  - **Strikes Mode**: 3-strike challenge mode with instant mistake detection and buzzer penalty.
+- **Full Control Flexibility**: Mouse drag painting & crossing (`Left Click` fill, `Right Click` cross) or keyboard navigation (`WASD`/`Arrows` move, `Z`/`Space` fill, `X`/`F` cross).
+- **Auto-check & Celebrations**: Auto-dimming of satisfied clues, Hint reveal button, elapsed timer, and full-color glowing victory particle fanfare.
+- **Controls**: `Left Click`/`Space`/`Z` fill, `Right Click`/`X`/`F` cross, `C` clear, `H` hint, `M` mode, `P`/`N` or `[`/`]` level select, `R` reset, `S` sound.
+
+```bash
+v run picross/
+```
+
+![Picross Pro Screenshot](screenshots/picross.png)
+
+---
+
+### 47. Reversi Master (`reversi/`)
+*Classic 8x8 Disc-Flipping Strategy Board Game*
+
+- **Authentic 8-Directional Raycast Engine**: Complete Reversi rules with bracketed disc flips, pass detection, and end-of-game territory scoring.
+- **Minimax AI with Alpha-Beta Pruning**:
+  - **Novice**: 1-ply evaluation with occasional random exploration.
+  - **Tactician**: 3-ply lookahead with corner valuation and mobility heuristics.
+  - **Grandmaster**: 5 to 7-ply deep search with end-game exact parity solving.
+- **3D Disc Flip Animations**: Smooth cosine-interpolated rotational flip effect when discs are captured.
+- **Visual Aids & Controls**: Soft green legal move indicators, last move golden highlight, coordinate axes (`A-H`, `1-8`), and infinite move undo history (`U`).
+- **1P AI & 2P Local Modes**: Play against the computer or pass-and-play with a friend.
+- **Controls**: `Left Click` place disc, `U` undo move, `H` show best hint, `M` toggle 1P/2P mode, `D` cycle AI difficulty, `R` reset board, `S` toggle sound.
+
+```bash
+v run reversi/
+```
+
+![Reversi Master Screenshot](screenshots/reversi.png)
+
+---
+
+### 48. Bejeweled Match-3 (`bejeweled/`)
+*Cascading Gem Match-3 Sensation*
+
+- **7 Faceted Geometric Gem Styles**: Ruby (Red), Sapphire (Blue), Emerald (Green), Topaz (Yellow), Amethyst (Purple), Diamond (White), and Amber (Orange) with custom specular shine facets.
+- **Special Power Gems**:
+  - **Flame Gem (4-in-a-row match)**: Explodes a 3x3 surrounding radius of gems in a fiery blast.
+  - **Hypercube (5-in-a-row match)**: Zaps and obliterates all gems of the swapped color on the entire board.
+- **Cascading Chaining & Combos**: Gravity falling physics with auto-refill, ascending musical pentatonic match chimes, floating score popups, and chain multipliers.
+- **2 Exciting Game Modes**:
+  - **Classic Mode**: Endless level-up progression with target score milestones.
+  - **Time Attack Mode**: 60-second frantic blitz with countdown timer bar.
+- **Controls**: `Left Click` select/swap adjacent gems, `Mouse Drag` swap, `H` show hint, `M` switch mode, `R` reset board, `S` toggle sound.
+
+```bash
+v run bejeweled/
+```
+
+![Bejeweled Match-3 Screenshot](screenshots/bejeweled.png)
+
+---
+
+### 49. Boulder Dash Retro (`boulderdash/`)
+*Action-Packed Cave Digger & Boulder Physics Legend*
+
+- **Authentic Physics Engine**:
+  - Falling boulders and diamonds with gravity and impact velocity.
+  - Rounded shoulder rolling off other boulders, diamonds, and brick walls.
+  - Horizontal boulder pushing into open space.
+  - Falling crush hazard: falling boulders crush enemies and player on impact!
+- **Enemies & Hazards**:
+  - **Firefly**: Patrols left walls; explodes into open space when crushed.
+  - **Butterfly**: Patrols right walls; explodes into a 3x3 cluster of 9 collectible diamonds when crushed!
+  - **Amoeba**: Expanding fluid hazard that turns into diamonds if enclosed.
+  - **Exit Portal**: Sealed vault that unlocks and flashes rainbow colors once the diamond quota is reached!
+- **5 Handcrafted Caves**: Tutorial Quarry, Boulder Garden, Firefly Maze, Butterfly Cavern, and Amoeba Core.
+- **Controls**: `WASD` or `Arrow Keys` to dig and move, `P`/`N` or `[`/`]` to select cave, `R` to restart level, `S` to toggle sound.
+
+```bash
+v run boulderdash/
+```
+
+![Boulder Dash Retro Screenshot](screenshots/boulderdash.png)
+
 
 
 
