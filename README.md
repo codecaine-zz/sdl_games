@@ -1,6 +1,6 @@
 # 🕹️ V Arcade SDL Games Suite
 
-A massive collection of **63 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
+A massive collection of **66 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
 
 Every single game is engineered with **zero external asset dependencies** — utilizing 100% procedural PCM sound synthesis, vector graphics rasterization, and embedded pixel/bitmap fonts.
 
@@ -22,7 +22,7 @@ v install sdl
 
 ---
 
-## 🎮 Master Game Index (63 Games)
+## 🎮 Master Game Index (66 Games)
 
 | # | Game | Folder | Genre | Quick Controls | How to Play |
 | :-: | :--- | :--- | :--- | :--- | :-: |
@@ -89,6 +89,9 @@ v install sdl
 | **61** | [Party Trivia Show](#61-party-trivia-show-trivia) | `trivia/` | TV Studio Quiz Battle | `1-4`/`A-D` (P1), `U-P` (P2), `Space` next | [Guide](#61-party-trivia-show-trivia) |
 | **62** | [CyberType Typist](#62-cybertype-neon-typist-typing) | `typing/` | Typing Space Shooter | `A-Z` type target words, `Backspace` cancel lock | [Guide](#62-cybertype-neon-typist-typing) |
 | **63** | [Yahtzee Deluxe](#63-yahtzee-deluxe-yahtzee) | `yahtzee/` | 5-Dice Strategy | `Space`/`Click` roll, `1-5` hold dice, `Click row` score | [Guide](#63-yahtzee-deluxe-yahtzee) |
+| **64** | [Bowling Pro](#64-bowling-pro-bowling) | `bowling/` | 10-Pin Sports / Physics | `WASD`/`Arrows` aim pos & angle, `Space` power, `Z`/`X` hook | [Guide](#64-bowling-pro-bowling) |
+| **65** | [Darts Masters](#65-darts-masters-darts) | `darts/` | 501/301/Cricket Darts | `Mouse`/`WASD` aim reticle, `Space`/`Click` timing | [Guide](#65-darts-masters-darts) |
+| **66** | [Billiards Pro](#66-billiards-pro-pool) | `pool/` | 8-Ball & 9-Ball Pool | `Mouse`/`Arrows` aim cue, `Drag`/`Space` strike | [Guide](#66-billiards-pro-pool) |
 
 ---
 
@@ -1541,12 +1544,93 @@ v run yahtzee
 
 ---
 
+### 64. Bowling Pro (`bowling/`)
+*10-Pin Arcade Bowling with Pin Physics, Hook Spin & 10-Frame Scoring*
+
+```bash
+v run bowling
+```
+![Bowling Pro](screenshots/bowling.png)
+
+- **Objective**: Roll the bowling ball down the polished wood lane, knock down all 10 pins in each frame, string together Strikes and Spares, and bowl a Perfect 300 game!
+- **Controls**:
+  - `A` / `D` or `Left` / `Right`: Position ball stance along the approach line (Step 1).
+  - `Space`: Lock ball position $\to$ Lock oscillating launch angle (Step 2) $\to$ Lock power and roll ball (Step 3).
+  - `Z` / `X`: Apply lateral left / right hook spin (imparts curve as the ball approaches the pin pocket).
+  - `1-3`: Game mode (**1: Solo Play**, **2: 2P Local Versus**, **3: vs CPU Bowler**).
+  - `Tab`: Cycle CPU AI difficulty (Novice, Pro, Hall of Fame).
+  - `M`: Toggle procedural audio.
+  - `R`: Restart game.
+- **Rules & Mechanics**:
+  - **10-Frame Engine**: Standard frames 1-9 have up to 2 rolls. 10th frame awards a 3rd bonus ball on a Strike or Spare!
+  - **Pin Physics**: Real-time pin-to-pin chain reaction physics, wobbling, pin sweeps, and gutter drops.
+  - **Scoring**: Strikes score 10 + next 2 rolls; Spares score 10 + next 1 roll. Maximum possible score is **300**.
+- **Pro Tip**: Stand slightly to the right of the center dot and add left hook spin (`Z`) to hit the 1-3 pocket at an angle for consistent explosive strikes!
+
+---
+
+### 65. Darts Masters (`darts/`)
+*Tournament Darts Championship (501 / 301 / Cricket / Around the Clock)*
+
+```bash
+v run darts
+```
+![Darts Masters](screenshots/darts.png)
+
+- **Objective**: Throw 3 darts per turn at the authentic 20-segment board, aim for high-scoring triples, and double-out to 0 without going bust!
+- **Controls**:
+  - `Mouse Move` or `WASD` / `Arrow Keys`: Aim targeting reticle on dartboard.
+  - `Space` or `Left Click`: Lock aim target $\to$ Stop timing meter in green sweet spot to throw dart.
+  - `1-4`: Game mode (**1: 501 Darts**, **2: 301 Darts**, **3: Cricket**, **4: Around the Clock**).
+  - `P`: 2P Local Versus mode.
+  - `C`: vs CPU AI Darts Opponent.
+  - `Tab`: Cycle AI skill level (Casual, League Player, World Champion).
+  - `M`: Toggle audio.
+  - `R`: Reset leg.
+- **Game Modes**:
+  - **501 / 301**: Double-Out countdown. Displays live checkout routes (e.g. `T20 -> T20 -> D20` for 160). Score of 1 or below 0 triggers a **Bust**!
+  - **Cricket**: Close numbers 15-20 and Bullseye with 3 hits each to score points.
+  - **Around the Clock**: Hit numbers 1 through 20 in sequential order.
+- **Pro Tip**: Master the timing meter release to hit the narrow Triple 20 bed (60 pts) consistently and build up a legendary **180** turn!
+
+---
+
+### 66. Billiards Pro (`pool/`)
+*8-Ball & 9-Ball Pool with 2D Physics, Spin English & Ghost-Ball Aim*
+
+```bash
+v run pool
+```
+![Billiards Pro](screenshots/pool.png)
+
+- **Objective**: Use your cue stick to pocket all of your assigned group balls (Solids 1-7 or Stripes 9-15) and legally pocket the black 8-ball to win the game!
+- **Controls**:
+  - `Mouse Move` or `Left` / `Right` / `A` / `D`: Rotate cue stick aiming angle.
+  - `Left Click + Drag Down` or `Hold Space`: Pull back cue stick to set shot power, release to strike cue ball!
+  - `1-3`: Game mode (**1: 8-Ball**, **2: 9-Ball**, **3: Practice / Trick Shot**).
+  - `P`: 2P Local Versus mode.
+  - `C`: vs CPU AI Hustler.
+  - `Tab`: Cycle AI difficulty.
+  - `M`: Toggle audio.
+  - `R`: Re-rack balls.
+  - `Click on Table (when Ball-in-Hand)`: Place cue ball anywhere on felt after opponent scratch.
+- **Physics & Mechanics**:
+  - Continuous elastic ball-ball collisions with momentum conservation ($e = 0.95$).
+  - Ghost-ball projection guide shows exact impact location and object ball deflection line.
+  - Cushion rail rebounds, pocket drop mouth jaws, and scratch penalties.
+- **Pro Tip**: Use soft touch shots on balls near pockets to keep the cue ball in the center of the table for effortless follow-up position play!
+
+---
+
 ## 🧪 Automated Unit Testing
 
 You can run automated test suites for the game modules using the V test runner:
 
 ```bash
 # Run tests across games
+v test bowling/
+v test darts/
+v test pool/
 v test yahtzee/
 v test etchasketch/
 v test skifree/
@@ -1589,6 +1673,7 @@ sdl_games/
 ├── bejeweled/              # 5. Bejeweled Match-3
 ├── bomberman/              # 6. Bomberman Arcade
 ├── boulderdash/            # 7. Boulder Dash Retro
+├── bowling/                # 64. Bowling Pro (10-Pin Bowling)
 ├── breakout/               # 8. Breakout Overdrive
 ├── bubbleshooter/          # 9. Bubble Shooter Pro
 ├── centipede/              # 10. Cyber Centipede Pro
@@ -1597,6 +1682,7 @@ sdl_games/
 ├── clickarcade/            # 13. Click Arcade (4-in-1 Suite)
 ├── connect4/               # 14. Connect 4
 ├── cyberrunner/            # 15. Neon Vector Run 3D
+├── darts/                  # 65. Darts Masters (501 / 301 / Cricket)
 ├── digdug/                 # 16. Dig Dug Classic
 ├── donkeykong/             # 17. Donkey Kong Arcade
 ├── dopewars/               # 18. Dope Wars 1990
@@ -1624,6 +1710,7 @@ sdl_games/
 ├── picross/                # 40. Picross Pro
 ├── pinball/                # 41. NES Pinball
 ├── pong/                   # 42. Hyper Pong
+├── pool/                   # 66. Billiards Pro (8-Ball & 9-Ball)
 ├── puyopuyo/               # 43. Puyo Puyo Cascade
 ├── qbert/                  # 44. Q*bert Isometric
 ├── racer/                  # 45. Cyber Drift Racer
