@@ -97,6 +97,10 @@ v install sdl
 | **69** | [War Card Battle](#69-war-card-battle-war) | `war/` | 52-Card War Showdown | `Space`/`Click` flip duel, `A` auto-play, `R` restart | [Guide](#69-war-card-battle-war) |
 | **70** | [Blackjack 21 Pro](#70-blackjack-21-pro-blackjack) | `blackjack/` | Vegas Blackjack 21 | `Space` deal, `H` hit, `S` stand, `D` double, `P` split | [Guide](#70-blackjack-21-pro-blackjack) |
 | **71** | [Texas Hold'em Poker](#71-texas-holdem-poker-texas) | `texas/` | No-Limit Texas Hold'em | `C` check/call, `R` raise, `F` fold, `A` all-in | [Guide](#71-texas-holdem-poker-texas) |
+| **72** | [TI-83 Block Dude](#72-ti-83-block-dude-blockdude) | `blockdude/` | Calculator Puzzle Platformer | `A`/`D` move, `Space`/`W`/`S` pick/drop, `U` undo | [Guide](#72-ti-83-block-dude-blockdude) |
+| **73** | [Game & Watch: Fire](#73-nintendo-game--watch-fire-fire) | `fire/` | 1980 LCD Handheld | `Left`/`Right`/`A`/`D` move trampoline, `1`/`2` mode | [Guide](#73-nintendo-game--watch-fire-fire) |
+| **74** | [Ultimate Screensaver Suite](#74-ultimate-retro-screensaver-suite-screensaver) | `screensaver/` | 102 Retro Screensavers | `Tab` Display Properties, `Right`/`Left` next/prev, `C` cycle | [Guide](#74-ultimate-retro-screensaver-suite-screensaver) |
+
 
 ---
 
@@ -1883,6 +1887,9 @@ sdl_games/
 ├── rodentsrevenge/         # 49. Rodent's Revenge
 ├── scorchedearth/          # 50. Scorched Earth Deluxe
 ├── shinobi/                # 51. Cyber Shinobi Runner
+├── blockdude/               # 72. TI-83 Block Dude Puzzle Platformer
+├── fire/                    # 73. Nintendo Game & Watch: Fire 1980 LCD
+├── screensaver/             # 74. Ultimate Retro Screensaver Suite (102 Templates)
 ├── sidescroller/           # 52. Cyberpunk Vanguard
 ├── simon/                  # 53. Cyber Simon
 ├── sinksub/                # 54. SinkSub Pro
