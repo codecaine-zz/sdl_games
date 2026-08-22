@@ -61,6 +61,7 @@ v install sdl
 | **JezzBall Pro** | `jezzball/` | Legendary 1992 Windows Entertainment Pack containment puzzle! Red and blue bouncing kinetic energy atoms, horizontal & vertical laser wall expansion, flood-fill isolated territory capture, 75%+ containment goal, and procedural FM audio. | `Left Click` build wall, `Right Click`/`Space` toggle orientation, `R` restart | [Preview](#35-jezzball-pro) |
 | **Yahtzee Deluxe** | `yahtzee/` | Classic 5-dice strategy game! Tumbling ivory dice physics, official 13-category scorecard with Upper Bonus (+35) and Yahtzee Bonus (+100) Joker rules, expected-value AI bot opponent, 2P Local mode, shaker rattle sound, and confetti celebrations! | `Space`/`Click` roll, `1-5` toggle hold, `Click row` score, `M` sound | [Preview](#36-yahtzee-deluxe) |
 | **Mappy Arcade** | `mappy/` | Namco 1983 arcade classic! 6-floor mansion, trampoline bounce physics (wear states), door stun swings, microwave shockwaves, loot pair multipliers (2x-6x), Goro hide bonus, and balloon bonus rounds. | `A`/`D` or `Arrows` move/dismount, `Space`/`W` door, `1`/`2` start, `P` pause, `M` sound | [Preview](#44-mappy-arcade) |
+| **CyberType: Neon Typist** | `typing/` | High-speed arcade typing space shooter! Lock-on plasma lasers, EMP nuke words, time-freeze stasis, real-time WPM/Accuracy gauges, 100x combo streaks, 4 game modes (Arcade, 60s Blitz, Code Syntax, Endless). | `A-Z` type & lock-on, `Backspace`/`Esc` cancel, `1-4` modes, `P` pause, `M` sound | [Preview](#45-cybertype-neon-typist) |
 
 ---
 
@@ -498,5 +499,30 @@ v run dopewars/
 ```bash
 v run mappy/
 ```
+
+---
+
+### 45. CyberType: Neon Typist (`typing/`)
+*High-Speed Arcade Typing Space Shooter*
+
+- **Tactical Lock-On & Laser Elimination**: Typing the first letter acquires target lock; each subsequent letter fires bright plasma laser bolts directly into hostiles.
+- **Enemy Classes & Power-Up Words**:
+  - **Scouts & Cruisers**: Fast descending drones and armored hulls.
+  - **Dreadnoughts**: Massive boss flagships requiring multi-syllable word mastery.
+  - **EMP Nuke Words (Cyan)**: Detonates full-screen EMP shockwaves destroying all hostiles.
+  - **Time Warp Words (Purple)**: Freezes all enemy movement for 4 seconds.
+  - **Shield Repair Words (Green)**: Repairs +1 hull integrity block.
+- **Real-Time Analytics & Combos**: Dynamic WPM (Words Per Minute) gauge, Accuracy percentage, and 10x/25x/50x/100x combo multiplier streaks.
+- **4 Game Modes**:
+  - **Arcade Campaign**: 10 progressive sector waves with asteroid belts and boss battles.
+  - **60s Speed Blitz**: Intense 1-minute adrenaline rush for highest WPM records.
+  - **Developer Syntax**: Falling code keywords from V, C, Rust, Python, Go, and SQL.
+  - **Endless Survival**: Unlimited escalating wave assault.
+- **Controls**: `A-Z` to type/target, `Backspace`/`Esc` to cancel lock, `Esc`/`F1` to pause, `1-4` or `Tab` select mode (on title), `Space`/`Enter` to start, `F9` to toggle sound, `F5` to restart.
+
+```bash
+v run typing/
+```
+
 
 
