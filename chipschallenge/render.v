@@ -192,6 +192,13 @@ fn render_chip_player(renderer &sdl.Renderer, x int, y int, s int, dx int, dy in
 	sdl.set_render_draw_color(renderer, 30, 60, 180, 255)
 	legs := sdl.Rect{x + 10, y + s - 8, s - 20, 6}
 	sdl.render_fill_rect(renderer, &legs)
+
+	// Eyes looking in facing direction
+	sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+	eye1 := sdl.Rect{x + 12 + dx * 2, y + 14 + dy * 2, 3, 3}
+	eye2 := sdl.Rect{x + 18 + dx * 2, y + 14 + dy * 2, 3, 3}
+	sdl.render_fill_rect(renderer, &eye1)
+	sdl.render_fill_rect(renderer, &eye2)
 }
 
 fn render_hud_panel(renderer &sdl.Renderer, g ChipsGame, x int, y int, w int, h int, sound_enabled bool) {

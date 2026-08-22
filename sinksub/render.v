@@ -395,7 +395,7 @@ fn render_submarine(renderer &sdl.Renderer, sub Submarine, ticks u32) {
 	sdl.render_draw_rect(renderer, &rect)
 }
 
-fn render_supply_crate(renderer &sdl.Renderer, crate Crate, ticks u32) {
+fn render_supply_crate(renderer &sdl.Renderer, crate Crate, _ u32) {
 	cx := int(crate.x)
 	cy := int(crate.y)
 

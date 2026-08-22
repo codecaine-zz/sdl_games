@@ -133,8 +133,8 @@ fn render_mouse(renderer &sdl.Renderer, x int, y int, s int, dx int, dy int) {
 	draw_filled_circle(renderer, x + 7, y + 7, 3, Color{255, 160, 180, 255})
 	draw_filled_circle(renderer, x + s - 8, y + 7, 3, Color{255, 160, 180, 255})
 
-	// Nose
-	draw_filled_circle(renderer, x + s / 2, y + s / 2 + 2, 2, Color{255, 100, 130, 255})
+	// Nose & facing direction
+	draw_filled_circle(renderer, x + s / 2 + dx * 3, y + s / 2 + 2 + dy * 3, 2, Color{255, 100, 130, 255})
 }
 
 fn render_header(renderer &sdl.Renderer, g RodentGame, win_w int, sound_enabled bool) {

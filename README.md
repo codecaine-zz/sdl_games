@@ -66,6 +66,7 @@ v install sdl
 | **Reversi Master** | `reversi/` | Classic 8x8 disc-flipping strategy game! Minimax AI with Alpha-Beta pruning (3 difficulties), 3D flipping animation, legal move projection, move undo history, coordinate markers, and scoreboard. | `Left Click` place disc, `U` undo, `H` hint, `M` 1P/2P, `D` difficulty, `S` sound | [Preview](#47-reversi-master) |
 | **Bejeweled Match-3** | `bejeweled/` | Cascading gem match-3 sensation! 7 vibrant faceted gem types, Flame Gem (4-match explosion) & Hypercube (5-match laser zap), chain combos, Classic & 60s Time Attack modes. | `Click`/`Drag` swap gems, `H` hint, `M` mode, `R` reset, `S` sound | [Preview](#48-bejeweled-match-3) |
 | **Boulder Dash Retro** | `boulderdash/` | Action cave puzzle legend! Dig dirt paths, falling & rolling boulder physics, diamond collection quotas, Fireflies & Butterflies that explode into diamonds, Amoeba core, and 5 caves. | `WASD`/`Arrows` dig & move, `P`/`N` cave select, `R` reset, `S` sound | [Preview](#49-boulder-dash-retro) |
+| **Click Arcade** | `clickarcade/` | Addictive 4-in-1 mouse clicking arcade suite! Gem Rush Tycoon (idle clicker & ascension), Chain Reaction Pop (atomic cascade puzzle), Whack-A-Boss (monster reflexes & streaks), and Blade Slicer (fruit ninja swiping). | `Left Click`/`Mouse Drag` interactive actions, `Esc` menu, `M` sound | [Preview](#50-click-arcade) |
 
 ---
 
@@ -613,6 +614,26 @@ v run boulderdash/
 ```
 
 ![Boulder Dash Retro Screenshot](screenshots/boulderdash.png)
+
+---
+
+### 50. Click Arcade (`clickarcade/`)
+*Addictive 4-in-1 Mouse-Clicking Mini Game Suite*
+
+- **4 Complete Addictive Mini-Games**:
+  1. **Gem Rush Tycoon**: Deep idle clicker with spring-squash animations, automation shop (Pickaxes, Dwarf Miners, Laser Bores, Cosmic Forges), combo multiplier meters, Golden Gem frenzy rush (7x multiplier), and celestial shard Prestige Ascension.
+  2. **Chain Reaction Pop**: Physics-based zero-gravity cascading atomic detonation puzzle. Click once to drop expanding shockwaves that explode colliding atoms into chain multipliers and musical pentatonic chime chords across escalating difficulty stages.
+  3. **Whack-A-Boss**: High-intensity reflex monster smasher. Whack standard goblins, golden speedster gnomes, clock bonus sprites (+6s), avoid skull bombs, and crush multi-hit armored bosses with streak combos.
+  4. **Blade Slicer**: Fluid mouse-swiping blade ninja slicer. Slash arcing flying watermelons, apples, oranges, and diamond stars in mid-air with glowing sword trails, split halves physics, and multi-slice combo multipliers.
+- **Unified Arcade Hub**: Persistent statistics (total lifetime clicks, highest score per game mode), sound synthesis, and instant `Esc` navigation.
+- **Controls**: `Left Click` or `Mouse Drag` for all gameplay actions, `Esc` return to menu, `M` toggle audio.
+
+```bash
+v run clickarcade/
+```
+
+![Click Arcade Screenshot](screenshots/clickarcade.bmp)
+
 
 
 

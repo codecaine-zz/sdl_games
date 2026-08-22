@@ -11,7 +11,6 @@ const play_width = win_width - 2 * wall_w
 
 // xjump-sdl tile sizing
 const tile_s = 25
-const field_w = 32
 
 enum PlatformType {
 	standard

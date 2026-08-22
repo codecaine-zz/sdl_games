@@ -480,7 +480,7 @@ pub fn (mut g RagdollGame) update(dt_raw f64, mx int, my int, mouse_down bool, m
 	}
 }
 
-fn (mut g RagdollGame) handle_tool_inputs(mx int, my int, mouse_down bool, mouse_clicked bool, mouse_vx f64, mouse_vy f64) {
+fn (mut g RagdollGame) handle_tool_inputs(mx int, my int, mouse_down bool, mouse_clicked bool, _ f64, _ f64) {
 	fmx := f64(mx)
 	fmy := f64(my)
 

@@ -156,7 +156,7 @@ fn (sm &SoundManager) play_win_sound() {
 	note_len := num_samples / notes.len
 
 	for i in 0 .. num_samples {
-		note_idx := i / note_len
+		note_idx := math.min(i / note_len, notes.len - 1)
 		freq := notes[note_idx]
 		t_note := f64(i % note_len) / f64(sample_rate)
 		env := math.exp(-10.0 * t_note)

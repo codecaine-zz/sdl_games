@@ -216,7 +216,7 @@ fn render_artillery_dashboard(renderer &sdl.Renderer, g ScorchedGame, win_w int,
 	}
 }
 
-fn render_weapons_shop(renderer &sdl.Renderer, g ScorchedGame, win_w int, win_h int, mouse_x int, mouse_y int) {
+fn render_weapons_shop(renderer &sdl.Renderer, g ScorchedGame, win_w int, win_h int, _ int, _ int) {
 	// Dark semi-transparent modal overlay
 	sdl.set_render_draw_color(renderer, 5, 10, 18, 230)
 	modal := sdl.Rect{80, 60, win_w - 160, win_h - 120}

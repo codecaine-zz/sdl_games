@@ -429,7 +429,7 @@ fn (mut g CentipedeGame) update(dt f64, sound_mgr &SoundManager) {
 		g.wave_clear_timer -= dt
 		if g.wave_clear_timer <= 0.0 {
 			// Regenerate damaged mushrooms for bonus points!
-			g.regenerate_mushrooms(sound_mgr)
+			g.regenerate_mushrooms()
 			g.start_wave(g.wave + 1)
 		}
 	}
@@ -1010,7 +1010,7 @@ fn (mut g CentipedeGame) handle_enemy_spawns(dt f64, sound_mgr &SoundManager) {
 	}
 }
 
-fn (mut g CentipedeGame) regenerate_mushrooms(sound_mgr &SoundManager) {
+fn (mut g CentipedeGame) regenerate_mushrooms() {
 	for r in 0 .. grid_rows {
 		for c in 0 .. grid_cols {
 			if g.grid[r][c].exists {

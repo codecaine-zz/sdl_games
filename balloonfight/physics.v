@@ -12,7 +12,6 @@ pub mut:
 const gravity = 420.0
 const air_drag = 0.985
 const max_fall_speed = 380.0
-const max_horizontal_speed = 280.0
 
 fn apply_flap(mut m MotionState, power f64) {
 	m.vy -= power

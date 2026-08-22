@@ -14,7 +14,6 @@ const tile_amoeba = 8
 const tile_exit_closed = 9
 const tile_exit_open = 10
 const tile_player = 11
-const tile_explosion = 12
 
 struct Point {
 pub:

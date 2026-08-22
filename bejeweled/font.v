@@ -244,12 +244,6 @@ fn draw_text_centered(renderer &sdl.Renderer, cx int, y int, text string, scale 
 	draw_text(renderer, start_x, y, text, scale, color)
 }
 
-fn draw_text_right(renderer &sdl.Renderer, right_x int, y int, text string, scale int, color Color) {
-	text_len := text.len
-	total_width := text_len * 8 * scale
-	start_x := right_x - total_width
-	draw_text(renderer, start_x, y, text, scale, color)
-}
 
 struct Button {
 pub mut:

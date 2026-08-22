@@ -1,6 +1,5 @@
 module main
 
-import math
 import sdl
 
 pub fn render_dopewars_game(renderer &sdl.Renderer, mut g DopeWarsGame, win_w int, win_h int, mouse_x int, mouse_y int, sound_enabled bool) {
@@ -83,7 +82,7 @@ fn render_header(renderer &sdl.Renderer, g DopeWarsGame, win_w int, sound_enable
 	}
 }
 
-fn render_market_view(renderer &sdl.Renderer, g DopeWarsGame, win_w int, win_h int, mouse_x int, mouse_y int) {
+fn render_market_view(renderer &sdl.Renderer, g DopeWarsGame, _ int, _ int, _ int, _ int) {
 	// Left Table: Market Prices & Inventory
 	table_x := 30
 	table_y := 65
@@ -183,7 +182,7 @@ fn render_market_view(renderer &sdl.Renderer, g DopeWarsGame, win_w int, win_h i
 	}
 }
 
-fn render_subway_view(renderer &sdl.Renderer, g DopeWarsGame, win_w int, win_h int, mouse_x int, mouse_y int) {
+fn render_subway_view(renderer &sdl.Renderer, g DopeWarsGame, win_w int, win_h int, _ int, _ int) {
 	// Modal Subways
 	sdl.set_render_draw_color(renderer, 12, 16, 24, 245)
 	modal := sdl.Rect{140, 80, win_w - 280, win_h - 160}
@@ -220,7 +219,7 @@ fn render_subway_view(renderer &sdl.Renderer, g DopeWarsGame, win_w int, win_h i
 	draw_text_centered(renderer, win_w / 2, win_h - 120, 'PRESS [ESC] TO CANCEL', 1, Color{180, 180, 180, 255})
 }
 
-fn render_bank_view(renderer &sdl.Renderer, g DopeWarsGame, win_w int, win_h int, mouse_x int, mouse_y int) {
+fn render_bank_view(renderer &sdl.Renderer, g DopeWarsGame, win_w int, win_h int, _ int, _ int) {
 	sdl.set_render_draw_color(renderer, 12, 16, 24, 245)
 	modal := sdl.Rect{140, 100, win_w - 280, win_h - 200}
 	sdl.render_fill_rect(renderer, &modal)
@@ -237,7 +236,7 @@ fn render_bank_view(renderer &sdl.Renderer, g DopeWarsGame, win_w int, win_h int
 	draw_text_centered(renderer, win_w / 2, 330, 'PRESS [ESC] TO RETURN TO MARKET', 1, Color{180, 180, 180, 255})
 }
 
-fn render_shark_view(renderer &sdl.Renderer, g DopeWarsGame, win_w int, win_h int, mouse_x int, mouse_y int) {
+fn render_shark_view(renderer &sdl.Renderer, g DopeWarsGame, win_w int, win_h int, _ int, _ int) {
 	sdl.set_render_draw_color(renderer, 24, 12, 14, 245)
 	modal := sdl.Rect{140, 100, win_w - 280, win_h - 200}
 	sdl.render_fill_rect(renderer, &modal)

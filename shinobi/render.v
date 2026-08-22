@@ -1,6 +1,5 @@
 module main
 
-import math
 import sdl
 
 fn render_shinobi_game(renderer &sdl.Renderer, mut g ShinobiGame) {

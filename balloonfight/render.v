@@ -39,7 +39,7 @@ fn draw_game(renderer &sdl.Renderer, ge &GameEngine) {
 	// Enemies
 	for enemy in ge.enemies {
 		if enemy.active {
-			draw_enemy(renderer, enemy, ge.elapsed_time)
+			draw_enemy(renderer, enemy)
 		}
 	}
 
@@ -192,7 +192,7 @@ fn draw_player(renderer &sdl.Renderer, p Player, t f64) {
 	}
 }
 
-fn draw_enemy(renderer &sdl.Renderer, enemy Enemy, t f64) {
+fn draw_enemy(renderer &sdl.Renderer, enemy Enemy) {
 	ex := int(enemy.motion.x)
 	ey := int(enemy.motion.y)
 

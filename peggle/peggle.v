@@ -1,7 +1,6 @@
 module main
 
 import math
-import rand
 
 pub enum PegType {
 	blue

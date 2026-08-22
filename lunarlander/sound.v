@@ -64,7 +64,6 @@ fn (sm &SoundManager) play_rcs_sound() {
 	mut pcm := []i16{len: num_samples}
 
 	for i in 0 .. num_samples {
-		t := f64(i) / f64(sample_rate)
 		noise := (f64(rand.intn(2000) or { 1000 }) / 1000.0) - 1.0
 		pcm[i] = i16(noise * 10000.0)
 	}

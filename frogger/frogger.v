@@ -266,6 +266,11 @@ fn (mut g FroggerGame) hop(dir_x int, dir_y int) {
 }
 
 fn (mut g FroggerGame) handle_frog_death(is_squish bool) {
+	if is_squish {
+		g.sound_mgr.play_squish_sound()
+	} else {
+		g.sound_mgr.play_splash_sound()
+	}
 	g.lives--
 	if g.lives <= 0 {
 		g.state = .game_over

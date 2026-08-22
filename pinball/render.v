@@ -327,7 +327,7 @@ fn render_hud(renderer &sdl.Renderer, game &GameEngine) {
 	}
 }
 
-fn render_title_screen(renderer &sdl.Renderer, game &GameEngine) {
+fn render_title_screen(renderer &sdl.Renderer, _ &GameEngine) {
 	draw_text_centered(renderer, 400, 140, 'N I N T E N D O', 2, Color{255, 50, 50, 255})
 	draw_text_centered(renderer, 400, 200, 'P I N B A L L', 5, Color{255, 220, 0, 255})
 	draw_text_centered(renderer, 400, 270, '1984 NES ARCADE RECREATION', 2, Color{

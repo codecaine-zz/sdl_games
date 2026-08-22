@@ -10,7 +10,6 @@ const color_magenta = gg.rgb(255, 0, 128)
 const color_yellow = gg.rgb(255, 220, 0)
 const color_neon_green = gg.rgb(50, 255, 120)
 const color_red = gg.rgb(255, 40, 60)
-const color_purple = gg.rgb(180, 40, 255)
 
 fn render_frame(mut app App) {
 	app.gg.begin()
@@ -41,7 +40,7 @@ fn render_frame(mut app App) {
 
 	// 2. Render 3D World Components
 	draw_starfield(app.stars, app.player.z)
-	draw_highway_track(app.player.z, app.speed)
+	draw_highway_track(app.player.z)
 
 	// Draw Speed Pads
 	for pad in app.speed_pads {
@@ -50,7 +49,6 @@ fn render_frame(mut app App) {
 		}
 	}
 
-	// Draw Gems
 	for gem in app.gems {
 		if !gem.collected && gem.z > app.player.z - 5.0 && gem.z < app.player.z + 120.0 {
 			draw_gem(gem, app.frame_count)
@@ -99,7 +97,7 @@ fn draw_starfield(stars []Star3D, player_z f32) {
 	sgl.end()
 }
 
-fn draw_highway_track(player_z f32, speed f32) {
+fn draw_highway_track(player_z f32) {
 	track_width := f32(7.5)
 	segment_len := f32(5.0)
 	start_seg := int((player_z - 10.0) / segment_len)
@@ -401,7 +399,7 @@ fn draw_particles(particles []Particle3D) {
 }
 
 // Helper to get true logical screen dimensions accounting for Retina DPI scaling
-fn get_logical_size(app &App) (int, int) {
+fn get_logical_size(_ &App) (int, int) {
 	return 1280, 720
 }
 

@@ -35,42 +35,6 @@ fn draw_filled_circle(renderer &sdl.Renderer, cx int, cy int, r int, color Color
 	}
 }
 
-fn draw_circle_outline(renderer &sdl.Renderer, cx int, cy int, r int, thickness int, color Color) {
-	if r <= 0 {
-		return
-	}
-	sdl.set_render_draw_color(renderer, color.r, color.g, color.b, color.a)
-	for t := 0; t < thickness; t++ {
-		radius := r - t
-		if radius <= 0 {
-			break
-		}
-		mut x := radius
-		mut y := 0
-		mut err := 0
-
-		for x >= y {
-			sdl.render_draw_point(renderer, cx + x, cy + y)
-			sdl.render_draw_point(renderer, cx + y, cy + x)
-			sdl.render_draw_point(renderer, cx - y, cy + x)
-			sdl.render_draw_point(renderer, cx - x, cy + y)
-			sdl.render_draw_point(renderer, cx - x, cy - y)
-			sdl.render_draw_point(renderer, cx - y, cy - x)
-			sdl.render_draw_point(renderer, cx + y, cy - x)
-			sdl.render_draw_point(renderer, cx + x, cy - y)
-
-			if err <= 0 {
-				y++
-				err += 2 * y + 1
-			}
-			if err > 0 {
-				x--
-				err -= 2 * x + 1
-			}
-		}
-	}
-}
-
 fn draw_glass_card(renderer &sdl.Renderer, x int, y int, w int, h int, border_color Color) {
 	bg_rect := sdl.Rect{
 		x: x

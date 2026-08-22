@@ -1,7 +1,5 @@
 module main
 
-import math
-
 pub enum Tile {
 	floor
 	wall
