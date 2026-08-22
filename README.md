@@ -1,6 +1,6 @@
 # 🕹️ V Arcade SDL Games Suite
 
-A massive collection of **71 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
+A massive collection of **80 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
 
 Every single game is engineered with **zero external asset dependencies** — utilizing 100% procedural PCM sound synthesis, vector graphics rasterization, and embedded pixel/bitmap fonts.
 
@@ -22,7 +22,7 @@ v install sdl
 
 ---
 
-## 🎮 Master Game Index (71 Games)
+## 🎮 Master Game Index (80 Games)
 
 | # | Game | Folder | Genre | Quick Controls | How to Play |
 | :-: | :--- | :--- | :--- | :--- | :-: |
@@ -100,6 +100,12 @@ v install sdl
 | **72** | [TI-83 Block Dude](#72-ti-83-block-dude-blockdude) | `blockdude/` | Calculator Puzzle Platformer | `A`/`D` move, `Space`/`W`/`S` pick/drop, `U` undo | [Guide](#72-ti-83-block-dude-blockdude) |
 | **73** | [Game & Watch: Fire](#73-nintendo-game--watch-fire-fire) | `fire/` | 1980 LCD Handheld | `Left`/`Right`/`A`/`D` move trampoline, `1`/`2` mode | [Guide](#73-nintendo-game--watch-fire-fire) |
 | **74** | [Ultimate Screensaver Suite](#74-ultimate-retro-screensaver-suite-screensaver) | `screensaver/` | 102 Retro Screensavers | `Tab` Display Properties, `Right`/`Left` next/prev, `C` cycle | [Guide](#74-ultimate-retro-screensaver-suite-screensaver) |
+| **75** | [Columns](#75-sega-columns-columns) | `columns/` | 1990 Gem Drop Match-3 | `A`/`D` move, `W`/`Up`/`Space` cycle, `S` soft drop, `Enter` hard drop | [Guide](#75-sega-columns-columns) |
+| **76** | [Klax](#76-atari-klax-klax) | `klax/` | 1989 Conveyor Matcher | `A`/`D` steer paddle, `S`/`Space` flip tile, `W`/`Up` push up | [Guide](#76-atari-klax-klax) |
+| **77** | [Super Puzzle Fighter II Turbo](#77-super-puzzle-fighter-ii-turbo-puzzlefighter) | `puzzlefighter/` | 1v1 Arcade Gem Battler | `A`/`D` move, `W` rotate, `S` drop, `Space` hard drop | [Guide](#77-super-puzzle-fighter-ii-turbo-puzzlefighter) |
+| **78** | [Zuma](#78-zuma-temple-of-the-stone-idol-zuma) | `zuma/` | PopCap Track Shooter | `Mouse Aim`, `Left Click`/`Space` shoot, `Right Click`/`Tab` swap | [Guide](#78-zuma-temple-of-the-stone-idol-zuma) |
+| **79** | [Panel de Pon / Puzzle League](#79-panel-de-pon-puzzle-league-paneldepon) | `paneldepon/` | Horizontal Swap Match-3 | `WASD`/`Arrows` move, `Space`/`J` swap, `LShift`/`K` raise | [Guide](#79-panel-de-pon-puzzle-league-paneldepon) |
+| **80** | [SameGame / Collapse](#80-samegame--collapse-samegame) | `samegame/` | Gem Cluster Collapse | `Mouse Hover` select, `Left Click` shatter, `T` mode toggle | [Guide](#80-samegame--collapse-samegame) |
 
 
 ---
@@ -1887,6 +1893,12 @@ sdl_games/
 ├── rodentsrevenge/         # 49. Rodent's Revenge
 ├── scorchedearth/          # 50. Scorched Earth Deluxe
 ├── shinobi/                # 51. Cyber Shinobi Runner
+├── columns/                 # 75. Sega Columns 1990 Gem Drop Classic
+├── klax/                    # 76. Atari Klax 1989 Conveyor Matcher
+├── puzzlefighter/           # 77. Super Puzzle Fighter II Turbo Arcade Gem Battler
+├── zuma/                    # 78. Zuma: Temple of the Stone Idol Track Shooter
+├── paneldepon/              # 79. Panel de Pon / Puzzle League Classic
+├── samegame/                # 80. SameGame / Collapse Gem Cluster Shatter
 ├── blockdude/               # 72. TI-83 Block Dude Puzzle Platformer
 ├── fire/                    # 73. Nintendo Game & Watch: Fire 1980 LCD
 ├── screensaver/             # 74. Ultimate Retro Screensaver Suite (102 Templates)
@@ -1911,7 +1923,50 @@ sdl_games/
 
 ---
 
+## 75. Sega Columns (`columns/`)
+- **Folder**: `columns/` | **Run**: `v run columns`
+- **Goal**: Align falling columns of 3 jewels to match 3 or more jewels horizontally, vertically, or diagonally.
+- **Controls**: `A`/`D` or `Left`/`Right` to move, `W`/`Up`/`Space` to cycle gems in flight, `S`/`Down` for soft drop, `Enter` for instant hard drop.
+
+---
+
+## 76. Atari Klax (`klax/`)
+- **Folder**: `klax/` | **Run**: `v run klax`
+- **Goal**: Catch falling tumbling tiles off the 3D conveyor ramp onto your paddle and flip them into a 5x5 bin to form 3-in-a-row Klaxes.
+- **Controls**: `A`/`D` to steer paddle, `S`/`Space` to flip top tile into the bin, `W`/`Up` to push the tile back up the conveyor ramp.
+
+---
+
+## 77. Super Puzzle Fighter II Turbo (`puzzlefighter/`)
+- **Folder**: `puzzlefighter/` | **Run**: `v run puzzlefighter`
+- **Goal**: Drop gem pairs, merge giant power blocks (2x2, 2x3, 3x3), and detonate connected clusters with glowing Crash Orbs to bury your opponent under counter garbage gems!
+- **Controls**: `A`/`D` to move pair, `W`/`Up` to rotate clockwise, `S`/`Down` for soft drop, `Space` for hard drop.
+
+---
+
+## 78. Zuma: Temple of the Stone Idol (`zuma/`)
+- **Folder**: `zuma/` | **Run**: `v run zuma`
+- **Goal**: Rotate the central Stone Frog 360 degrees to fire colored marbles into a continuous rolling train, creating 3+ matches and triggering magnetic gap-pull combos before the train reaches the golden skull!
+- **Controls**: `Mouse Aim` 360 degrees, `Left Click` or `Space` to shoot marble, `Right Click` or `Tab` to swap current and next ball.
+
+---
+
+## 79. Panel de Pon / Puzzle League (`paneldepon/`)
+- **Folder**: `paneldepon/` | **Run**: `v run paneldepon`
+- **Goal**: Control a 2-panel horizontal cursor to swap adjacent colored glyph blocks, clear match-3+ lines horizontally and vertically, trigger cascading combos to freeze the rising stack!
+- **Controls**: `WASD` or `Arrows` to move 2-tile cursor, `Space` or `J` to swap panels, `LShift` or `K` to manually raise stack.
+
+---
+
+## 80. SameGame / Collapse (`samegame/`)
+- **Folder**: `samegame/` | **Run**: `v run samegame`
+- **Goal**: Hover over connected clusters of 2 or more identical crystal gems and click to shatter them, causing upper gems to fall and empty columns to collapse leftward. Clear all gems for a massive +20,000 pt perfect clear bonus!
+- **Controls**: `Mouse Hover` to select cluster, `Left Click` to shatter cluster, `T` to toggle between Classic Puzzle and Continuous Collapse Arcade mode.
+
+---
+
 ## 📜 License & Credits
 
 Built with ❤️ in [V](https://vlang.io/) using [SDL2](https://www.libsdl.org/) and [vlang/sdl](https://github.com/vlang/sdl).
 All game logic, physics engines, procedural sound synthesizers, and vector graphics are custom-built for high performance and zero external binary dependencies.
+
