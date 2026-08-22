@@ -1,6 +1,6 @@
 # 🕹️ V Arcade SDL Games Suite
 
-A massive collection of **67 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
+A massive collection of **71 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
 
 Every single game is engineered with **zero external asset dependencies** — utilizing 100% procedural PCM sound synthesis, vector graphics rasterization, and embedded pixel/bitmap fonts.
 
@@ -22,7 +22,7 @@ v install sdl
 
 ---
 
-## 🎮 Master Game Index (67 Games)
+## 🎮 Master Game Index (71 Games)
 
 | # | Game | Folder | Genre | Quick Controls | How to Play |
 | :-: | :--- | :--- | :--- | :--- | :-: |
@@ -93,6 +93,10 @@ v install sdl
 | **65** | [Darts Masters](#65-darts-masters-darts) | `darts/` | 501/301/Cricket Darts | `Mouse`/`WASD` aim reticle, `Space`/`Click` timing | [Guide](#65-darts-masters-darts) |
 | **66** | [Billiards Pro](#66-billiards-pro-pool) | `pool/` | 8-Ball & 9-Ball Pool | `Mouse`/`Arrows` aim cue, `Drag`/`Space` strike | [Guide](#66-billiards-pro-pool) |
 | **67** | [Vegas Jackpot Slots](#67-vegas-jackpot-slots-slots) | `slots/` | Casino / 777 Slots | `Space`/`Click` spin lever, `1-3` hold, `T` theme | [Guide](#67-vegas-jackpot-slots-slots) |
+| **68** | [Uno Master](#68-uno-master-uno) | `uno/` | Classic Color Match Card | `A`/`D` select card, `Space` play, `X` draw, `U` Uno! | [Guide](#68-uno-master-uno) |
+| **69** | [War Card Battle](#69-war-card-battle-war) | `war/` | 52-Card War Showdown | `Space`/`Click` flip duel, `A` auto-play, `R` restart | [Guide](#69-war-card-battle-war) |
+| **70** | [Blackjack 21 Pro](#70-blackjack-21-pro-blackjack) | `blackjack/` | Vegas Blackjack 21 | `Space` deal, `H` hit, `S` stand, `D` double, `P` split | [Guide](#70-blackjack-21-pro-blackjack) |
+| **71** | [Texas Hold'em Poker](#71-texas-holdem-poker-texas) | `texas/` | No-Limit Texas Hold'em | `C` check/call, `R` raise, `F` fold, `A` all-in | [Guide](#71-texas-holdem-poker-texas) |
 
 ---
 
@@ -1655,12 +1659,136 @@ v run slots
 
 ---
 
+### 68. Uno Master (`uno/`)
+*Classic 108-Card Uno with 4-Player AI Table & Uno Call Shouts*
+
+```bash
+v run uno
+```
+![Uno Master](screenshots/uno.png)
+
+- **Objective**: Be the first player to empty your hand by matching the discard pile card by color, number, or action symbol!
+- **Controls**:
+  - `Left` / `Right` or `A` / `D`: Cycle through cards in your hand.
+  - `Space` or `Enter`: Play selected card (or double-click with Mouse).
+  - `X` or `Down`: Draw card from deck when no playable card exists.
+  - `U` or Click **[CALL UNO]**: Shout "UNO!" when down to 1 or 2 cards.
+  - `1`, `2`, `3`, `4` (or `R`, `B`, `G`, `Y`): Choose color when playing Wild / Wild Draw 4.
+  - `M`: Toggle procedural audio.
+  - `Esc`: Exit game.
+- **Card Types & Rules**:
+  - **Colors**: Red, Blue, Green, Yellow, and Wild.
+  - **Skip**: Skips the next player's turn.
+  - **Reverse**: Inverts table turn rotation direction (Clockwise $\leftrightarrow$ Counter-Clockwise).
+  - **Draw Two (+2)**: Next player draws 2 cards and forfeits their turn.
+  - **Wild**: Lets you declare any of the 4 active table colors.
+  - **Wild Draw Four (+4)**: Next player draws 4 cards, forfeits turn, and color is declared!
+  - **UNO Penalty**: If you play down to 1 card without calling UNO, you receive a **+2 Card Penalty**!
+- **Pro Tip**: Save your Wild Draw 4 cards for late-round turns when opponents are down to 1 or 2 cards to disrupt their momentum!
+
+---
+
+### 69. War Card Battle (`war/`)
+*The Definitive 52-Card War Showdown with Sudden-Death Duel Mechanics*
+
+```bash
+v run war
+```
+![War Card Battle](screenshots/war.png)
+
+- **Objective**: Conquer all 52 cards in the deck by defeating the opponent general in head-to-head card ranks!
+- **Controls**:
+  - `Space` or `Left Click`: Flip card for next battle round.
+  - `A`: Toggle **Auto-Play** mode for fast continuous automated warfare.
+  - `R`: Restart match.
+  - `M`: Toggle audio.
+  - `Esc`: Exit game.
+- **Rules & War Mechanics**:
+  - **Standard Ranks**: 2, 3, 4, 5, 6, 7, 8, 9, 10, Jack, Queen, King, **Ace (Highest)**.
+  - **Standard Round**: Both players flip the top card from their draw pile. The higher card captures both cards into the victor's win pile.
+  - **"I DECLARE WAR!" (Ties)**: When both ranks match, War is declared! Both players place 3 cards face down into the War Loot Pot, then flip a 4th card face up in sudden death. The winner takes the entire pot!
+  - **Double / Triple War**: If the war cards tie again, another war begins with additional face-down loot cards!
+  - When a draw pile runs out, captured cards are shuffled and recycled into the draw pile.
+- **Pro Tip**: Turn on Auto-Play (`A`) to watch intense, multi-round card wars resolve at high speed!
+
+---
+
+### 70. Blackjack 21 Pro (`blackjack/`)
+*Authentic Vegas Casino Blackjack with Splits, Double Down, and Insurance*
+
+```bash
+v run blackjack
+```
+![Blackjack 21 Pro](screenshots/blackjack.png)
+
+- **Objective**: Beat the dealer's hand total without exceeding 21!
+- **Controls**:
+  - `Space` or `Enter`: Deal hand / Next round.
+  - `1`, `2`, `3`, `4`, `5`: Place chips (**$5**, **$25**, **$50**, **$100**, **$500**).
+  - `C`: Clear current bet.
+  - `H`: **Hit** (Draw another card).
+  - `S`: **Stand** (End turn and keep current total).
+  - `D`: **Double Down** (Double your wager, draw exactly 1 card, and stand).
+  - `P`: **Split** (Split matching pair into two separate hands).
+  - `I`: **Insurance** (Buy side bet against dealer Ace paying 2:1).
+  - `M`: Toggle audio.
+  - `Esc`: Exit game.
+- **Vegas Table Rules**:
+  - **Natural Blackjack**: 2-card 21 (Ace + 10/J/Q/K) pays **3:2** ($250 on a $100 bet).
+  - **Dealer Rules**: Dealer hits on soft 16 or lower, stands on all 17s.
+  - **Aces Value**: Automatically counted as 11 or 1 for optimal hand total.
+- **Pro Tip**: Always Double Down on a total of 11 against a dealer 5 or 6 to maximize long-term positive expected value (+EV)!
+
+---
+
+### 71. Texas Hold'em Poker (`texas/`)
+*4-Player No-Limit Texas Hold'em Poker with AI Personalities & 7-Card Evaluator*
+
+```bash
+v run texas
+```
+![Texas Hold'em Poker](screenshots/texas.png)
+
+- **Objective**: Win chips by making the best 5-card poker hand or bluffing opponents into folding!
+- **Controls**:
+  - `C`, `Space`, or `Enter`: **Check** (if no bet to call) or **Call** current table bet.
+  - `R`: **Raise** to selected amount.
+  - `Up` / `Down` or `W` / `S`: Increase / decrease raise amount in increments of big blind.
+  - `F`: **Fold** your hand.
+  - `A`: **All-In** (Wager your entire chip stack!).
+  - `M`: Toggle audio.
+  - `Esc`: Exit game.
+- **Streets & Betting Rounds**:
+  - **Pre-Flop**: 2 hole cards dealt, Small Blind ($10) and Big Blind ($20) posted.
+  - **Flop**: 3 community cards dealt face up.
+  - **Turn**: 4th community card dealt.
+  - **River**: 5th and final community card dealt.
+  - **Showdown**: Active players reveal cards; best 5-card combination from 7 cards wins the pot!
+- **Hand Rankings (Lowest to Highest)**:
+  1. High Card
+  2. One Pair
+  3. Two Pair
+  4. Three of a Kind
+  5. Straight (5 consecutive cards)
+  6. Flush (5 cards of same suit)
+  7. Full House (3 of a kind + Pair)
+  8. Four of a Kind (Quads)
+  9. Straight Flush (5 consecutive cards of same suit)
+  10. **Royal Flush** (A-K-Q-J-10 of same suit!)
+- **Pro Tip**: Position is power in poker. When sitting on or near the Dealer Button (`D`), you act last on post-flop streets, giving you maximum information on opponents' moves!
+
+---
+
 ## 🧪 Automated Unit Testing
 
 You can run automated test suites for the game modules using the V test runner:
 
 ```bash
 # Run tests across games
+v test uno/
+v test war/
+v test blackjack/
+v test texas/
 v test slots/
 v test bowling/
 v test darts/
@@ -1705,6 +1833,7 @@ sdl_games/
 ├── balloonfight/           # 3. NES Balloon Fight
 ├── battleship/             # 4. Battleship Pro
 ├── bejeweled/              # 5. Bejeweled Match-3
+├── blackjack/              # 70. Blackjack 21 Pro (Vegas Casino Table)
 ├── bomberman/              # 6. Bomberman Arcade
 ├── boulderdash/            # 7. Boulder Dash Retro
 ├── bowling/                # 64. Bowling Pro (10-Pin Bowling)
@@ -1763,9 +1892,12 @@ sdl_games/
 ├── sokoban/                # 57. Sokoban Master
 ├── spaceinvaders/          # 58. Space Invaders Pro
 ├── tetris/                 # 59. Modern Tetris
+├── texas/                  # 71. Texas Hold'em Poker Pro (No-Limit 4-Player)
 ├── towerdefense/           # 60. Cyber Tower Defense
 ├── trivia/                 # 61. Party Trivia Show
 ├── typing/                 # 62. CyberType: Neon Typist
+├── uno/                    # 68. Uno Master (4-Player AI Table)
+├── war/                    # 69. War Card Battle (52-Card Duel)
 ├── yahtzee/                # 63. Yahtzee Deluxe
 └── screenshots/            # Visual gallery screenshots for all games
 ```
