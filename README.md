@@ -173,6 +173,7 @@ v install sdl
 | **84** | [Kung-Fu Master (Spartan X)](#84-kung-fu-master-spartan-x-kungfu) | `kungfu/` | 1984 Irem Beat 'Em Up Classic | `WASD` move/jump/crouch, `J` punch, `K` kick, wiggle escape | [Guide](#84-kung-fu-master-spartan-x-kungfu) |
 | **85** | [Dr. Mario](#85-dr-mario-drmario) | `drmario/` | 1990 Falling Megavitamin Puzzle | `A`/`D` move, `S` soft drop, `Space` hard drop, `W`/`J` rotate CW, `K` CCW, `Shift` hold | [Guide](#85-dr-mario-drmario) |
 | **86** | [Yoshi's Cookie](#86-yoshis-cookie-yoshicookie) | `yoshicookie/` | 1992 Line-Sliding Bakery Puzzle | `WASD`/`Arrows` move, `Hold Space/J/Z` + `Move` shift row/col | [Guide](#86-yoshis-cookie-yoshicookie) |
+| **87** | [Vampire Survivors](#87-vampire-survivors-vampiresurvivors) | `vampiresurvivors/` | Gothic Bullet-Hell Roguelike | `WASD`/`Arrows` move, `1-4`/`Space` upgrade, `C` 2P co-op, `T` music | [Guide](#87-vampire-survivors-vampiresurvivors) |
 
 ---
 
@@ -2254,6 +2255,62 @@ v run yoshicookie
   - **Soundtrack**: `T` / `B` to cycle music (Type A / Type B / Off).
   - `1` / `2` / `3`: Set conveyor speed (LOW, MED, HI)
   - `P` to pause, `M` to mute audio, `C` to toggle CRT scanlines, `R` to restart, `ESC` for title.
+
+---
+
+### 87. Vampire Survivors (`vampiresurvivors/`)
+*Gothic Bullet-Hell Action Roguelike with Auto-Attacking Weapons & 2P Co-Op*
+
+```bash
+v run vampiresurvivors
+```
+![Vampire Survivors](screenshots/vampiresurvivors.png)
+
+- **Objective**: Survive relentless swarms of nocturnal monsters, collect sparkling experience gems to level up auto-firing weapons and passive artifacts, and defeat elite bosses!
+- **Playable Survivors & Ultimate Abilities**:
+  - 🗡️ **Antonio Belpaese**: Starts with **Whip** (+10% base melee damage, Ultimate: **Blood Tempest**).
+  - 🔮 **Imelda Belpaese**: Starts with **Magic Wand** (+10% EXP gain rate, Ultimate: **Astral Nova**).
+  - 📖 **Pasqualina Belpaese**: Starts with **King Bible** (+10% projectile speed, Ultimate: **Runic Judgement**).
+  - 🔪 **Gennaro Belpaese**: Starts with **Knife** (+1 extra projectile, Ultimate: **Blade Hurricane**).
+- **Super Weapon Evolutions (Level 8 + Passive)**:
+  - 🩸 **Bloody Tear** (*Whip + Spinach*): Massive lifesteal critical slashes (+8 HP).
+  - ⚡ **Holy Wand** (*Magic Wand + Tome*): Zero-cooldown continuous laser stream.
+  - 🗡️ **Thousand Edge** (*Knife + Duplicator*): Relentless machine-gun dagger barrage.
+  - 🌀 **Death Spiral** (*Axe + Wings*): 360-degree expanding circle of 8 scythes.
+  - 📖 **Unholy Vespers** (*King Bible + Crown*): Permanent invincible rotating scripture ring.
+  - 🕳️ **Soul Eater** (*Garlic + Armor*): Giant life-absorbing void black hole.
+- **Breakable Props & Rare Floor Drops**:
+  - 🔵 **Vacuum Magnet Orb**: Sucks every XP gem on the entire map directly to the player!
+  - ✝️ **Holy Rosary Bomb**: Vaporizes every regular enemy currently on screen!
+  - ⏱️ **Freeze Watch**: Freezes time for 6 seconds.
+  - 🍗 **Floor Chicken**: Restores +35 HP.
+  - 💰 **Coin Bags**: +50 Gold bounty.
+- **AAA Features & Polish**:
+  - **Kill Streak Announcer**: *RAMPAGE!*, *DOMINATING!*, *UNSTOPPABLE!*, *GODLIKE!* combo ranks with bonus gold!
+  - **Treasure Chest Multi-Roulette**: 1x, 3x, and 5x Mega Jackpot Chests with gold cascades and fireworks!
+  - **Pause Grimoire & Live DPS Tracker (`P`/`ESC`)**: Live weapon DPS breakdown and evolution recipes.
+  - **Minimap Radar (`Tab`)**: Tracking radar displaying player position and boss skull alerts.
+  - **3-Track Epic Gothic Synthmetal BGM (`T`/`B`)**: *Gothic Rondo* (140 BPM), *Vampire Eclipse* (155 BPM), and *Bloodlust Symphony* (160 BPM).
+- **Difficulty Modes (`D` / `K`)**:
+  - 🛡️ **NORMAL**: Standard survivor pace.
+  - ⚔️ **HARD (CHALLENGE - Default)**: +80% Enemy HP, +40% Attack Damage, +25% Speed, aggressive ranged attackers.
+  - 🔥 **INFERNO (BULLET-HELL)**: +220% Enemy HP, double attack damage, glowing Champion mini-bosses, dense homing projectile swarms!
+- **Dynamic Time Scaling & Enemy Bullet-Hell**:
+  - Enemies scale up HP, damage, and move speed over time.
+  - **Red Skulls** and **Reaper Bosses** fire burning skull projectiles and shadow scythes at the player.
+  - **Golden Champion Mini-Bosses** spawn with 2.5x HP and bonus gold rewards.
+- **Controls**:
+  - `WASD` / `Arrow Keys`: Move survivor across the infinite gothic arena.
+  - `Space` / `RShift`: Unleash Screen-Clearing **Ultimate Ability** when meter is full!
+  - `D` / `K`: Toggle **Difficulty (Normal / Hard / Inferno)**.
+  - `H` / `F`: Cycle **Game Speed (1.0x / 1.5x / 2.0x Hyper / 3.0x Turbo)**.
+  - `1` / `2` / `3` or `Up`/`Down` + `Space`/`Enter`: Choose upgrade on Level-Up.
+  - `P` / `ESC`: Open **Pause Grimoire & Live DPS Breakdown**.
+  - `Tab`: Toggle **Minimap Radar**.
+  - `C`: Toggle **1-Player Solo** vs **2-Player Local Co-Op** on select screen.
+  - `T` / `B`: Cycle 3-track soundtrack (*Gothic Rondo* / *Vampire Eclipse* / *Bloodlust Symphony* / *Off*).
+  - `M`: Toggle sound effects.
+  - `R`: Restart run.
 
 ---
 
