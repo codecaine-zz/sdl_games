@@ -31,30 +31,37 @@ fn render_galaga_game(renderer &sdl.Renderer, mut g GalagaGame) {
 		}
 	}
 
-	// 3. Draw Captured Ship if returning
+	// 3. Draw Captured Ship attached to Boss
 	if g.captured_ship_x > 0 && g.captured_ship_y > 0 {
 		draw_player_ship(renderer, g.captured_ship_x, g.captured_ship_y, false, Color{ r: 255, g: 100, b: 100, a: 255 })
 	}
 
-	// 4. Draw Enemies
+	// 4. Draw Rescuable Ships falling down
+	for rs in g.rescuable_ships {
+		if !rs.active { continue }
+		draw_player_ship(renderer, rs.x, rs.y, false, Color{ r: 100, g: 255, b: 150, a: 255 })
+	}
+
+	// 5. Draw Enemies
 	for e in g.enemies {
 		if !e.active { continue }
 		draw_enemy_ship(renderer, e)
 	}
 
-	// 5. Draw Player Ship
+	// 6. Draw Player Ship
 	if g.state == .playing || g.state == .paused {
 		if g.player.invuln_timer <= 0 || (int(g.player.invuln_timer * 10.0) % 2 == 0) {
+			p_color := if g.player.is_capturing { Color{ r: 255, g: 120, b: 120, a: 255 } } else { Color{ r: 255, g: 255, b: 255, a: 255 } }
 			if g.player.is_dual {
-				draw_player_ship(renderer, g.player.x - g.player.dual_offset / 2.0, g.player.y, false, Color{ r: 255, g: 255, b: 255, a: 255 })
-				draw_player_ship(renderer, g.player.x + g.player.dual_offset / 2.0, g.player.y, false, Color{ r: 255, g: 255, b: 255, a: 255 })
+				draw_player_ship(renderer, g.player.x - g.player.dual_offset / 2.0, g.player.y, false, p_color)
+				draw_player_ship(renderer, g.player.x + g.player.dual_offset / 2.0, g.player.y, false, p_color)
 			} else {
-				draw_player_ship(renderer, g.player.x, g.player.y, false, Color{ r: 255, g: 255, b: 255, a: 255 })
+				draw_player_ship(renderer, g.player.x, g.player.y, false, p_color)
 			}
 		}
 	}
 
-	// 6. Draw Bullets with glowing laser corona
+	// 7. Draw Bullets with glowing laser corona
 	for b in g.player_bullets {
 		if !b.active { continue }
 		// Yellow-orange photon aura
@@ -78,7 +85,7 @@ fn render_galaga_game(renderer &sdl.Renderer, mut g GalagaGame) {
 		sdl.render_fill_rect(renderer, &rect)
 	}
 
-	// 7. Draw Particles
+	// 8. Draw Particles
 	for p in g.particles {
 		alpha := u8(p.life / p.max_life * 255.0)
 		sdl.set_render_draw_color(renderer, p.color.r, p.color.g, p.color.b, alpha)
@@ -86,31 +93,110 @@ fn render_galaga_game(renderer &sdl.Renderer, mut g GalagaGame) {
 		sdl.render_fill_rect(renderer, &rect)
 	}
 
-	// 8. Draw HUD
-	draw_text(renderer, 20, 15, "SCORE: ${g.score}", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
-	draw_text(renderer, 320, 15, "HIGH: ${g.high_score}", 2, Color{ r: 255, g: 215, b: 0, a: 255 })
+	// 9. Draw Top HUD
+	draw_text(renderer, 20, 15, "1UP ${g.score}", 2, Color{ r: 255, g: 50, b: 50, a: 255 })
+	draw_text(renderer, 320, 15, "HIGH ${g.high_score}", 2, Color{ r: 255, g: 215, b: 0, a: 255 })
 	draw_text(renderer, 650, 15, "STAGE ${g.stage}", 2, Color{ r: 0, g: 255, b: 255, a: 255 })
 
+	// Lives Icons at Bottom-Left
 	for l in 0 .. g.player.lives {
-		draw_player_ship(renderer, 30.0 + f32(l) * 26.0, 580.0, true, Color{ r: 255, g: 255, b: 255, a: 255 })
+		draw_player_ship(renderer, 25.0 + f32(l) * 26.0, 580.0, true, Color{ r: 255, g: 255, b: 255, a: 255 })
 	}
 
-	// 9. Overlay Menus
+	// Stage Flags / Badges at Bottom-Right
+	draw_stage_badges(renderer, g.stage)
+
+	// Stage Intro Banners ("STAGE X", "READY!", "CHALLENGING STAGE")
+	if g.state == .playing && g.stage_intro_timer > 0 {
+		if g.is_challenge_stage {
+			draw_text_centered(renderer, 400, 260, "CHALLENGING STAGE", 3, Color{ r: 0, g: 240, b: 255, a: 255 })
+		} else {
+			draw_text_centered(renderer, 400, 250, "STAGE ${g.stage}", 3, Color{ r: 0, g: 255, b: 255, a: 255 })
+			draw_text_centered(renderer, 400, 290, "READY", 2, Color{ r: 255, g: 50, b: 50, a: 255 })
+		}
+	}
+
+	// Stage Clear Banner
+	if g.state == .playing && g.stage_clear_timer > 0 {
+		draw_text_centered(renderer, 400, 260, "STAGE CLEAR!", 3, Color{ r: 255, g: 220, b: 40, a: 255 })
+		bonus_str := if g.is_challenge_stage && g.challenge_hits == g.challenge_total {
+			"PERFECT! BONUS 10000 PTS"
+		} else {
+			"STAGE BONUS +${1000 + g.stage * 200}"
+		}
+		draw_text_centered(renderer, 400, 300, bonus_str, 2, Color{ r: 100, g: 255, b: 150, a: 255 })
+	}
+
+	// 10. Overlay Menus
 	if g.state == .menu {
-		draw_text_centered(renderer, 400, 180, "GALAGA ARCADE", 4, Color{ r: 255, g: 50, b: 50, a: 255 })
-		draw_text_centered(renderer, 400, 240, "CYBER SPACE SHOOTER", 2, Color{ r: 0, g: 200, b: 255, a: 255 })
-		draw_text_centered(renderer, 400, 340, "PRESS SPACE TO START", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
-		draw_text_centered(renderer, 400, 400, "CONTROLS: A/D OR ARROWS MOVE | SPACE FIRE | F11: Fullscreen", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
-		draw_text_centered(renderer, 400, 420, "DUAL CANNON RESCUE | M MUTE | R RESET", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
+		draw_text_centered(renderer, 400, 170, "GALAGA ARCADE", 4, Color{ r: 255, g: 50, b: 50, a: 255 })
+		draw_text_centered(renderer, 400, 230, "CYBER SPACE SHOOTER", 2, Color{ r: 0, g: 200, b: 255, a: 255 })
+		draw_text_centered(renderer, 400, 320, "PRESS SPACE TO START", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
+		draw_text_centered(renderer, 400, 380, "CONTROLS: A/D OR ARROWS MOVE | SPACE FIRE | F11: Fullscreen", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
+		draw_text_centered(renderer, 400, 400, "DUAL FIGHTER RESCUE | M MUTE | R RESET", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
 	} else if g.state == .game_over {
-		draw_text_centered(renderer, 400, 240, "GAME OVER", 4, Color{ r: 255, g: 50, b: 50, a: 255 })
-		draw_text_centered(renderer, 400, 310, "FINAL SCORE: ${g.score}", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
-		draw_text_centered(renderer, 400, 370, "PRESS SPACE OR R TO RESTART", 2, Color{ r: 0, g: 255, b: 100, a: 255 })
+		draw_text_centered(renderer, 400, 230, "GAME OVER", 4, Color{ r: 255, g: 50, b: 50, a: 255 })
+		draw_text_centered(renderer, 400, 300, "FINAL SCORE: ${g.score}", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
+		draw_text_centered(renderer, 400, 330, "REACHED STAGE ${g.stage}", 2, Color{ r: 0, g: 255, b: 255, a: 255 })
+		draw_text_centered(renderer, 400, 380, "PRESS SPACE OR R TO RESTART", 2, Color{ r: 0, g: 255, b: 100, a: 255 })
 	} else if g.state == .paused {
 		draw_text_centered(renderer, 400, 280, "- PAUSED -", 3, Color{ r: 255, g: 255, b: 0, a: 255 })
 	}
 
 	sdl.render_present(renderer)
+}
+
+fn draw_stage_badges(renderer &sdl.Renderer, stage int) {
+	mut s := stage
+	mut bx := 770
+	by := 575
+
+	// 50-flag
+	for s >= 50 && bx > 500 {
+		draw_flag(renderer, bx, by, Color{ r: 255, g: 215, b: 0, a: 255 }, '50')
+		bx -= 24
+		s -= 50
+	}
+	// 30-flag
+	for s >= 30 && bx > 500 {
+		draw_flag(renderer, bx, by, Color{ r: 255, g: 100, b: 100, a: 255 }, '30')
+		bx -= 24
+		s -= 30
+	}
+	// 20-flag
+	for s >= 20 && bx > 500 {
+		draw_flag(renderer, bx, by, Color{ r: 100, g: 150, b: 255, a: 255 }, '20')
+		bx -= 24
+		s -= 20
+	}
+	// 10-flag
+	for s >= 10 && bx > 500 {
+		draw_flag(renderer, bx, by, Color{ r: 255, g: 50, b: 50, a: 255 }, '10')
+		bx -= 24
+		s -= 10
+	}
+	// 5-badge
+	for s >= 5 && bx > 500 {
+		draw_flag(renderer, bx, by, Color{ r: 255, g: 200, b: 40, a: 255 }, '5')
+		bx -= 20
+		s -= 5
+	}
+	// 1-badge
+	for s >= 1 && bx > 500 {
+		draw_flag(renderer, bx, by, Color{ r: 100, g: 200, b: 255, a: 255 }, '1')
+		bx -= 16
+		s -= 1
+	}
+}
+
+fn draw_flag(renderer &sdl.Renderer, x int, y int, col Color, _ string) {
+	sdl.set_render_draw_color(renderer, col.r, col.g, col.b, col.a)
+	rect := sdl.Rect{ x: x - 6, y: y - 8, w: 12, h: 16 }
+	sdl.render_fill_rect(renderer, &rect)
+
+	sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+	tri := sdl.Rect{ x: x - 4, y: y - 6, w: 8, h: 8 }
+	sdl.render_fill_rect(renderer, &tri)
 }
 
 fn draw_player_ship(renderer &sdl.Renderer, x f32, y f32, mini bool, color Color) {

@@ -242,6 +242,69 @@ fn (sm &SoundManager) play_chest() {
 	sdl.queue_audio(sm.dev, pcm.data, u32(pcm.len * 2))
 }
 
+fn gen_undo() []i16 {
+	sample_rate := 44100
+	duration_ms := 60
+	num_samples := (sample_rate * duration_ms) / 1000
+	mut pcm := []i16{len: num_samples}
+	for i in 0 .. num_samples {
+		t := f64(i) / f64(sample_rate)
+		freq := 600.0 - 300.0 * (f64(i) / f64(num_samples))
+		env := math.exp(-20.0 * t)
+		val := math.sin(2.0 * math.pi * freq * t) * env * 18000.0
+		pcm[i] = i16(val)
+	}
+	return pcm
+}
+
+fn gen_splash() []i16 {
+	sample_rate := 44100
+	duration_ms := 180
+	num_samples := (sample_rate * duration_ms) / 1000
+	mut pcm := []i16{len: num_samples}
+	for i in 0 .. num_samples {
+		t := f64(i) / f64(sample_rate)
+		freq := 300.0 + 150.0 * math.sin(2.0 * math.pi * 35.0 * t)
+		env := math.exp(-8.0 * t)
+		val := math.sin(2.0 * math.pi * freq * t) * env * 22000.0
+		pcm[i] = i16(val)
+	}
+	return pcm
+}
+
+fn gen_hammer() []i16 {
+	sample_rate := 44100
+	duration_ms := 140
+	num_samples := (sample_rate * duration_ms) / 1000
+	mut pcm := []i16{len: num_samples}
+	for i in 0 .. num_samples {
+		t := f64(i) / f64(sample_rate)
+		freq := 160.0 - 80.0 * (f64(i) / f64(num_samples))
+		env := math.exp(-12.0 * t)
+		val := (if math.sin(2.0 * math.pi * freq * t) > 0.0 { 1.0 } else { -1.0 }) * env * 24000.0
+		pcm[i] = i16(val)
+	}
+	return pcm
+}
+
+fn (sm &SoundManager) play_undo() {
+	if !sm.sound_enabled || sm.dev == 0 { return }
+	pcm := gen_undo()
+	sdl.queue_audio(sm.dev, pcm.data, u32(pcm.len * 2))
+}
+
+fn (sm &SoundManager) play_splash() {
+	if !sm.sound_enabled || sm.dev == 0 { return }
+	pcm := gen_splash()
+	sdl.queue_audio(sm.dev, pcm.data, u32(pcm.len * 2))
+}
+
+fn (sm &SoundManager) play_hammer() {
+	if !sm.sound_enabled || sm.dev == 0 { return }
+	pcm := gen_hammer()
+	sdl.queue_audio(sm.dev, pcm.data, u32(pcm.len * 2))
+}
+
 fn (sm &SoundManager) play_victory() {
 	if !sm.sound_enabled || sm.dev == 0 {
 		return
@@ -255,3 +318,4 @@ fn (sm &SoundManager) cleanup() {
 		sdl.close_audio_device(sm.dev)
 	}
 }
+

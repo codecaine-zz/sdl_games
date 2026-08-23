@@ -175,13 +175,17 @@ fn main() {
 				}
 				.keydown {
 					sym := event.key.keysym.sym
-					// Player 1 Controls (WASD + Space)
+					// Player 1 Controls (WASD + Space / F / X)
 					if sym == int(sdl.KeyCode.f11) {
 						toggle_fullscreen(window)
 					} else if sym == int(sdl.KeyCode.a) || sym == int(sdl.KeyCode.left) {
 						game.p1_left = true
 					} else if sym == int(sdl.KeyCode.d) || sym == int(sdl.KeyCode.right) {
 						game.p1_right = true
+					} else if sym == int(sdl.KeyCode.s) || sym == int(sdl.KeyCode.down) {
+						game.p1_down = true
+					} else if sym == int(sdl.KeyCode.f) || sym == int(sdl.KeyCode.x) {
+						game.p1_fire = true
 					} else if sym == int(sdl.KeyCode.w) || sym == int(sdl.KeyCode.space) {
 						if game.state == .title {
 							game.start_game(game.mode)
@@ -193,11 +197,15 @@ fn main() {
 							game.p1_jump = true
 						}
 					}
-					// Player 2 Controls (J / L move, I / Up jump)
+					// Player 2 Controls (J / L move, I / Up jump, K down, H fire)
 					else if sym == int(sdl.KeyCode.j) {
 						game.p2_left = true
 					} else if sym == int(sdl.KeyCode.l) {
 						game.p2_right = true
+					} else if sym == int(sdl.KeyCode.k) {
+						game.p2_down = true
+					} else if sym == int(sdl.KeyCode.h) || sym == int(sdl.KeyCode.semicolon) {
+						game.p2_fire = true
 					} else if sym == int(sdl.KeyCode.i) || sym == int(sdl.KeyCode.up) {
 						if game.state == .title {
 							game.start_game(game.mode)
@@ -253,6 +261,10 @@ fn main() {
 						game.p1_left = false
 					} else if sym == int(sdl.KeyCode.d) || sym == int(sdl.KeyCode.right) {
 						game.p1_right = false
+					} else if sym == int(sdl.KeyCode.s) || sym == int(sdl.KeyCode.down) {
+						game.p1_down = false
+					} else if sym == int(sdl.KeyCode.f) || sym == int(sdl.KeyCode.x) {
+						game.p1_fire = false
 					} else if sym == int(sdl.KeyCode.w) || sym == int(sdl.KeyCode.space) {
 						game.p1_jump = false
 					}
@@ -261,6 +273,10 @@ fn main() {
 						game.p2_left = false
 					} else if sym == int(sdl.KeyCode.l) {
 						game.p2_right = false
+					} else if sym == int(sdl.KeyCode.k) {
+						game.p2_down = false
+					} else if sym == int(sdl.KeyCode.h) || sym == int(sdl.KeyCode.semicolon) {
+						game.p2_fire = false
 					} else if sym == int(sdl.KeyCode.i) || sym == int(sdl.KeyCode.up) {
 						game.p2_jump = false
 					}

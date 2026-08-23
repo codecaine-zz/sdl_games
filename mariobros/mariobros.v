@@ -3,14 +3,18 @@ module main
 import math
 import rand
 
+pub const gravity = 640.0
+pub const max_run_speed = 260.0
+pub const run_accel = 750.0
+pub const friction = 680.0
+
 pub enum GameState {
 	title
 	playing
 	bonus_phase
 	phase_clear
-	paused
 	game_over
-	victory
+	paused
 }
 
 pub enum GameMode {
@@ -20,8 +24,8 @@ pub enum GameMode {
 
 pub enum EnemyType {
 	shellcreeper // Turtle
-	sidestepper  // Crab
-	fighterfly   // Fly
+	sidestepper  // Crab (takes 2 hits)
+	fighterfly   // Jumping fly
 	slipice      // Ice monster
 	fireball     // Green/Red fireball
 }
@@ -34,6 +38,11 @@ pub enum EnemyState {
 	recovering // Flashing/wiggling about to right itself
 	kicked     // Hit by player, flying away
 	in_pipe    // Traveling inside pipe
+}
+
+pub enum PowerUpType {
+	star
+	fire_flower
 }
 
 pub struct Platform {
@@ -67,12 +76,21 @@ pub mut:
 	active   bool  = true
 }
 
+pub enum DripType {
+	water
+	toxic_waste
+	sludge
+}
+
 pub struct WaterDrip {
 pub mut:
-	x      f32
-	y      f32
-	vy     f32 = 180.0
-	active bool = true
+	x         f32
+	y         f32
+	vy        f32 = 140.0
+	drip_type DripType = .water
+	target_y  f32 = 540.0
+	color     Color = Color{ r: 90, g: 200, b: 255, a: 220 }
+	active    bool = true
 }
 
 pub struct Player {
@@ -97,6 +115,11 @@ pub mut:
 	walk_frame   int
 	combo_count  int
 	combo_timer  f32
+	// Enhancements
+	star_timer   f32 // Super Star Invincibility (seconds)
+	has_fire     bool // Fire Flower Power
+	charge_timer f32 // Down charge for super spring jump
+	is_charged   bool
 }
 
 pub struct Enemy {
@@ -119,6 +142,50 @@ pub mut:
 	pipe_timer   f32
 	pipe_target  int // 0 = top left, 1 = top right
 	active       bool = true
+}
+
+pub struct SlidingShell {
+pub mut:
+	x           f32
+	y           f32
+	vx          f32
+	vy          f32
+	width       f32 = 28.0
+	height      f32 = 22.0
+	is_grounded bool
+	anim_timer  f32
+	life_timer  f32 = 12.0
+	combo       int = 1
+	active      bool = true
+}
+
+pub struct PlayerFireball {
+pub mut:
+	player_id   int
+	x           f32
+	y           f32
+	vx          f32
+	vy          f32
+	width       f32 = 14.0
+	height      f32 = 14.0
+	bounces     int
+	life_timer  f32 = 3.5
+	anim_timer  f32
+	active      bool = true
+}
+
+pub struct PowerUp {
+pub mut:
+	power_type  PowerUpType
+	x           f32
+	y           f32
+	vx          f32
+	vy          f32
+	width       f32 = 24.0
+	height      f32 = 24.0
+	is_grounded bool
+	anim_timer  f32
+	active      bool = true
 }
 
 pub struct Coin {
@@ -177,6 +244,9 @@ pub mut:
 	high_score         int       = 20000
 	players            []Player
 	enemies            []Enemy
+	sliding_shells     []SlidingShell
+	player_fireballs   []PlayerFireball
+	powerups           []PowerUp
 	coins              []Coin
 	platforms          []Platform
 	bump_waves         []BumpWave
@@ -203,10 +273,18 @@ pub mut:
 	// Controls
 	p1_left            bool
 	p1_right           bool
+	p1_up              bool
+	p1_down            bool
 	p1_jump            bool
+	p1_fire            bool
+	p1_fire_cooldown   f32
 	p2_left            bool
 	p2_right           bool
+	p2_up              bool
+	p2_down            bool
 	p2_jump            bool
+	p2_fire            bool
+	p2_fire_cooldown   f32
 }
 
 pub fn new_mario_bros_game() MarioBrosGame {
@@ -239,6 +317,9 @@ pub fn (mut g MarioBrosGame) reset_to_title() {
 	g.state = .title
 	g.players.clear()
 	g.enemies.clear()
+	g.sliding_shells.clear()
+	g.player_fireballs.clear()
+	g.powerups.clear()
 	g.coins.clear()
 	g.bump_waves.clear()
 	g.shockwaves.clear()
@@ -250,92 +331,153 @@ pub fn (mut g MarioBrosGame) reset_to_title() {
 pub fn (mut g MarioBrosGame) start_game(mode GameMode) {
 	g.mode = mode
 	g.phase = 1
-	g.state = .playing
 	g.players.clear()
-
-	// Mario (P1)
-	g.players << Player{
-		id: 1
-		x: 240.0
-		y: 490.0
-		facing_right: true
-		lives: 3
-		score: 0
-		invuln_timer: 2.0
-	}
-
-	// Luigi (P2) if 2-player mode
-	if mode == .two_players {
-		g.players << Player{
-			id: 2
-			x: 560.0
-			y: 490.0
-			facing_right: false
-			lives: 3
-			score: 0
-			invuln_timer: 2.0
-		}
-	}
-
-	g.pow_block = PowBlock{ hits_left: 3, active: true }
-	g.setup_phase(1)
-}
-
-pub fn (mut g MarioBrosGame) setup_phase(phase_num int) {
-	g.phase = phase_num
 	g.enemies.clear()
+	g.sliding_shells.clear()
+	g.player_fireballs.clear()
+	g.powerups.clear()
 	g.coins.clear()
 	g.bump_waves.clear()
 	g.shockwaves.clear()
-	g.water_drips.clear()
-	g.score_popups.clear()
 	g.particles.clear()
-	g.phase_timer = 0.0
-	g.fireball_timer = 0.0
-	g.phase_banner_timer = 2.2
 
-	// Is this a bonus phase? (Every 4th phase starting at phase 3)
-	if phase_num == 3 || (phase_num > 3 && (phase_num - 3) % 5 == 0) {
+	// Player 1: Mario (Starts bottom-left)
+	g.players << Player{
+		id:           1
+		x:            180.0
+		y:            504.0
+		vx:           0.0
+		vy:           0.0
+		facing_right: true
+		is_grounded:  true
+		lives:        3
+	}
+
+	// Player 2: Luigi (Starts bottom-right)
+	if mode == .two_players {
+		g.players << Player{
+			id:           2
+			x:            590.0
+			y:            504.0
+			vx:           0.0
+			vy:           0.0
+			facing_right: false
+			is_grounded:  true
+			lives:        3
+		}
+	}
+
+	g.pow_block = PowBlock{
+		hits_left: 3
+		active:    true
+	}
+
+	g.setup_phase(1)
+}
+
+pub fn (mut g MarioBrosGame) setup_phase(phase int) {
+	g.phase = phase
+	g.enemies.clear()
+	g.sliding_shells.clear()
+	g.player_fireballs.clear()
+	g.powerups.clear()
+	g.coins.clear()
+	g.bump_waves.clear()
+	g.shockwaves.clear()
+	g.particles.clear()
+
+	// Recharge POW block slightly on new phase
+	if !g.pow_block.active || g.pow_block.hits_left < 3 {
+		g.pow_block.active = true
+		g.pow_block.hits_left = math.min(3, g.pow_block.hits_left + 1)
+	}
+
+	// Reset player positions on phase start
+	if g.players.len > 0 {
+		g.players[0].x = 180.0
+		g.players[0].y = 504.0
+		g.players[0].vx = 0.0
+		g.players[0].vy = 0.0
+		g.players[0].is_grounded = true
+		g.players[0].invuln_timer = 2.5
+	}
+	if g.players.len > 1 {
+		g.players[1].x = 590.0
+		g.players[1].y = 504.0
+		g.players[1].vx = 0.0
+		g.players[1].vy = 0.0
+		g.players[1].is_grounded = true
+		g.players[1].invuln_timer = 2.5
+	}
+
+	// Phase 3, 8, 13 etc are Bonus Coin Phases
+	if phase % 5 == 3 {
 		g.state = .bonus_phase
-		g.bonus_timer = 20.0 // 20 seconds bonus round
+		g.bonus_timer = 20.0
 		g.spawn_bonus_coins()
+		g.sound_mgr.play_phase_clear()
 		return
 	}
 
 	g.state = .playing
-	// Determine enemy count and composition based on phase
-	count := int(math.min(5 + phase_num * 2, 16))
-	g.total_in_phase = count
-	g.enemies_left = count
+	g.phase_banner_timer = 2.2
 	g.spawn_timer = 1.0
 
-	// Reset POW hits every few phases
-	if phase_num % 4 == 1 {
-		g.pow_block.hits_left = 3
-		g.pow_block.active = true
+	// Calculate enemy counts based on phase difficulty
+	count := 4 + phase * 2
+	g.total_in_phase = count
+	g.enemies_left = count
+
+	g.sound_mgr.play_phase_clear()
+
+	// Chance to spawn a Star or Fire Flower power-up
+	if phase >= 2 {
+		g.spawn_powerup(if phase % 2 == 0 { PowerUpType.star } else { PowerUpType.fire_flower })
 	}
 }
 
 pub fn (mut g MarioBrosGame) spawn_bonus_coins() {
 	g.coins.clear()
-	// Spawn 10 golden coins across all platforms
-	positions := [
-		[f32(100.0), f32(130.0)], [f32(250.0), f32(130.0)], [f32(550.0), f32(130.0)], [f32(700.0), f32(130.0)],
-		[f32(240.0), f32(260.0)], [f32(400.0), f32(260.0)], [f32(560.0), f32(260.0)],
-		[f32(140.0), f32(386.0)], [f32(660.0), f32(386.0)],
-		[f32(400.0), f32(510.0)],
+	// 10 coins positioned across all platforms
+	spots := [
+		[100.0, 128.0],
+		[220.0, 128.0],
+		[540.0, 128.0],
+		[660.0, 128.0],
+		[270.0, 258.0],
+		[390.0, 258.0],
+		[510.0, 258.0],
+		[140.0, 384.0],
+		[640.0, 384.0],
+		[390.0, 508.0],
 	]
-	for pos in positions {
+	for sp in spots {
 		g.coins << Coin{
-			x: pos[0]
-			y: pos[1]
-			vx: 0.0
-			vy: 0.0
+			x:           f32(sp[0])
+			y:           f32(sp[1])
+			vx:          0.0
+			vy:          0.0
 			is_grounded: true
-			life_timer: 25.0
-			active: true
+			anim_timer:  f32(rand.intn(100) or { 0 }) / 100.0
+			active:      true
 		}
 	}
+}
+
+pub fn (mut g MarioBrosGame) spawn_powerup(p_type PowerUpType) {
+	pipe_side := rand.intn(2) or { 0 }
+	spawn_x := if pipe_side == 0 { f32(60.0) } else { f32(740.0) }
+	dir := if pipe_side == 0 { f32(110.0) } else { f32(-110.0) }
+	g.powerups << PowerUp{
+		power_type:  p_type
+		x:           spawn_x
+		y:           86.0
+		vx:          dir
+		vy:          -60.0
+		is_grounded: false
+		active:      true
+	}
+	g.sound_mgr.play_powerup()
 }
 
 pub fn (mut g MarioBrosGame) spawn_enemy() {
@@ -344,386 +486,376 @@ pub fn (mut g MarioBrosGame) spawn_enemy() {
 	}
 	g.enemies_left--
 
-	// Determine enemy type based on phase and randomness
+	// Determine enemy type based on phase
 	mut e_type := EnemyType.shellcreeper
-	r := rand.intn(100) or { 50 }
+	r := rand.intn(100) or { 0 }
 
 	if g.phase == 1 {
 		e_type = .shellcreeper
 	} else if g.phase == 2 {
-		e_type = if r < 60 { EnemyType.shellcreeper } else { EnemyType.fighterfly }
-	} else if g.phase >= 4 {
-		if r < 40 {
-			e_type = .sidestepper
-		} else if r < 70 {
-			e_type = .fighterfly
-		} else if r < 90 {
+		e_type = if r < 50 { EnemyType.shellcreeper } else { EnemyType.sidestepper }
+	} else if g.phase == 3 {
+		e_type = if r < 35 { EnemyType.shellcreeper } else if r < 70 { EnemyType.sidestepper } else { EnemyType.fighterfly }
+	} else {
+		if r < 30 {
 			e_type = .shellcreeper
+		} else if r < 60 {
+			e_type = .sidestepper
+		} else if r < 85 {
+			e_type = .fighterfly
 		} else {
 			e_type = .slipice
 		}
 	}
 
-	from_left := (rand.intn(2) or { 0 }) == 0
-	start_x := if from_left { f32(40.0) } else { f32(760.0) }
-	dir := if from_left { f32(1.0) } else { f32(-1.0) }
-	base_speed := 95.0 + f32(g.phase * 6)
+	pipe_side := rand.intn(2) or { 0 }
+	spawn_x := if pipe_side == 0 { f32(20.0) } else { f32(750.0) }
+	target_dir := pipe_side == 0
 
 	mut enemy := Enemy{
-		id: g.total_in_phase - g.enemies_left
-		enemy_type: e_type
-		state: .walking
-		x: start_x
-		y: 86.0
-		vx: dir * base_speed
-		vy: 0.0
-		facing_right: from_left
-		is_grounded: true
-		active: true
+		id:           g.total_in_phase - g.enemies_left
+		enemy_type:   e_type
+		state:        .walking
+		x:            spawn_x
+		y:            86.0
+		vx:           if target_dir { f32(100.0) } else { f32(-100.0) }
+		vy:           0.0
+		facing_right: target_dir
+		is_grounded:  false
+		active:       true
 	}
 
-	if e_type == .fighterfly {
-		enemy.hop_timer = 0.5
+	if e_type == .sidestepper {
+		enemy.vx *= 1.15
+	} else if e_type == .fighterfly {
+		enemy.hop_timer = 0.8
 	}
 
 	g.enemies << enemy
 	g.sound_mgr.play_pipe()
+}
 
-	// Spawn sewer pipe smoke / steam particles
-	g.add_particles(start_x, 100.0, 8, Color{ r: 70, g: 200, b: 90, a: 200 })
+pub fn (mut g MarioBrosGame) spawn_fireball() {
+	pipe_side := rand.intn(2) or { 0 }
+	spawn_x := if pipe_side == 0 { f32(-20.0) } else { f32(820.0) }
+	vy_level := f32(180 + (rand.intn(3) or { 0 }) * 125)
+
+	g.enemies << Enemy{
+		id:           999
+		enemy_type:   .fireball
+		state:        .walking
+		x:            spawn_x
+		y:            vy_level
+		vx:           if pipe_side == 0 { f32(160.0) } else { f32(-160.0) }
+		vy:           0.0
+		facing_right: pipe_side == 0
+		active:       true
+	}
+}
+
+pub fn (mut g MarioBrosGame) trigger_bump_wave(bx f32, by f32) {
+	g.bump_waves << BumpWave{
+		x: bx
+		y: by
+	}
+	g.sound_mgr.play_bump()
+
+	// Check grounded enemies above this bump wave
+	for mut e in g.enemies {
+		if !e.active || e.state == .kicked || e.state == .in_pipe {
+			continue
+		}
+		if e.is_grounded && math.abs(e.y + e.height - by) < 18.0 && math.abs(e.x + e.width * 0.5 - bx) < 55.0 {
+			g.hit_enemy_from_below(mut e)
+		}
+	}
 }
 
 pub fn (mut g MarioBrosGame) hit_pow_block() {
 	if !g.pow_block.active || g.pow_block.hits_left <= 0 {
 		return
 	}
-
 	g.pow_block.hits_left--
-	if g.pow_block.hits_left <= 0 {
-		g.pow_block.active = false
-		// Block shatter explosion
-		g.add_particles(g.pow_block.x + g.pow_block.w * 0.5, g.pow_block.y + g.pow_block.h * 0.5, 30, Color{ r: 100, g: 190, b: 255, a: 255 })
-	}
-	g.pow_block.shake_timer = 0.4
-	g.screen_shake = 0.45
+	g.pow_block.shake_timer = 0.35
+	g.screen_shake = 0.4
 	g.sound_mgr.play_pow()
 
-	// Expanding shockwave ring across screen
 	g.shockwaves << Shockwave{
 		x: g.pow_block.x + g.pow_block.w * 0.5
 		y: g.pow_block.y + g.pow_block.h * 0.5
-		radius: 12.0
-		max_r: 480.0
-		timer: 0.45
-		duration: 0.45
-		color: Color{ r: 100, g: 220, b: 255, a: 255 }
-		active: true
 	}
 
-	// Flip/damage all grounded enemies
 	for mut e in g.enemies {
 		if !e.active || e.state == .kicked || e.state == .in_pipe {
 			continue
 		}
 		if e.is_grounded {
-			g.bump_enemy(mut e)
+			g.hit_enemy_from_below(mut e)
 		}
 	}
 
-	// Remove any active fireballs
-	for mut e in g.enemies {
-		if e.active && e.enemy_type == .fireball {
-			e.active = false
-			g.add_particles(e.x + 14.0, e.y + 14.0, 16, Color{ r: 255, g: 100, b: 0, a: 255 })
-		}
+	if g.pow_block.hits_left <= 0 {
+		g.pow_block.active = false
 	}
 }
 
-pub fn (mut g MarioBrosGame) bump_enemy(mut e Enemy) {
-	match e.enemy_type {
-		.shellcreeper {
-			if e.state == .walking || e.state == .angry {
-				e.state = .stunned
-				e.stun_timer = 8.5
-				e.vy = -200.0
-				e.is_grounded = false
-				g.sound_mgr.play_flip()
-				g.add_particles(e.x + 14.0, e.y + 14.0, 10, Color{ r: 255, g: 230, b: 80, a: 255 })
-			} else if e.state == .stunned || e.state == .recovering {
-				e.state = .walking
-				e.vy = -120.0
-				e.is_grounded = false
+pub fn (mut g MarioBrosGame) hit_enemy_from_below(mut e Enemy) {
+	// If the enemy is already turned over (stunned or recovering), hitting it from below flips it back upright and dangerous!
+	if e.state == .stunned || e.state == .recovering {
+		e.stun_timer = 0.0
+		e.is_grounded = false
+		e.vy = -240.0
+		rec_dir := if e.facing_right { f32(1.0) } else { f32(-1.0) }
+		if e.enemy_type == .sidestepper {
+			e.state = .angry
+			e.angry_level = 1
+			e.vx = rec_dir * (150.0 + f32(g.phase * 8))
+		} else {
+			e.state = .walking
+			e.vx = rec_dir * (120.0 + f32(g.phase * 8))
+			if e.enemy_type == .fighterfly {
+				e.hop_timer = 0.5
 			}
 		}
-		.sidestepper {
-			if e.state == .walking {
-				e.state = .angry
-				e.angry_level = 1
-				dir := if e.facing_right { f32(1.0) } else { f32(-1.0) }
-				e.vx = dir * 170.0
-				e.vy = -160.0
-				e.is_grounded = false
-				g.sound_mgr.play_bump()
-				// Steam / anger puff
-				g.add_particles(e.x + 14.0, e.y + 8.0, 8, Color{ r: 255, g: 60, b: 60, a: 255 })
-			} else if e.state == .angry {
-				e.state = .stunned
-				e.stun_timer = 6.5
-				e.vy = -200.0
-				e.is_grounded = false
-				g.sound_mgr.play_flip()
-				g.add_particles(e.x + 14.0, e.y + 14.0, 12, Color{ r: 255, g: 200, b: 50, a: 255 })
-			} else if e.state == .stunned || e.state == .recovering {
-				e.state = .angry
-				e.vy = -120.0
-				e.is_grounded = false
-			}
-		}
-		.fighterfly {
-			if e.is_grounded && (e.state == .walking || e.state == .angry) {
-				e.state = .stunned
-				e.stun_timer = 8.0
-				e.vy = -200.0
-				e.is_grounded = false
-				g.sound_mgr.play_flip()
-				g.add_particles(e.x + 14.0, e.y + 14.0, 10, Color{ r: 180, g: 140, b: 255, a: 255 })
-			} else if e.state == .stunned || e.state == .recovering {
-				e.state = .walking
-				e.vy = -120.0
-				e.is_grounded = false
-			}
-		}
-		.slipice {
-			e.active = false
-			g.add_particles(e.x + 14.0, e.y + 14.0, 20, Color{ r: 150, g: 230, b: 255, a: 255 })
-			g.add_score_popup(e.x, e.y, '500', Color{ r: 100, g: 240, b: 255, a: 255 })
-			if g.players.len > 0 {
-				g.players[0].score += 500
-			}
-			g.sound_mgr.play_kick()
-		}
-		.fireball {
-			e.active = false
-			g.add_particles(e.x + 14.0, e.y + 14.0, 16, Color{ r: 255, g: 120, b: 20, a: 255 })
-			g.sound_mgr.play_kick()
-		}
+		g.sound_mgr.play_bump()
+		g.add_particles(e.x + e.width * 0.5, e.y + e.height * 0.5, 8, Color{ r: 255, g: 120, b: 60, a: 220 })
+		return
 	}
-}
 
-pub fn (mut g MarioBrosGame) trigger_bump_wave(x f32, y f32) {
-	g.bump_waves << BumpWave{
-		x: x
-		y: y
-		radius: 48.0
-		timer: 0.22
-		duration: 0.22
-		active: true
-	}
-	g.sound_mgr.play_bump()
-
-	// Platform dust particles
-	g.add_particles(x, y, 6, Color{ r: 140, g: 180, b: 220, a: 200 })
-
-	// Check if this bump hit the POW block
-	if g.pow_block.active && g.pow_block.hits_left > 0 {
-		pow_cx := g.pow_block.x + g.pow_block.w * 0.5
-		pow_cy := g.pow_block.y + g.pow_block.h
-		if math.abs(x - pow_cx) < 32.0 && math.abs(y - pow_cy) < 18.0 {
-			g.hit_pow_block()
+	if e.enemy_type == .sidestepper {
+		if e.state == .walking {
+			e.state = .angry
+			e.angry_level = 1
+			// Bound up with forward momentum in an enraged arc!
+			dir_mult := if e.facing_right { f32(1.25) } else { f32(-1.25) }
+			e.vx = math.abs(e.vx) * dir_mult
+			e.vy = -260.0
+			e.is_grounded = false
+			g.sound_mgr.play_bump()
+			g.add_score_popup(e.x, e.y - 10.0, 'ANGRY!', Color{ r: 255, g: 80, b: 80, a: 255 })
+			g.add_particles(e.x + e.width * 0.5, e.y + e.height * 0.5, 8, Color{ r: 255, g: 100, b: 100, a: 220 })
 			return
 		}
 	}
 
-	// Check enemies standing on the platform above the bump point
-	for mut e in g.enemies {
-		if !e.active || e.state == .kicked || e.state == .in_pipe {
-			continue
-		}
-		// Must be on the same horizontal platform span and right above the bump
-		if math.abs(e.x + e.width * 0.5 - x) < 46.0 && math.abs((e.y + e.height) - y) < 18.0 {
-			g.bump_enemy(mut e)
-		}
+	e.state = .stunned
+	e.stun_timer = 6.0
+	// Bound up preserving horizontal momentum onto back in a forward arc!
+	if math.abs(e.vx) > 10.0 {
+		e.vx = e.vx * 1.2
+	} else {
+		e.vx = if e.facing_right { f32(50.0) } else { f32(-50.0) }
 	}
+	e.vy = -275.0
+	e.is_grounded = false
+	g.sound_mgr.play_flip()
+	g.add_particles(e.x + e.width * 0.5, e.y + e.height * 0.5, 8, Color{ r: 255, g: 220, b: 60, a: 200 })
+}
 
-	// Check coins above bump
-	for mut c in g.coins {
-		if c.active && math.abs(c.x + c.width * 0.5 - x) < 40.0 && math.abs((c.y + c.height) - y) < 18.0 {
-			c.vy = -240.0
-			c.is_grounded = false
-			g.add_particles(c.x + 10.0, c.y + 10.0, 5, Color{ r: 255, g: 230, b: 60, a: 255 })
-		}
+pub fn (mut g MarioBrosGame) fire_player_fireball(p_id int, px f32, py f32, facing_right bool) {
+	dir := if facing_right { f32(360.0) } else { f32(-360.0) }
+	g.player_fireballs << PlayerFireball{
+		player_id:  p_id
+		x:          if facing_right { px + 28.0 } else { px - 14.0 }
+		y:          py + 10.0
+		vx:         dir
+		vy:         -40.0
+		active:     true
 	}
+	g.sound_mgr.play_fireball()
 }
 
 pub fn (mut g MarioBrosGame) add_score_popup(x f32, y f32, text string, color Color) {
 	g.score_popups << ScorePopup{
-		x: x
-		y: y
-		text: text
+		x:     x
+		y:     y
+		text:  text
 		color: color
-		timer: 0.9
-		active: true
 	}
 }
 
 pub fn (mut g MarioBrosGame) add_particles(x f32, y f32, count int, color Color) {
 	for _ in 0 .. count {
-		angle := f32(rand.intn(360) or { 0 }) * f32(math.pi / 180.0)
-		speed := 50.0 + f32(rand.intn(120) or { 60 })
+		angle := f32(rand.intn(360) or { 0 }) * f32(math.pi) / 180.0
+		speed := f32(rand.intn(160) or { 60 }) + 30.0
 		g.particles << Particle{
-			x: x
-			y: y
-			vx: f32(math.cos(f64(angle))) * speed
-			vy: f32(math.sin(f64(angle))) * speed
-			color: color
-			life: 0.4 + f32(rand.intn(40) or { 20 }) / 100.0
-			max_l: 0.8
-			size: 3.0 + f32(rand.intn(3) or { 1 })
+			x:      x
+			y:      y
+			vx:     f32(math.cos(angle)) * speed
+			vy:     f32(math.sin(angle)) * speed
+			color:  color
+			life:   0.3 + f32(rand.intn(30) or { 0 }) / 100.0
+			max_l:  0.6
+			size:   f32((rand.intn(3) or { 0 }) + 2)
 			active: true
 		}
 	}
 }
 
-pub fn (mut g MarioBrosGame) spawn_coin_from_pipe(p_idx int) {
-	x := if p_idx == 0 { f32(40.0) } else { f32(760.0) }
-	vx := if p_idx == 0 { f32(90.0) } else { f32(-90.0) }
-	g.coins << Coin{
-		x: x
-		y: 86.0
-		vx: vx
-		vy: 0.0
-		is_grounded: true
-		life_timer: 15.0
-		active: true
+pub fn (g &MarioBrosGame) find_ground_below(x f32, start_y f32) f32 {
+	mut lowest_y := f32(540.0)
+	for plat in g.platforms {
+		if plat.y > start_y + 4.0 && plat.y < lowest_y {
+			if x >= plat.x && x <= plat.x + plat.w {
+				lowest_y = plat.y
+			}
+		}
+	}
+	return lowest_y
+}
+
+pub fn (mut g MarioBrosGame) spawn_ambient_drip() {
+	roll := rand.intn(100) or { 0 }
+	if roll < 45 {
+		// Pipe drip: oozing waste / toxic green from one of the 4 pipes
+		pipe_idx := rand.intn(4) or { 0 }
+		mut px := f32(82.0)
+		mut py := f32(130.0)
+		match pipe_idx {
+			0 { px = 82.0; py = 130.0 }
+			1 { px = 718.0; py = 130.0 }
+			2 { px = 82.0; py = 536.0 }
+			else { px = 718.0; py = 536.0 }
+		}
+		target := g.find_ground_below(px, py)
+		is_toxic := (rand.intn(2) or { 0 }) == 0
+		d_type := if is_toxic { DripType.toxic_waste } else { DripType.sludge }
+		d_color := if is_toxic {
+			Color{ r: 70, g: 255, b: 50, a: 240 }
+		} else {
+			Color{ r: 190, g: 150, b: 35, a: 230 }
+		}
+		g.water_drips << WaterDrip{
+			x:         px
+			y:         py
+			vy:        90.0
+			drip_type: d_type
+			target_y:  target
+			color:     d_color
+			active:    true
+		}
+	} else if roll < 80 {
+		// Platform underside water drip
+		if g.platforms.len > 0 {
+			plat_idx := rand.intn(g.platforms.len) or { 0 }
+			plat := g.platforms[plat_idx]
+			if plat.h < 30.0 { // Upper platform
+				px := plat.x + 10.0 + f32(rand.intn(int(math.max(1.0, plat.w - 20.0))) or { 0 })
+				py := plat.y + plat.h
+				target := g.find_ground_below(px, py)
+				g.water_drips << WaterDrip{
+					x:         px
+					y:         py
+					vy:        70.0
+					drip_type: .water
+					target_y:  target
+					color:     Color{ r: 90, g: 200, b: 255, a: 220 }
+					active:    true
+				}
+			}
+		}
+	} else {
+		// Ceiling sewer drop
+		px := f32(40.0) + f32(rand.intn(720) or { 0 })
+		py := f32(6.0)
+		target := g.find_ground_below(px, py)
+		g.water_drips << WaterDrip{
+			x:         px
+			y:         py
+			vy:        110.0
+			drip_type: .water
+			target_y:  target
+			color:     Color{ r: 100, g: 210, b: 255, a: 220 }
+			active:    true
+		}
+	}
+}
+
+pub fn (mut g MarioBrosGame) add_splash(x f32, y f32, d_type DripType) {
+	count := (rand.intn(3) or { 0 }) + 3
+	for _ in 0 .. count {
+		vx := f32(rand.intn(140) or { 70 }) - 70.0
+		vy := -f32(rand.intn(90) or { 45 }) - 50.0
+		c := match d_type {
+			.toxic_waste {
+				if (rand.intn(2) or { 0 }) == 0 {
+					Color{ r: 80, g: 255, b: 60, a: 230 }
+				} else {
+					Color{ r: 190, g: 255, b: 90, a: 255 }
+				}
+			}
+			.sludge {
+				if (rand.intn(2) or { 0 }) == 0 {
+					Color{ r: 190, g: 150, b: 35, a: 230 }
+				} else {
+					Color{ r: 240, g: 200, b: 70, a: 240 }
+				}
+			}
+			else {
+				if (rand.intn(2) or { 0 }) == 0 {
+					Color{ r: 110, g: 210, b: 255, a: 220 }
+				} else {
+					Color{ r: 210, g: 245, b: 255, a: 255 }
+				}
+			}
+		}
+		g.particles << Particle{
+			x:      x
+			y:      y - 2.0
+			vx:     vx
+			vy:     vy
+			color:  c
+			life:   0.22 + f32(rand.intn(18) or { 0 }) / 100.0
+			max_l:  0.4
+			size:   f32((rand.intn(2) or { 0 }) + 2)
+			active: true
+		}
 	}
 }
 
 pub fn (mut g MarioBrosGame) update(dt f32) {
-	if g.state == .paused || g.state == .title || g.state == .game_over {
+	// 1. Screen Shake Decay
+	if g.screen_shake > 0.0 {
+		g.screen_shake -= dt
+		mag := g.screen_shake * 14.0
+		g.shake_offset_x = (f32(rand.intn(200) or { 100 }) / 100.0 - 1.0) * mag
+		g.shake_offset_y = (f32(rand.intn(200) or { 100 }) / 100.0 - 1.0) * mag
+	} else {
+		g.shake_offset_x = 0.0
+		g.shake_offset_y = 0.0
+	}
+
+	// 2. Cooldowns
+	if g.p1_fire_cooldown > 0.0 {
+		g.p1_fire_cooldown -= dt
+	}
+	if g.p2_fire_cooldown > 0.0 {
+		g.p2_fire_cooldown -= dt
+	}
+
+	if g.state != .playing && g.state != .bonus_phase {
 		return
 	}
 
-	g.phase_timer += dt
-	gravity := f32(650.0)
-
-	// Phase banner animation timer
-	if g.phase_banner_timer > 0.0 {
-		g.phase_banner_timer -= dt
-	}
-
-	// Combo banner timer
-	if g.combo_banner_timer > 0.0 {
-		g.combo_banner_timer -= dt
-	}
-
-	// Sewer water drip spawner
-	g.drip_spawn_timer += dt
-	if g.drip_spawn_timer > 1.8 {
-		g.drip_spawn_timer = 0.0
-		r_val := f32(rand.intn(30) or { 0 })
-		drip_x := if (rand.intn(2) or { 0 }) == 0 { 60.0 + r_val } else { 710.0 + r_val }
-		g.water_drips << WaterDrip{ x: drip_x, y: 130.0, active: true }
-	}
-
-	// Update water drips
-	for mut wd in g.water_drips {
-		if !wd.active {
-			continue
+	// 3. Spawners
+	if g.state == .playing {
+		g.phase_timer += dt
+		g.spawn_timer -= dt
+		if g.spawn_timer <= 0.0 && g.enemies_left > 0 {
+			g.spawn_enemy()
+			g.spawn_timer = f32(math.max(1.8, 3.8 - f64(g.phase) * 0.25))
 		}
-		wd.y += wd.vy * dt
-		if wd.y >= 540.0 {
-			wd.active = false
-			// Water splash ripple particles
-			g.add_particles(wd.x, 540.0, 4, Color{ r: 80, g: 180, b: 240, a: 180 })
-		}
-	}
-	g.water_drips = g.water_drips.filter(it.active)
 
-	// Screen shake decay
-	if g.screen_shake > 0.0 {
-		g.screen_shake -= dt
-		if g.screen_shake <= 0.0 {
-			g.screen_shake = 0.0
-			g.shake_offset_x = 0.0
-			g.shake_offset_y = 0.0
-		} else {
-			g.shake_offset_x = f32(rand.intn(13) or { 6 }) - 6.0
-			g.shake_offset_y = f32(rand.intn(13) or { 6 }) - 6.0
+		g.fireball_timer -= dt
+		if g.fireball_timer <= 0.0 && g.phase >= 2 {
+			g.spawn_fireball()
+			g.fireball_timer = f32(math.max(5.0, 14.0 - f64(g.phase) * 0.6))
 		}
-	}
-
-	// Update POW block shake
-	if g.pow_block.shake_timer > 0.0 {
-		g.pow_block.shake_timer -= dt
-	}
-
-	// 1. Update Bump Waves
-	for mut bw in g.bump_waves {
-		if !bw.active {
-			continue
-		}
-		bw.timer -= dt
-		if bw.timer <= 0.0 {
-			bw.active = false
-		}
-	}
-	g.bump_waves = g.bump_waves.filter(it.active)
-
-	// 1b. Update Shockwaves
-	for mut sw in g.shockwaves {
-		if !sw.active {
-			continue
-		}
-		sw.timer -= dt
-		sw.radius += (sw.max_r / sw.duration) * dt
-		if sw.timer <= 0.0 {
-			sw.active = false
-		}
-	}
-	g.shockwaves = g.shockwaves.filter(it.active)
-
-	// 2. Bonus Phase Timer
-	if g.state == .bonus_phase {
+	} else if g.state == .bonus_phase {
 		g.bonus_timer -= dt
 		if g.bonus_timer <= 0.0 || g.coins.len == 0 {
-			// Perfect bonus award
-			if g.coins.len == 0 && g.players.len > 0 {
-				g.players[0].score += 5000
-				g.add_score_popup(400.0, 300.0, 'PERFECT 5000!', Color{ r: 255, g: 230, b: 0, a: 255 })
-			}
-			g.state = .phase_clear
-			g.sound_mgr.play_phase_clear()
+			g.next_phase()
 			return
-		}
-	}
-
-	// 3. Enemy Spawning in normal phases
-	if g.state == .playing {
-		if g.enemies_left > 0 {
-			g.spawn_timer -= dt
-			if g.spawn_timer <= 0.0 {
-				g.spawn_enemy()
-				g.spawn_timer = f32(2.4 - math.min(f64(g.phase) * 0.1, 1.4))
-			}
-		}
-
-		// Fireball hazard if phase takes long
-		g.fireball_timer += dt
-		if g.fireball_timer > 16.0 {
-			g.fireball_timer = 0.0
-			fb_vx := if (rand.intn(2) or { 0 }) == 0 { f32(160.0) } else { f32(-160.0) }
-			g.enemies << Enemy{
-				id: 999
-				enemy_type: .fireball
-				state: .walking
-				x: if (rand.intn(2) or { 0 }) == 0 { f32(20.0) } else { f32(780.0) }
-				y: 200.0 + f32(rand.intn(250) or { 100 })
-				vx: fb_vx
-				vy: 0.0
-				facing_right: true
-				is_grounded: false
-				active: true
-			}
 		}
 	}
 
@@ -735,26 +867,15 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 			p.y += p.vy * dt
 			if p.dead_timer <= 0.0 {
 				if p.lives > 0 {
-					p.lives--
-					if p.lives > 0 {
-						p.is_dead = false
-						p.x = if p.id == 1 { f32(240.0) } else { f32(560.0) }
-						p.y = 490.0
-						p.vx = 0.0
-						p.vy = 0.0
-						p.invuln_timer = 3.0
-					} else {
-						// Check if all players dead
-						mut any_alive := false
-						for check_p in g.players {
-							if check_p.lives > 0 {
-								any_alive = true
-							}
-						}
-						if !any_alive {
-							g.state = .game_over
-						}
-					}
+					p.is_dead = false
+					p.x = if p.id == 1 { f32(180.0) } else { f32(590.0) }
+					p.y = 504.0
+					p.vx = 0.0
+					p.vy = 0.0
+					p.is_grounded = true
+					p.invuln_timer = 3.0
+				} else {
+					g.check_game_over()
 				}
 			}
 			continue
@@ -764,7 +885,19 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 			p.invuln_timer -= dt
 		}
 
-		// Player Combo Decay
+		if p.star_timer > 0.0 {
+			p.star_timer -= dt
+			// Star sparkles
+			if (rand.intn(2) or { 0 }) == 0 {
+				g.add_particles(p.x + p.width * 0.5, p.y + p.height * 0.5, 1, Color{
+					r: u8(rand.intn(255) or { 255 })
+					g: u8(rand.intn(255) or { 255 })
+					b: u8(rand.intn(255) or { 255 })
+					a: 220
+				})
+			}
+		}
+
 		if p.combo_timer > 0.0 {
 			p.combo_timer -= dt
 			if p.combo_timer <= 0.0 {
@@ -772,36 +905,57 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 			}
 		}
 
-		// Input Controls
+		// Input handling
 		left_pressed := if p.id == 1 { g.p1_left } else { g.p2_left }
 		right_pressed := if p.id == 1 { g.p1_right } else { g.p2_right }
+		down_pressed := if p.id == 1 { g.p1_down } else { g.p2_down }
 		jump_pressed := if p.id == 1 { g.p1_jump } else { g.p2_jump }
+		fire_pressed := if p.id == 1 { g.p1_fire } else { g.p2_fire }
 
-		accel := f32(800.0)
-		friction := f32(650.0)
-		max_vx := f32(230.0)
+		// Super Spring Jump Charge
+		if down_pressed && p.is_grounded {
+			p.charge_timer += dt
+			if p.charge_timer > 0.3 {
+				p.is_charged = true
+				// Charging sparks
+				if (rand.intn(3) or { 0 }) == 0 {
+					g.add_particles(p.x + p.width * 0.5, p.y + p.height, 1, Color{ r: 255, g: 255, b: 60, a: 220 })
+				}
+			}
+		} else {
+			p.charge_timer = 0.0
+			p.is_charged = false
+		}
 
-		if left_pressed {
-			p.vx -= accel * dt
-			if p.vx < -max_vx {
-				p.vx = -max_vx
+		// Fireball Shooting
+		if fire_pressed && p.has_fire {
+			if p.id == 1 && g.p1_fire_cooldown <= 0.0 {
+				g.fire_player_fireball(1, p.x, p.y, p.facing_right)
+				g.p1_fire_cooldown = 0.28
+			} else if p.id == 2 && g.p2_fire_cooldown <= 0.0 {
+				g.fire_player_fireball(2, p.x, p.y, p.facing_right)
+				g.p2_fire_cooldown = 0.28
+			}
+		}
+
+		// Horizontal Movement & Accel
+		speed_mult := if p.star_timer > 0.0 { f32(1.5) } else { f32(1.0) }
+		target_max := max_run_speed * speed_mult
+
+		if left_pressed && !right_pressed {
+			p.vx -= run_accel * dt
+			if p.vx < -target_max {
+				p.vx = -target_max
 			}
 			p.facing_right = false
 			p.is_skidding = p.vx > 30.0
-			// Skid dust
-			if p.is_skidding && p.is_grounded && (rand.intn(3) or { 0 }) == 0 {
-				g.add_particles(p.x + p.width * 0.5, p.y + p.height - 2.0, 2, Color{ r: 200, g: 200, b: 200, a: 160 })
-			}
-		} else if right_pressed {
-			p.vx += accel * dt
-			if p.vx > max_vx {
-				p.vx = max_vx
+		} else if right_pressed && !left_pressed {
+			p.vx += run_accel * dt
+			if p.vx > target_max {
+				p.vx = target_max
 			}
 			p.facing_right = true
 			p.is_skidding = p.vx < -30.0
-			if p.is_skidding && p.is_grounded && (rand.intn(3) or { 0 }) == 0 {
-				g.add_particles(p.x + p.width * 0.5, p.y + p.height - 2.0, 2, Color{ r: 200, g: 200, b: 200, a: 160 })
-			}
 		} else {
 			p.is_skidding = false
 			if p.vx > 0.0 {
@@ -817,20 +971,28 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 			}
 		}
 
-		// Jump
+		// Jump (Normal or Super Spring Jump!)
 		if jump_pressed && p.is_grounded && !p.is_jumping {
-			p.vy = -430.0
+			if p.is_charged {
+				p.vy = -680.0 // Massive Super Spring Jump!
+				g.sound_mgr.play_super_jump()
+				g.add_particles(p.x + p.width * 0.5, p.y + p.height, 8, Color{ r: 255, g: 255, b: 100, a: 220 })
+				g.add_score_popup(p.x, p.y - 12.0, 'SPRING JUMP!', Color{ r: 255, g: 240, b: 80, a: 255 })
+			} else {
+				p.vy = -480.0
+				g.sound_mgr.play_jump()
+				g.add_particles(p.x + p.width * 0.5, p.y + p.height, 4, Color{ r: 180, g: 180, b: 200, a: 180 })
+			}
 			p.is_grounded = false
 			p.is_jumping = true
-			g.sound_mgr.play_jump()
-			// Jump takeoff dust
-			g.add_particles(p.x + p.width * 0.5, p.y + p.height, 4, Color{ r: 180, g: 180, b: 200, a: 180 })
+			p.is_charged = false
+			p.charge_timer = 0.0
 		}
 
 		// Gravity
 		p.vy += gravity * dt
-		if p.vy > 600.0 {
-			p.vy = 600.0
+		if p.vy > 480.0 {
+			p.vy = 480.0
 		}
 
 		// Apply velocity
@@ -861,7 +1023,7 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 			else if p.vy < 0.0 && old_y >= plat.y + plat.h - 4.0 && p.y <= plat.y + plat.h {
 				if p.x + p.width > plat.x && p.x < plat.x + plat.w {
 					p.y = plat.y + plat.h
-					p.vy = 40.0 // Bounce back down
+					p.vy = 40.0
 					g.trigger_bump_wave(p.x + p.width * 0.5, plat.y)
 				}
 			}
@@ -870,7 +1032,6 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 		// POW Block top landing / bottom bumping
 		if g.pow_block.active && g.pow_block.hits_left > 0 {
 			pb := g.pow_block
-			// Land on top of POW block
 			if old_y + p.height <= pb.y + 4.0 && p.y + p.height >= pb.y {
 				if p.x + p.width > pb.x && p.x < pb.x + pb.w {
 					p.y = pb.y - p.height
@@ -878,13 +1039,11 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 					p.is_grounded = true
 					p.is_jumping = false
 				}
-			}
-			// Bump underside of POW block
-			else if p.vy < 0.0 && old_y >= pb.y + pb.h - 4.0 && p.y <= pb.y + pb.h {
+			} else if p.vy < 0.0 && old_y >= pb.y + pb.h - 4.0 && p.y <= pb.y + pb.h {
 				if p.x + p.width > pb.x && p.x < pb.x + pb.w {
 					p.y = pb.y + pb.h
 					p.vy = 40.0
-					g.trigger_bump_wave(pb.x + pb.w * 0.5, pb.y + pb.h)
+					g.hit_pow_block()
 				}
 			}
 		}
@@ -903,7 +1062,176 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 		}
 	}
 
-	// 5. Update Enemies
+	// 5. Update Sliding Shells (Bowling Attacks!)
+	for mut sh in g.sliding_shells {
+		if !sh.active {
+			continue
+		}
+		sh.anim_timer += dt * 18.0
+		sh.life_timer -= dt
+		if sh.life_timer <= 0.0 {
+			sh.active = false
+			continue
+		}
+
+		sh.vy += gravity * dt
+		old_shy := sh.y
+		sh.x += sh.vx * dt
+		sh.y += sh.vy * dt
+
+		// Trail particles
+		if (rand.intn(2) or { 0 }) == 0 {
+			g.add_particles(sh.x + sh.width * 0.5, sh.y + sh.height - 2.0, 1, Color{ r: 80, g: 230, b: 90, a: 180 })
+		}
+
+		// Screen Wrap-Around
+		if sh.x < -sh.width {
+			sh.x = 800.0
+		} else if sh.x > 800.0 {
+			sh.x = -sh.width
+		}
+
+		// Platform landing
+		sh.is_grounded = false
+		for plat in g.platforms {
+			if old_shy + sh.height <= plat.y + 6.0 && sh.y + sh.height >= plat.y {
+				if sh.x + sh.width > plat.x && sh.x < plat.x + plat.w {
+					sh.y = plat.y - sh.height
+					sh.vy = 0.0
+					sh.is_grounded = true
+				}
+			}
+		}
+
+		// Check Sliding Shell hitting Enemies (Bowling them down!)
+		for mut e in g.enemies {
+			if !e.active || e.state == .kicked || e.state == .in_pipe {
+				continue
+			}
+			if sh.x + sh.width > e.x && sh.x < e.x + e.width && sh.y + sh.height > e.y && sh.y < e.y + e.height {
+				e.state = .kicked
+				e.vx = sh.vx * 0.7
+				e.vy = -340.0
+				g.sound_mgr.play_shell_kick()
+				g.screen_shake = 0.2
+
+				pts := 800 * sh.combo
+				sh.combo++
+				if g.players.len > 0 {
+					g.players[0].score += pts
+				}
+				g.add_score_popup(e.x, e.y, '+${pts}', Color{ r: 255, g: 240, b: 60, a: 255 })
+				g.add_particles(e.x + e.width * 0.5, e.y + e.height * 0.5, 12, Color{ r: 255, g: 215, b: 0, a: 220 })
+			}
+		}
+	}
+
+	// 6. Update Player Fireballs
+	for mut fb in g.player_fireballs {
+		if !fb.active {
+			continue
+		}
+		fb.anim_timer += dt * 14.0
+		fb.life_timer -= dt
+		if fb.life_timer <= 0.0 {
+			fb.active = false
+			continue
+		}
+
+		fb.vy += gravity * dt
+		old_fby := fb.y
+		fb.x += fb.vx * dt
+		fb.y += fb.vy * dt
+
+		// Fire spark trail
+		g.add_particles(fb.x + fb.width * 0.5, fb.y + fb.height * 0.5, 1, Color{ r: 255, g: 120, b: 20, a: 200 })
+
+		if fb.x < -fb.width || fb.x > 800.0 {
+			fb.active = false
+			continue
+		}
+
+		// Platform Bouncing
+		for plat in g.platforms {
+			if old_fby + fb.height <= plat.y + 6.0 && fb.y + fb.height >= plat.y {
+				if fb.x + fb.width > plat.x && fb.x < plat.x + plat.w {
+					fb.y = plat.y - fb.height
+					fb.vy = -220.0 // Bounce upward!
+					fb.bounces++
+					if fb.bounces > 5 {
+						fb.active = false
+					}
+				}
+			}
+		}
+
+		// Check Fireball hitting Enemies -> Flips them on their back!
+		for mut e in g.enemies {
+			if !e.active || e.state == .kicked || e.state == .in_pipe || e.enemy_type == .fireball {
+				continue
+			}
+			if fb.x + fb.width > e.x && fb.x < e.x + e.width && fb.y + fb.height > e.y && fb.y < e.y + e.height {
+				fb.active = false
+				g.hit_enemy_from_below(mut e)
+				g.add_particles(e.x + e.width * 0.5, e.y + e.height * 0.5, 8, Color{ r: 255, g: 140, b: 30, a: 220 })
+				break
+			}
+		}
+	}
+
+	// 7. Update Power-Ups (Starman & Fire Flower)
+	for mut pu in g.powerups {
+		if !pu.active {
+			continue
+		}
+		pu.anim_timer += dt * 6.0
+		pu.vy += gravity * dt
+		old_puy := pu.y
+		pu.x += pu.vx * dt
+		pu.y += pu.vy * dt
+
+		// Screen Wrap-Around
+		if pu.x < -pu.width {
+			pu.x = 800.0
+		} else if pu.x > 800.0 {
+			pu.x = -pu.width
+		}
+
+		// Platform Bouncing for Starman & Flower
+		pu.is_grounded = false
+		for plat in g.platforms {
+			if old_puy + pu.height <= plat.y + 6.0 && pu.y + pu.height >= plat.y {
+				if pu.x + pu.width > plat.x && pu.x < plat.x + plat.w {
+					pu.y = plat.y - pu.height
+					pu.vy = if pu.power_type == .star { f32(-280.0) } else { f32(0.0) }
+					pu.is_grounded = true
+				}
+			}
+		}
+
+		// Check Player collecting Power-Up!
+		for mut p in g.players {
+			if p.is_dead {
+				continue
+			}
+			if p.x + p.width > pu.x && p.x < pu.x + pu.width && p.y + p.height > pu.y && p.y < pu.y + pu.height {
+				pu.active = false
+				if pu.power_type == .star {
+					p.star_timer = 10.0
+					g.sound_mgr.play_star_power()
+					g.add_score_popup(p.x, p.y - 12.0, 'STAR POWER!', Color{ r: 255, g: 215, b: 0, a: 255 })
+				} else {
+					p.has_fire = true
+					g.sound_mgr.play_powerup()
+					g.add_score_popup(p.x, p.y - 12.0, 'FIRE FLOWER!', Color{ r: 255, g: 120, b: 40, a: 255 })
+				}
+				p.score += 1000
+				g.add_particles(p.x + p.width * 0.5, p.y + p.height * 0.5, 16, Color{ r: 255, g: 255, b: 120, a: 255 })
+			}
+		}
+	}
+
+	// 8. Update Enemies
 	for mut e in g.enemies {
 		if !e.active {
 			continue
@@ -943,12 +1271,20 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 				e.state = .recovering
 			}
 			if e.stun_timer <= 0.0 {
-				// Rights itself and gets angry!
 				e.state = if e.enemy_type == .sidestepper { .angry } else { .walking }
 				rec_dir := if e.facing_right { f32(1.0) } else { f32(-1.0) }
 				e.vx = rec_dir * (130.0 + f32(g.phase * 8))
 				e.vy = -140.0
 				e.is_grounded = false
+			}
+
+			// Friction damping while lying on back
+			if e.is_grounded {
+				if math.abs(e.vx) > 3.0 {
+					e.vx -= (e.vx * 4.5) * dt
+				} else {
+					e.vx = 0.0
+				}
 			}
 		}
 
@@ -960,7 +1296,6 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 					e.vy = -280.0
 					e.is_grounded = false
 					e.hop_timer = 0.9
-					// Hop dust
 					g.add_particles(e.x + e.width * 0.5, e.y + e.height, 3, Color{ r: 170, g: 150, b: 220, a: 160 })
 				}
 			}
@@ -971,7 +1306,6 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 			e.anim_timer += dt * 8.0
 			e.y += f32(math.sin(f64(e.anim_timer)) * 3.0)
 			e.x += e.vx * dt
-			// Flame trail
 			if (rand.intn(2) or { 0 }) == 0 {
 				g.add_particles(e.x + 14.0, e.y + 14.0, 1, Color{ r: 255, g: 140, b: 20, a: 180 })
 			}
@@ -988,7 +1322,8 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 		}
 
 		old_ey := e.y
-		if e.state != .stunned && e.state != .recovering {
+		// Preserve horizontal motion in air or while sliding onto back
+		if !e.is_grounded || (e.state != .stunned && e.state != .recovering) || math.abs(e.vx) > 2.0 {
 			e.x += e.vx * dt
 		}
 		e.y += e.vy * dt
@@ -1000,18 +1335,18 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 			e.x = -e.width
 		}
 
-		// Bottom pipe entry when walking into corners on ground floor
+		// Bottom pipe entry
 		if e.is_grounded && e.y >= 500.0 && (e.state == .walking || e.state == .angry) {
 			if e.x < 50.0 && !e.facing_right {
 				e.state = .in_pipe
 				e.pipe_timer = 2.0
-				e.pipe_target = 1 // Emerge from top right
+				e.pipe_target = 1
 				g.sound_mgr.play_pipe()
 				continue
 			} else if e.x > 720.0 && e.facing_right {
 				e.state = .in_pipe
 				e.pipe_timer = 2.0
-				e.pipe_target = 0 // Emerge from top left
+				e.pipe_target = 0
 				g.sound_mgr.play_pipe()
 				continue
 			}
@@ -1023,14 +1358,89 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 			if old_ey + e.height <= plat.y + 6.0 && e.y + e.height >= plat.y {
 				if e.x + e.width > plat.x && e.x < plat.x + plat.w {
 					e.y = plat.y - e.height
-					e.vy = 0.0
-					e.is_grounded = true
+					// Bounce if landing fast on its back!
+					if (e.state == .stunned || e.state == .recovering) && e.vy > 180.0 {
+						e.vy = -e.vy * 0.35
+						g.add_particles(e.x + e.width * 0.5, plat.y, 4, Color{ r: 210, g: 210, b: 210, a: 160 })
+					} else {
+						e.vy = 0.0
+						e.is_grounded = true
+					}
 				}
 			}
 		}
 	}
 
-	// 6. Update Coins
+	// 9. Enemy-to-Enemy Collisions (Bouncing off upside-down & head-on)
+	for i := 0; i < g.enemies.len; i++ {
+		if !g.enemies[i].active || g.enemies[i].state == .kicked || g.enemies[i].state == .in_pipe || g.enemies[i].enemy_type == .fireball {
+			continue
+		}
+		for j := i + 1; j < g.enemies.len; j++ {
+			if !g.enemies[j].active || g.enemies[j].state == .kicked || g.enemies[j].state == .in_pipe || g.enemies[j].enemy_type == .fireball {
+				continue
+			}
+
+			e1_left := g.enemies[i].x
+			e1_right := g.enemies[i].x + g.enemies[i].width
+			e1_bottom := g.enemies[i].y + g.enemies[i].height
+
+			e2_left := g.enemies[j].x
+			e2_right := g.enemies[j].x + g.enemies[j].width
+			e2_bottom := g.enemies[j].y + g.enemies[j].height
+
+			if math.abs(f64(e1_bottom - e2_bottom)) < 18.0 && e1_right > e2_left && e1_left < e2_right {
+				e1_flipped := g.enemies[i].state == .stunned || g.enemies[i].state == .recovering
+				e2_flipped := g.enemies[j].state == .stunned || g.enemies[j].state == .recovering
+
+				e1_moving := g.enemies[i].state == .walking || g.enemies[i].state == .angry
+				e2_moving := g.enemies[j].state == .walking || g.enemies[j].state == .angry
+
+				if e1_flipped && e2_moving {
+					if e2_left < e1_left {
+						g.enemies[j].facing_right = false
+						g.enemies[j].vx = -math.abs(g.enemies[j].vx)
+						g.enemies[j].x = e1_left - g.enemies[j].width - 1.0
+					} else {
+						g.enemies[j].facing_right = true
+						g.enemies[j].vx = math.abs(g.enemies[j].vx)
+						g.enemies[j].x = e1_right + 1.0
+					}
+					g.sound_mgr.play_bump()
+				} else if e2_flipped && e1_moving {
+					if e1_left < e2_left {
+						g.enemies[i].facing_right = false
+						g.enemies[i].vx = -math.abs(g.enemies[i].vx)
+						g.enemies[i].x = e2_left - g.enemies[i].width - 1.0
+					} else {
+						g.enemies[i].facing_right = true
+						g.enemies[i].vx = math.abs(g.enemies[i].vx)
+						g.enemies[i].x = e2_right + 1.0
+					}
+					g.sound_mgr.play_bump()
+				} else if e1_moving && e2_moving {
+					if (e1_left < e2_left && g.enemies[i].vx > 0 && g.enemies[j].vx < 0) ||
+					   (e2_left < e1_left && g.enemies[j].vx > 0 && g.enemies[i].vx < 0) {
+						g.enemies[i].facing_right = !g.enemies[i].facing_right
+						g.enemies[i].vx = -g.enemies[i].vx
+						g.enemies[j].facing_right = !g.enemies[j].facing_right
+						g.enemies[j].vx = -g.enemies[j].vx
+
+						if e1_left < e2_left {
+							g.enemies[i].x = e2_left - g.enemies[i].width - 1.0
+							g.enemies[j].x = e2_left + 1.0
+						} else {
+							g.enemies[j].x = e1_left - g.enemies[j].width - 1.0
+							g.enemies[i].x = e1_left + 1.0
+						}
+						g.sound_mgr.play_bump()
+					}
+				}
+			}
+		}
+	}
+
+	// 10. Update Coins
 	for mut c in g.coins {
 		if !c.active {
 			continue
@@ -1069,10 +1479,24 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 		}
 	}
 
-	// 7. Player-Enemy & Player-Coin Collisions
+	// 11. Player-Enemy & Player-Coin Collisions
 	for mut p in g.players {
 		if p.is_dead {
 			continue
+		}
+
+		// Check Coin Collection
+		for mut c in g.coins {
+			if !c.active {
+				continue
+			}
+			if p.x + p.width > c.x && p.x < c.x + c.width && p.y + p.height > c.y && p.y < c.y + c.height {
+				c.active = false
+				p.score += 800
+				g.sound_mgr.play_coin()
+				g.add_score_popup(c.x, c.y, '800', Color{ r: 255, g: 240, b: 60, a: 255 })
+				g.add_particles(c.x + c.width * 0.5, c.y + c.height * 0.5, 8, Color{ r: 255, g: 215, b: 0, a: 255 })
+			}
 		}
 
 		// Check Enemy Interaction
@@ -1082,15 +1506,41 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 			}
 
 			// AABB overlap test
-			if p.x + p.width > e.x && p.x < e.x + e.width && p.y + p.height > e.y
-				&& p.y < e.y + e.height {
+			if p.x + p.width > e.x && p.x < e.x + e.width && p.y + p.height > e.y && p.y < e.y + e.height {
+				// STAR POWER INVINCIBLE RUSH!
+				if p.star_timer > 0.0 {
+					e.state = .kicked
+					e.vx = if p.facing_right { f32(350.0) } else { f32(-350.0) }
+					e.vy = -380.0
+					g.sound_mgr.play_kick()
+					p.score += 1000
+					g.add_score_popup(e.x, e.y, 'STAR 1000!', Color{ r: 255, g: 255, b: 80, a: 255 })
+					g.add_particles(e.x + e.width * 0.5, e.y + e.height * 0.5, 14, Color{ r: 255, g: 200, b: 40, a: 255 })
+					continue
+				}
+
 				// If enemy is stunned/recovering: KICK IT!
 				if e.state == .stunned || e.state == .recovering {
-					e.state = .kicked
-					kick_dir := if p.facing_right { f32(300.0) } else { f32(-300.0) }
-					e.vx = kick_dir
-					e.vy = -320.0
-					g.sound_mgr.play_kick()
+					// Kicking a turtle shell launches a Sliding Shell!
+					if e.enemy_type == .shellcreeper {
+						e.active = false
+						sh_vx := if p.facing_right { f32(400.0) } else { f32(-400.0) }
+						g.sliding_shells << SlidingShell{
+							x:           e.x
+							y:           e.y + 6.0
+							vx:          sh_vx
+							vy:          0.0
+							is_grounded: true
+							active:      true
+						}
+						g.sound_mgr.play_shell_kick()
+					} else {
+						e.state = .kicked
+						kick_dir := if p.facing_right { f32(300.0) } else { f32(-300.0) }
+						e.vx = kick_dir
+						e.vy = -320.0
+						g.sound_mgr.play_kick()
+					}
 
 					// Combo multiplier
 					p.combo_count++
@@ -1102,79 +1552,126 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 						else { 3200 }
 					}
 					p.score += pts
+					g.add_score_popup(e.x, e.y, '${pts}', Color{ r: 255, g: 255, b: 255, a: 255 })
 
-					// Combo Notification Banner
-					if p.combo_count > 1 {
-						g.combo_banner = '${p.combo_count}X COMBO +${pts}!'
+					if p.combo_count >= 2 {
+						g.combo_banner = '${p.combo_count}x COMBO!'
 						g.combo_banner_timer = 1.2
 					}
 
-					g.add_score_popup(e.x, e.y, '${pts}', Color{ r: 255, g: 240, b: 60, a: 255 })
-					g.add_particles(e.x + 14.0, e.y + 14.0, 18, Color{ r: 255, g: 220, b: 50, a: 255 })
-
-					// Coin reward from sewer pipe
-					g.spawn_coin_from_pipe(rand.intn(2) or { 0 })
+					// Spawn Gold Coin from kicked enemy
+					g.coins << Coin{
+						x:           e.x
+						y:           e.y
+						vx:          if p.facing_right { f32(120.0) } else { f32(-120.0) }
+						vy:          -300.0
+						is_grounded: false
+						anim_timer:  0.0
+						active:      true
+					}
 				}
-				// If enemy is upright & player not invulnerable: Player dies!
-				else if p.invuln_timer <= 0.0 {
+				// Active walking/angry/fireball/slipice enemy touched -> Player dies!
+				else if (e.state == .walking || e.state == .angry || e.enemy_type == .fireball || e.enemy_type == .slipice) && p.invuln_timer <= 0.0 {
 					p.is_dead = true
-					p.dead_timer = 2.2
-					p.vy = -380.0
+					p.dead_timer = 2.5
+					p.vy = -450.0
+					p.lives--
+					p.has_fire = false
+					p.star_timer = 0.0
 					g.sound_mgr.play_die()
-					g.add_particles(p.x + 14.0, p.y + 18.0, 24, Color{ r: 255, g: 60, b: 60, a: 255 })
+					g.screen_shake = 0.3
+					g.add_particles(p.x + p.width * 0.5, p.y + p.height * 0.5, 16, Color{ r: 255, g: 60, b: 60, a: 255 })
 				}
 			}
 		}
-
-		// Check Coin Collection
-		for mut c in g.coins {
-			if !c.active {
-				continue
-			}
-			if p.x + p.width > c.x && p.x < c.x + c.width && p.y + p.height > c.y
-				&& p.y < c.y + c.height {
-				c.active = false
-				p.score += 800
-				g.sound_mgr.play_coin()
-				g.add_score_popup(c.x, c.y, '800', Color{ r: 255, g: 240, b: 80, a: 255 })
-				g.add_particles(c.x + 10.0, c.y + 10.0, 14, Color{ r: 255, g: 230, b: 60, a: 255 })
-			}
-		}
 	}
 
-	// 8. Update Score Popups
-	for mut sp in g.score_popups {
-		if !sp.active {
-			continue
-		}
-		sp.timer -= dt
-		sp.y -= 35.0 * dt
-		if sp.timer <= 0.0 {
-			sp.active = false
-		}
-	}
-	g.score_popups = g.score_popups.filter(it.active)
-
-	// 9. Update Particles
+	// 12. Update Particles, Water Drips, Shockwaves
 	for mut pt in g.particles {
 		if !pt.active {
 			continue
 		}
 		pt.life -= dt
-		pt.x += pt.vx * dt
-		pt.y += pt.vy * dt
 		if pt.life <= 0.0 {
 			pt.active = false
+			continue
+		}
+		pt.vy += 380.0 * dt
+		pt.x += pt.vx * dt
+		pt.y += pt.vy * dt
+	}
+
+	// Ambient Sewer Drips & Waste Drops
+	g.drip_spawn_timer -= dt
+	if g.drip_spawn_timer <= 0.0 {
+		g.drip_spawn_timer = 0.16 + f32(rand.intn(22) or { 10 }) / 100.0
+		if g.water_drips.len < 32 {
+			g.spawn_ambient_drip()
 		}
 	}
-	g.particles = g.particles.filter(it.active)
-	g.coins = g.coins.filter(it.active)
 
-	// 10. Check Phase Victory (all enemies spawned and cleared)
+	for mut wd in g.water_drips {
+		if !wd.active {
+			continue
+		}
+		wd.vy += 320.0 * dt
+		wd.y += wd.vy * dt
+		if wd.y >= wd.target_y {
+			wd.active = false
+			g.add_splash(wd.x, wd.target_y, wd.drip_type)
+		}
+	}
+
+	for mut sw in g.shockwaves {
+		if !sw.active {
+			continue
+		}
+		sw.timer -= dt
+		if sw.timer <= 0.0 {
+			sw.active = false
+			continue
+		}
+		progress := 1.0 - sw.timer / sw.duration
+		sw.radius = sw.max_r * progress
+	}
+
+	for mut bw in g.bump_waves {
+		if !bw.active {
+			continue
+		}
+		bw.timer -= dt
+		if bw.timer <= 0.0 {
+			bw.active = false
+		}
+	}
+
+	for mut sp in g.score_popups {
+		if !sp.active {
+			continue
+		}
+		sp.timer -= dt
+		sp.y -= 45.0 * dt
+		if sp.timer <= 0.0 {
+			sp.active = false
+		}
+	}
+
+	// Filter inactive items
+	g.particles = g.particles.filter(it.active)
+	g.water_drips = g.water_drips.filter(it.active)
+	g.shockwaves = g.shockwaves.filter(it.active)
+	g.bump_waves = g.bump_waves.filter(it.active)
+	g.score_popups = g.score_popups.filter(it.active)
+	g.coins = g.coins.filter(it.active)
+	g.sliding_shells = g.sliding_shells.filter(it.active)
+	g.player_fireballs = g.player_fireballs.filter(it.active)
+	g.powerups = g.powerups.filter(it.active)
+
+	// Check Phase Victory (all enemies cleared)
 	if g.state == .playing {
 		mut active_enemies := 0
 		for e in g.enemies {
-			if e.active && e.enemy_type != .fireball {
+			if e.active {
 				active_enemies++
 			}
 		}
@@ -1187,4 +1684,17 @@ pub fn (mut g MarioBrosGame) update(dt f32) {
 
 pub fn (mut g MarioBrosGame) next_phase() {
 	g.setup_phase(g.phase + 1)
+}
+
+pub fn (mut g MarioBrosGame) check_game_over() {
+	mut all_dead := true
+	for p in g.players {
+		if p.lives > 0 || !p.is_dead {
+			all_dead = false
+			break
+		}
+	}
+	if all_dead {
+		g.state = .game_over
+	}
 }

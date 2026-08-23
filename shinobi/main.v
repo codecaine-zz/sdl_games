@@ -43,6 +43,7 @@ fn main() {
 	renderer := sdl.create_renderer(window, -1, u32(sdl.RendererFlags.accelerated) | u32(sdl.RendererFlags.presentvsync))
 	if unsafe { renderer == nil } { return }
 	defer { sdl.destroy_renderer(renderer) }
+	sdl.render_set_logical_size(renderer, 800, 600)
 
 	mut game := new_shinobi_game()
 

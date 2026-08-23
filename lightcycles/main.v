@@ -85,6 +85,7 @@ fn main() {
 		return
 	}
 	defer { sdl.destroy_renderer(renderer) }
+	sdl.render_set_logical_size(renderer, win_w, win_h)
 
 	app.window = window
 	app.renderer = renderer

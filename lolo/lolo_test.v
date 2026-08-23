@@ -109,7 +109,7 @@ fn test_level_serialization() {
 	g := new_game()
 	lvl1 := g.campaign_levels[0]
 	serialized := g.serialize_level(lvl1)
-	assert serialized.contains('Level 1')
+	assert serialized.contains('Room 1')
 
 	parsed := parse_level(serialized)
 	assert parsed.name == lvl1.name
@@ -128,4 +128,45 @@ fn test_door_entry() {
 	assert g.status == .level_clear
 	assert g.lolo.x == 5
 	assert g.lolo.y == 0
+}
+
+fn test_undo_mechanics() {
+	mut g := new_game()
+	start_x := g.lolo.x
+	start_y := g.lolo.y
+
+	// Move right
+	g.move_lolo(.right)
+	assert g.lolo.x == start_x + 1
+	assert g.undo_stack.len > 0
+
+	// Undo!
+	undone := g.undo()
+	assert undone == true
+	assert g.lolo.x == start_x
+	assert g.lolo.y == start_y
+}
+
+fn test_twenty_levels_loaded() {
+	g := new_game()
+	assert g.campaign_levels.len == 20
+	assert g.campaign_levels[19].name.contains('King Egger')
+}
+
+fn test_every_level_is_valid_and_playable() {
+	mut g := new_game()
+	assert g.campaign_levels.len == 20
+
+	for i, lvl in g.campaign_levels {
+		err := g.validate_level(lvl)
+		assert err == '' // Every single room MUST have valid spawn, chest, door, hearts
+
+		// Load level into game and check initialization
+		g.load_level(i)
+		assert g.hearts_remaining > 0
+		assert g.lolo.x == 5 && g.lolo.y == 9
+		assert g.chest_open == false
+		assert g.door_open == false
+		assert g.status == .playing
+	}
 }
