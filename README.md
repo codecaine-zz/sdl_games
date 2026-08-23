@@ -1,6 +1,6 @@
 # 🕹️ V Arcade SDL Games Suite
 
-A massive collection of **80 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
+A massive collection of **81 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
 
 Every single game is engineered with **zero external asset dependencies** — utilizing 100% procedural PCM sound synthesis, vector graphics rasterization, and embedded pixel/bitmap fonts.
 
@@ -22,7 +22,7 @@ v install sdl
 
 ---
 
-## 🎮 Master Game Index (80 Games)
+## 🎮 Master Game Index (81 Games)
 
 | # | Game | Folder | Genre | Quick Controls | How to Play |
 | :-: | :--- | :--- | :--- | :--- | :-: |
@@ -106,6 +106,7 @@ v install sdl
 | **78** | [Zuma](#78-zuma-temple-of-the-stone-idol-zuma) | `zuma/` | PopCap Track Shooter | `Mouse Aim`, `Left Click`/`Space` shoot, `Right Click`/`Tab` swap | [Guide](#78-zuma-temple-of-the-stone-idol-zuma) |
 | **79** | [Panel de Pon / Puzzle League](#79-panel-de-pon-puzzle-league-paneldepon) | `paneldepon/` | Horizontal Swap Match-3 | `WASD`/`Arrows` move, `Space`/`J` swap, `LShift`/`K` raise | [Guide](#79-panel-de-pon-puzzle-league-paneldepon) |
 | **80** | [SameGame / Collapse](#80-samegame--collapse-samegame) | `samegame/` | Gem Cluster Collapse | `Mouse Hover` select, `Left Click` shatter, `T` mode toggle | [Guide](#80-samegame--collapse-samegame) |
+| **81** | [Mario Bros. Arcade](#81-mario-bros-arcade-mariobros) | `mariobros/` | Platformer Classic / 2P Co-op | `WASD`/`Space` (P1), `J`/`L`/`I` (P2), `P` pause | [Guide](#81-mario-bros-arcade-mariobros) |
 
 
 ---
@@ -1998,6 +1999,31 @@ v run samegame
 
 - **Goal**: Hover over connected clusters of 2 or more identical crystal gems and click to shatter them, causing upper gems to fall and empty columns to collapse leftward. Clear all gems for a massive +20,000 pt perfect clear bonus!
 - **Controls**: `Mouse Hover` to select cluster, `Left Click` to shatter cluster, `T` to toggle between Classic Puzzle and Continuous Collapse Arcade mode.
+
+---
+
+## 81. Mario Bros. Arcade (`mariobros/`)
+*1983 Nintendo Sewer Pipe Platformer & Simultaneous 2-Player Co-op*
+
+```bash
+v run mariobros
+```
+![Mario Bros](screenshots/mariobros.png)
+
+- **Goal**: Clear the sewer pipes of encroaching pests by bumping the platforms underneath them to flip them onto their backs, then kicking them into the water before they recover!
+- **Pests & Enemies**:
+  - **Shellcreeper (Turtle)**: Requires 1 bump underneath to flip onto its back; righting itself makes it move faster.
+  - **Sidestepper (Crab)**: 1st hit angers it (turns fiery red, moves faster); 2nd hit flips it over.
+  - **Fighter Fly (Fly)**: Hops along ledges; can only be flipped if bumped while its feet touch the floor.
+  - **Slipice (Ice Chunk)**: Slides across platforms trying to freeze them into slippery ice. Bump to shatter into 500 bonus points.
+  - **Fireballs (Green & Red)**: Floating bouncy fireballs that appear if a phase takes too long.
+- **POW Block**: Centered in the lower tier, hitting the POW block from below shakes the entire screen and flips all grounded enemies simultaneously across all platforms (usable 3 times).
+- **Bonus Rounds**: Timed coin rush stages with 10 golden coins to collect for a +5,000 pt perfect bonus!
+- **Controls**:
+  - **Player 1 (Mario)**: `A` / `D` or `Left` / `Right` to move, `Space` or `W` to jump.
+  - **Player 2 (Luigi)**: `J` / `L` to move, `I` or `Up` to jump.
+  - **Mode Selection**: `1` for 1-Player, `2` for 2-Player simultaneous co-op/versus.
+  - **System**: `P` to pause, `R` to restart, `M` to mute/unmute procedural audio, `ESC` to return to title.
 
 ---
 
