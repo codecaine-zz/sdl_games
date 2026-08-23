@@ -230,6 +230,124 @@ fn test_room_15_speed_boosters_beatable() {
 	assert game.status == .playing
 }
 
+fn test_editor_line_tool() {
+	mut game := new_game()
+	game.editor_tool = .line
+	game.selected_tile = .wall
+	game.is_entity_selected = false
+
+	// Draw horizontal line from (2, 4) to (8, 4)
+	game.handle_editor_click(2, 4, false)
+	game.handle_editor_click(8, 4, false)
+
+	for c in 2 .. 9 {
+		assert game.editor_level.grid[4][c] == .wall
+	}
+}
+
+fn test_editor_prefab_tool() {
+	mut game := new_game()
+	game.editor_tool = .prefab
+	game.selected_prefab = 0 // Mirror Rig
+
+	// Stamp at (3, 3)
+	game.handle_editor_click(3, 3, false)
+	assert game.editor_level.grid[3][3] == .laser_prism_slash
+	assert game.editor_level.grid[3][4] == .laser_prism_backslash
+	assert game.editor_level.entities[4][3] == .emerald_frame
+	assert game.editor_level.entities[4][4] == .heart_frame
+}
+
+fn test_multi_channel_pressure_plates_and_gates() {
+	mut game := new_game()
+	game.editor_level = create_empty_level_theme('Channel Test', .castle)
+	game.editor_level.grid[8][5] = .plate_channel_1
+	game.editor_level.grid[6][5] = .gate_channel_1
+	game.editor_level.entities[9][5] = .lolo_spawn
+
+	assert game.test_play_custom_level()
+	assert !game.channels_open[0]
+
+	// Step UP onto Plate Channel 1 at (5, 8)
+	game.move_lolo(.up)
+	assert game.lolo.y == 8
+	game.update(0.016)
+	assert game.channels_open[0]
+
+	// Step UP through Gate Channel 1 at (5, 6)
+	game.move_lolo(.up)
+	step, _, _, _, _, _ := game.move_lolo(.up)
+	assert step
+	assert game.lolo.y == 6
+}
+
+fn test_timed_pulse_laser_barriers() {
+	mut game := new_game()
+	game.editor_level = create_empty_level_theme('Pulse Test', .volcanic)
+	game.editor_level.grid[8][5] = .timed_laser_barrier
+	game.editor_level.entities[9][5] = .lolo_spawn
+
+	assert game.test_play_custom_level()
+	game.is_pulse_active = true
+
+	// While active, moving UP is blocked
+	step1, _, _, _, _, _ := game.move_lolo(.up)
+	assert !step1
+
+	// Advance pulse clock to switch pulse state
+	game.update(2.1)
+	assert !game.is_pulse_active
+
+	// Now barrier is down, can step through!
+	step2, _, _, _, _, _ := game.move_lolo(.up)
+	assert step2
+	assert game.lolo.y == 8
+}
+
+fn test_hologram_lore_dialogue_terminals() {
+	mut game := new_game()
+	game.editor_level = create_empty_level_theme('Holo Test', .haunted)
+	game.editor_level.lore_text = 'SYSTEM LOG: CYBER HINTS ACTIVE.'
+	game.editor_level.entities[8][5] = .holo_terminal
+	game.editor_level.entities[9][5] = .lolo_spawn
+
+	assert game.test_play_custom_level()
+	assert !game.is_dialogue_open
+
+	// Step UP into Holo Terminal
+	game.move_lolo(.up)
+	assert game.is_dialogue_open
+	assert game.active_dialogue == 'SYSTEM LOG: CYBER HINTS ACTIVE.'
+}
+
+fn test_dark_dungeon_fog_of_war() {
+	mut game := new_game()
+	game.editor_level = create_empty_level_theme('Dark Test', .haunted)
+	game.editor_level.is_dark_dungeon = true
+	assert game.test_play_custom_level()
+	assert game.current_level.is_dark_dungeon
+}
+
+fn test_speedrun_medal_calculations() {
+	mut game := new_game()
+	game.editor_level = create_empty_level_theme('Medal Test', .castle)
+	game.editor_level.target_gold_sec = 10
+	game.editor_level.target_silver_sec = 20
+	game.editor_level.target_bronze_sec = 30
+
+	assert game.test_play_custom_level()
+	// Simulate fast clear under 10 seconds
+	game.level_time_ms = 5000
+	game.door_open = true
+	game.entities[0][5] = .door
+	game.lolo.x = 5
+	game.lolo.y = 1
+	game.move_lolo(.up)
+
+	assert game.status == .level_clear
+	assert game.earned_medal == 'GOLD'
+}
+
 fn test_all_campaign_levels_valid() {
 	game := new_game()
 	assert game.campaign_levels.len == 65

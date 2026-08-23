@@ -92,23 +92,25 @@ Each theme features unique color schemes, animated atmospheric particle engines,
 Press **`Tab`** at any time to open the full Level Designer:
 
 - **Categorized Tabs**:
-  - `[TILES]`: Grass, Wall, Rock, Spire, Coolant, Scaffold, Plasma, Cryo Ice, Warps A/B, Gate, Prisms, Plates, Laser Gate, Conveyors, Phase A/B.
-  - `[ITEMS]`: Lolo Spawn, Exit Gate, Data Vault, Antimatter Cores, Energy Blocks, Wrench, Keycard, Jet Boots.
+  - `[TILES]`: Grass, Wall, Rock, Spire, Coolant, Scaffold, Plasma, Cryo Ice, Warps A/B, Gate, Prisms, Plates, Laser Gate, Conveyors, Phase A/B, Pulse Laser Gate, Multi-Channel Plates & Gates.
+  - `[ITEMS]`: Lolo Spawn, Exit Gate, Data Vault, Antimatter Cores, Energy Blocks, Wrench, Keycard, Jet Boots, Hologram Info Beacons.
   - `[ENEMIES]`: Snakey, Alma, Leeper, Skull, Medusa, Don Medusa H/V, Gol, King Egger, Gobby, Rocky, Moby, Wisp, Tesla Trap.
-  - `[SETTINGS]`: Biome Switcher, Blueprint Templates, Share Codes, and 5 Save/Load Slots (`S1..S5`, `L1..L5`).
+  - `[SETTINGS]`: Biome Switcher, Dark Dungeon Vision Mode, Blueprint Templates, Share Codes, and 5 Save/Load Slots (`S1..S5`, `L1..L5`).
 - **Precision Drawing Tools**:
-  - `PENCIL [B]`: Single-tile click or drag-painting.
-  - `ERASER [E]`: Clear cells to empty grid.
-  - `FILL [G]`: Flood-fill contiguous identical tile regions.
-  - `RECT [R]`: Box fill rectangular regions.
-- **Built-in Blueprint Templates**:
-  - `BLANK`: Clean empty canvas.
-  - `ISLAND`: Moat and bridge puzzle layout.
-  - `LABYRINTH`: Winding maze layout.
-  - `ICE CHAMBER`: Sliding ice arena with warp singularities.
-  - `FORTRESS`: Volcanic fortress with lava, locked gate, keys, and King Egger.
-- **Live AI Solvability Engine**:
-  - Automatically performs BFS reachability analysis in real-time to verify that player spawn, cores, vault, and exit gate are reachable (`AI SOLVER: SOLVABLE [PASS]`).
+  - `PEN`: Single-tile click or drag-painting.
+  - `LINE`: Straight line drawing between two points with Bresenham line algorithm.
+  - `RECT`: Box fill rectangular regions.
+  - `FILL`: Flood-fill contiguous identical tile regions.
+  - `ERASE`: Clear cells to empty grid.
+  - `PREFAB`: 1-click drop-in modular puzzle templates (*Mirror Rig, Warp Hub, Conveyor Loop, Turret Bunker, Pressure Gate*).
+- **1-Click Test-From-Here (`Right-Click`)**:
+  - Right-click on any grid cell in the editor to immediately spawn Lolo on that exact cell and playtest that section without walking across the entire map!
+- **Dark Dungeon Fog-of-War Mode**:
+  - Toggle in Settings: Shrouds the room in total darkness with real-time radial torch beam illumination centered on Lolo.
+- **Hologram Lore & Story Terminals**:
+  - Place `.holo_terminal` beacons on the map to display cyberpunk hint dialogues and level storylines.
+- **Speedrun Medals (Gold / Silver / Bronze)**:
+  - Custom target clear times evaluated upon level victory with badge toast celebrations.
 
 ---
 
@@ -130,6 +132,7 @@ Press **`K`** to open the Level Sharing Console:
 - **Live Millisecond Splits**: Real-time timer and step counter in the telemetry HUD.
 - **Personal Best Tracking**: Automatically saves your fastest time and minimum steps per sector.
 - **Ghost Input Replay (`V` Key)**: Replay your successful room clear solution in fast-forward.
+- **Speedrun Medals**: Earn 🥇 Gold, 🥈 Silver, or 🥉 Bronze medals based on clear speed!
 
 ---
 
@@ -146,7 +149,7 @@ Press **`K`** to open the Level Sharing Console:
   - 🏅 *Speed Demon*: Clear a room under 15.00 seconds.
   - 🏅 *Pacifist*: Clear a room without firing shots.
   - 🏅 *Master Architect*: Build and test a valid custom level in the Designer.
-  - 🏅 *Grand Master*: Clear all 20 campaign sectors!
+  - 🏅 *Grand Master*: Clear all campaign and bonus sectors!
 
 ---
 
@@ -157,4 +160,4 @@ Press **`K`** to open the Level Sharing Console:
 v test lolo
 ```
 
-All 20 campaign rooms, 5 community challenge packs, laser reflection physics, dimension phase shifting, pressure plates, conveyor belts, speedrun telemetry, replays, AI solver reachability, and code serialization are verified with automated test suites.
+All 65 campaign rooms, 5 community challenge packs, line and prefab drawing tools, multi-channel gates, timed pulse lasers, hologram terminals, dark dungeon fog-of-war, laser reflection physics, dimension phase shifting, speedrun medals, and code serialization are 100% verified with automated unit tests.

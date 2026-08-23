@@ -273,6 +273,11 @@ fn (mut app App) run() {
 						continue
 					}
 
+					if app.game.is_dialogue_open {
+						app.game.is_dialogue_open = false
+						continue
+					}
+
 					if app.btn_editor.contains(mx, my) {
 						app.is_painting_grid = false
 						app.game.toggle_editor_mode()
@@ -316,6 +321,21 @@ fn (mut app App) run() {
 							&& my >= grid_offset_y && my < grid_offset_y + grid_rows * cell_size {
 							col := (mx - grid_offset_x) / cell_size
 							row := (my - grid_offset_y) / cell_size
+							if is_right {
+								// 1-Click Instant Spawn & Playtest from this cell!
+								for r in 0 .. grid_rows {
+									for c in 0 .. grid_cols {
+										if app.game.editor_level.entities[r][c] == .lolo_spawn {
+											app.game.editor_level.entities[r][c] = .none
+										}
+									}
+								}
+								app.game.editor_level.entities[row][col] = .lolo_spawn
+								if app.game.test_play_custom_level() {
+									app.btn_editor.text = 'DESIGNER [TAB]'
+								}
+								continue
+							}
 							app.is_painting_grid = true
 							app.last_grid_col = col
 							app.last_grid_row = row
@@ -515,12 +535,16 @@ fn (mut app App) handle_mario_maker_clicks(mx int, my int) {
 		}
 	}
 
-	// Check Tool Clicks
-	for i in 0 .. 4 {
-		bx := panel_x + 10 + i * 86
+	// Check Tool Clicks (6 tools: PEN, LINE, RECT, FILL, ERASE, PREFAB)
+	for i in 0 .. 6 {
+		bx := panel_x + 10 + i * 58
 		by := panel_y + 44
-		if mx >= bx && mx <= bx + 82 && my >= by && my <= by + 26 {
-			app.game.editor_tool = unsafe { EditorTool(i) }
+		if mx >= bx && mx <= bx + 54 && my >= by && my <= by + 26 {
+			if app.game.editor_tool == unsafe { EditorTool(i) } && i == 5 {
+				app.game.selected_prefab = (app.game.selected_prefab + 1) % 5
+			} else {
+				app.game.editor_tool = unsafe { EditorTool(i) }
+			}
 			return
 		}
 	}
@@ -550,6 +574,9 @@ fn (mut app App) handle_mario_maker_clicks(mx int, my int) {
 				TileType.conveyor_right,
 				TileType.phase_block_alpha,
 				TileType.phase_block_beta,
+				TileType.timed_laser_barrier,
+				TileType.plate_channel_1,
+				TileType.gate_channel_1,
 			]
 			for i in 0 .. tiles.len {
 				col := i % 3
@@ -573,13 +600,14 @@ fn (mut app App) handle_mario_maker_clicks(mx int, my int) {
 				EntityType.hammer,
 				EntityType.key_item,
 				EntityType.speed_boots,
+				EntityType.holo_terminal,
 			]
 			for i in 0 .. items.len {
-				col := i % 2
-				row := i / 2
-				ix := panel_x + 12 + col * 172
-				iy := py + row * 46
-				if mx >= ix && mx <= ix + 164 && my >= iy && my <= iy + 40 {
+				col := i % 3
+				row := i / 3
+				ix := panel_x + 12 + col * 114
+				iy := py + row * 36
+				if mx >= ix && mx <= ix + 108 && my >= iy && my <= iy + 32 {
 					app.game.is_entity_selected = true
 					app.game.selected_entity = items[i]
 					return
@@ -641,8 +669,14 @@ fn (mut app App) handle_mario_maker_clicks(mx int, my int) {
 				}
 			}
 
+			// Dark Dungeon Mode Modifier Toggle
+			if mx >= panel_x + 12 && mx <= panel_x + 350 && my >= py + 170 && my <= py + 196 {
+				app.game.editor_level.is_dark_dungeon = !app.game.editor_level.is_dark_dungeon
+				return
+			}
+
 			// Open Community / Share modal
-			if mx >= panel_x + 12 && mx <= panel_x + 350 && my >= py + 190 && my <= py + 222 {
+			if mx >= panel_x + 12 && mx <= panel_x + 350 && my >= py + 222 && my <= py + 250 {
 				app.game.is_share_modal_open = true
 				return
 			}
@@ -650,7 +684,7 @@ fn (mut app App) handle_mario_maker_clicks(mx int, my int) {
 			// Slots Save (S1..S5)
 			for i in 0 .. 5 {
 				ix := panel_x + 12 + i * 68
-				iy := py + 248
+				iy := py + 276
 				if mx >= ix && mx <= ix + 62 && my >= iy && my <= iy + 24 {
 					app.game.save_slot(i)
 					return
@@ -660,7 +694,7 @@ fn (mut app App) handle_mario_maker_clicks(mx int, my int) {
 			// Slots Load (L1..L5)
 			for i in 0 .. 5 {
 				ix := panel_x + 12 + i * 68
-				iy := py + 276
+				iy := py + 304
 				if mx >= ix && mx <= ix + 62 && my >= iy && my <= iy + 24 {
 					app.game.load_slot(i)
 					return

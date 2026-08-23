@@ -69,6 +69,11 @@ pub enum TileType {
 	conveyor_right
 	phase_block_alpha
 	phase_block_beta
+	timed_laser_barrier
+	plate_channel_1
+	plate_channel_2
+	gate_channel_1
+	gate_channel_2
 }
 
 pub enum EntityType {
@@ -95,6 +100,7 @@ pub enum EntityType {
 	hammer
 	key_item
 	speed_boots
+	holo_terminal
 }
 
 pub enum Direction {
@@ -121,9 +127,11 @@ pub enum EditorTab {
 
 pub enum EditorTool {
 	pencil
-	eraser
-	fill
+	line
 	rect
+	fill
+	eraser
+	prefab
 }
 
 pub struct Point {
@@ -170,12 +178,18 @@ pub mut:
 
 pub struct Level {
 pub mut:
-	name     string
-	floor    int
-	password string
-	theme    LevelTheme = .castle
-	grid     [11][11]TileType
-	entities [11][11]EntityType
+	name              string
+	floor             int
+	password          string
+	theme             LevelTheme = .castle
+	grid              [11][11]TileType
+	entities          [11][11]EntityType
+	is_dark_dungeon   bool
+	lore_text         string
+	target_gold_sec   int = 15
+	target_silver_sec int = 30
+	target_bronze_sec int = 60
+	rule_pacifist     bool
 }
 
 pub struct MoveStep {
@@ -271,6 +285,18 @@ pub mut:
 	// Level Select & Directory State
 	level_select_tab     int
 
+	// Multi-Channel Logic & Timed Laser Clocks
+	pulse_clock          f32
+	is_pulse_active      bool = true
+	channels_open        [4]bool
+
+	// Hologram Dialogue Terminal State
+	active_dialogue      string
+	is_dialogue_open     bool
+
+	// Speedrun Medal Award
+	earned_medal         string
+
 	// Editor State
 	editor_level         Level
 	editor_tab           EditorTab  = .tiles
@@ -282,6 +308,9 @@ pub mut:
 	is_level_select_open bool
 	rect_start_col       int = -1
 	rect_start_row       int = -1
+	line_start_col       int = -1
+	line_start_row       int = -1
+	selected_prefab      int
 	validation_msg       string
 	custom_slots         [5]Level
 }
@@ -318,6 +347,12 @@ pub fn (mut g Game) init_level(lvl Level) {
 	g.warp_cooldown = 0
 	g.spike_cycle_timer = 0
 	g.gate_open = false
+	g.pulse_clock = 0
+	g.is_pulse_active = true
+	g.channels_open = [false, false, false, false]!
+	g.is_dialogue_open = false
+	g.active_dialogue = ''
+	g.earned_medal = ''
 	g.active_dimension = .alpha
 	g.medusa_laser_active = false
 	g.laser_segments.clear()
@@ -480,6 +515,13 @@ pub fn (mut g Game) update(dt f64) {
 		}
 	}
 
+	// Pulse Clock Update (2.0s period)
+	g.pulse_clock += f32(dt)
+	if g.pulse_clock >= 2.0 {
+		g.pulse_clock = 0.0
+		g.is_pulse_active = !g.is_pulse_active
+	}
+
 	// Pressure Plate Check
 	g.check_pressure_plates()
 
@@ -542,17 +584,34 @@ fn (mut g Game) check_pressure_plates() {
 	if g.grid[g.lolo.y][g.lolo.x] == .pressure_plate {
 		is_pressed = true
 	}
-	for ent in g.entities {
-		for cell in ent {
-			if cell == .emerald_frame {
-				// checked on grid
-			}
-		}
-	}
 	for r in 0 .. grid_rows {
 		for c in 0 .. grid_cols {
 			if g.entities[r][c] == .emerald_frame && g.grid[r][c] == .pressure_plate {
 				is_pressed = true
+			}
+		}
+	}
+	if is_pressed {
+		g.gate_open = true
+	}
+
+	// Multi-Channel Pressure Plates
+	g.channels_open[0] = false
+	g.channels_open[1] = false
+	if g.grid[g.lolo.y][g.lolo.x] == .plate_channel_1 {
+		g.channels_open[0] = true
+	}
+	if g.grid[g.lolo.y][g.lolo.x] == .plate_channel_2 {
+		g.channels_open[1] = true
+	}
+	for r in 0 .. grid_rows {
+		for c in 0 .. grid_cols {
+			if g.entities[r][c] == .emerald_frame {
+				if g.grid[r][c] == .plate_channel_1 {
+					g.channels_open[0] = true
+				} else if g.grid[r][c] == .plate_channel_2 {
+					g.channels_open[1] = true
+				}
 			}
 		}
 	}
@@ -695,7 +754,11 @@ fn (mut g Game) trace_laser_beam(start_x int, start_y int, start_dir Direction) 
 					.right { Direction.down }
 				}
 				break
-			} else if tile == .wall || tile == .rock || tile == .tree || (tile == .toggle_laser_gate && !g.gate_open) {
+			} else if tile == .wall || tile == .rock || tile == .tree
+				|| (tile == .toggle_laser_gate && !g.gate_open)
+				|| (tile == .gate_channel_1 && !g.channels_open[0])
+				|| (tile == .gate_channel_2 && !g.channels_open[1])
+				|| (tile == .timed_laser_barrier && g.is_pulse_active) {
 				terminated = true
 				break
 			}
@@ -823,8 +886,12 @@ pub fn (mut g Game) move_lolo(dir Direction) (bool, bool, bool, bool, bool, bool
 		return true, false, false, false, false, false
 	}
 
-	// Blocked by solid obstacles
-	if target_tile == .wall || target_tile == .rock || target_tile == .tree || target_tile == .water || target_tile == .lava {
+	// Blocked by solid obstacles and laser gates
+	if target_tile == .wall || target_tile == .rock || target_tile == .tree || target_tile == .water || target_tile == .lava
+		|| (target_tile == .toggle_laser_gate && !g.gate_open)
+		|| (target_tile == .gate_channel_1 && !g.channels_open[0])
+		|| (target_tile == .gate_channel_2 && !g.channels_open[1])
+		|| (target_tile == .timed_laser_barrier && g.is_pulse_active) {
 		if target_tile == .rock && g.lolo.hammers > 0 {
 			g.lolo.hammers--
 			g.grid[ny][nx] = .grass
@@ -835,6 +902,15 @@ pub fn (mut g Game) move_lolo(dir Direction) (bool, bool, bool, bool, bool, bool
 
 	// Items & Entities
 	match target_ent {
+		.holo_terminal {
+			g.is_dialogue_open = true
+			g.active_dialogue = if g.current_level.lore_text != '' {
+				g.current_level.lore_text
+			} else {
+				'CYBER LOG: FACILITY SENSORS ACTIVE. POWER CORES CHARGE EXIT GATEWAY.'
+			}
+			return false, false, false, false, false, false
+		}
 		.heart_frame {
 			g.entities[ny][nx] = .none
 			g.hearts_remaining--
@@ -879,7 +955,22 @@ pub fn (mut g Game) move_lolo(dir Direction) (bool, bool, bool, bool, bool, bool
 			if g.door_open {
 				g.score += 1000
 				g.status = .level_clear
-				g.status_msg = 'SECTOR CLEAR! MISSION ADVANCING...'
+
+				sec := int(g.level_time_ms / 1000)
+				gold := if g.current_level.target_gold_sec > 0 { g.current_level.target_gold_sec } else { 15 }
+				silver := if g.current_level.target_silver_sec > 0 { g.current_level.target_silver_sec } else { 30 }
+				bronze := if g.current_level.target_bronze_sec > 0 { g.current_level.target_bronze_sec } else { 60 }
+				g.earned_medal = if sec <= gold {
+					'GOLD'
+				} else if sec <= silver {
+					'SILVER'
+				} else if sec <= bronze {
+					'BRONZE'
+				} else {
+					'NONE'
+				}
+
+				g.status_msg = 'SECTOR CLEAR! MEDAL: ${g.earned_medal}'
 				g.save_personal_best()
 				g.active_replay_moves = g.recorded_moves.clone()
 				return true, false, false, false, true, false
@@ -948,7 +1039,7 @@ fn (mut g Game) save_personal_best() {
 }
 
 pub fn (mut g Game) fire_magic_shot() bool {
-	if g.status != .playing || g.lolo.shots <= 0 || g.magic_shot.active {
+	if g.status != .playing || g.lolo.shots <= 0 || g.magic_shot.active || g.current_level.rule_pacifist {
 		return false
 	}
 	g.lolo.shots--
@@ -1439,6 +1530,16 @@ pub fn (mut g Game) handle_editor_click(col int, row int, is_right_click bool) {
 		.pencil {
 			g.apply_editor_brush_cell(col, row)
 		}
+		.line {
+			if g.line_start_col < 0 {
+				g.line_start_col = col
+				g.line_start_row = row
+			} else {
+				g.editor_line_draw(g.line_start_col, g.line_start_row, col, row)
+				g.line_start_col = -1
+				g.line_start_row = -1
+			}
+		}
 		.fill {
 			g.editor_flood_fill(col, row)
 		}
@@ -1452,7 +1553,95 @@ pub fn (mut g Game) handle_editor_click(col int, row int, is_right_click bool) {
 				g.rect_start_row = -1
 			}
 		}
+		.prefab {
+			g.editor_apply_prefab(col, row, g.selected_prefab)
+		}
 		else {}
+	}
+}
+
+fn (mut g Game) editor_line_draw(x0 int, y0 int, x1 int, y1 int) {
+	dx := if x1 > x0 { x1 - x0 } else { x0 - x1 }
+	dy := if y1 > y0 { y1 - y0 } else { y0 - y1 }
+	sx := if x0 < x1 { 1 } else { -1 }
+	sy := if y0 < y1 { 1 } else { -1 }
+	mut err := dx - dy
+	mut cx := x0
+	mut cy := y0
+
+	for {
+		if cx >= 0 && cx < grid_cols && cy >= 0 && cy < grid_rows {
+			g.apply_editor_brush_cell(cx, cy)
+		}
+		if cx == x1 && cy == y1 {
+			break
+		}
+		e2 := 2 * err
+		if e2 > -dy {
+			err -= dy
+			cx += sx
+		}
+		if e2 < dx {
+			err += dx
+			cy += sy
+		}
+	}
+}
+
+fn (mut g Game) editor_apply_prefab(start_c int, start_r int, prefab_id int) {
+	match prefab_id {
+		0 {
+			// Mirror Rig: 2x2 '/' and '\' crystal prism pair with target frame
+			if start_c + 2 <= grid_cols && start_r + 2 <= grid_rows {
+				g.editor_level.grid[start_r][start_c] = .laser_prism_slash
+				g.editor_level.grid[start_r][start_c + 1] = .laser_prism_backslash
+				g.editor_level.entities[start_r + 1][start_c] = .emerald_frame
+				g.editor_level.entities[start_r + 1][start_c + 1] = .heart_frame
+			}
+		}
+		1 {
+			// Warp Hub: 3x3 Warp A and Warp B surrounded by stone barriers
+			if start_c + 3 <= grid_cols && start_r + 3 <= grid_rows {
+				for r in 0 .. 3 {
+					for c in 0 .. 3 {
+						g.editor_level.grid[start_r + r][start_c + c] = .rock
+					}
+				}
+				g.editor_level.grid[start_r + 1][start_c + 1] = .warp_a
+				g.editor_level.grid[start_r + 2][start_c + 1] = .warp_b
+			}
+		}
+		2 {
+			// Conveyor Loop: 3x3 Continuous Clockwise Loop
+			if start_c + 3 <= grid_cols && start_r + 3 <= grid_rows {
+				g.editor_level.grid[start_r][start_c] = .conveyor_right
+				g.editor_level.grid[start_r][start_c + 1] = .conveyor_right
+				g.editor_level.grid[start_r][start_c + 2] = .conveyor_down
+				g.editor_level.grid[start_r + 1][start_c + 2] = .conveyor_down
+				g.editor_level.grid[start_r + 2][start_c + 2] = .conveyor_left
+				g.editor_level.grid[start_r + 2][start_c + 1] = .conveyor_left
+				g.editor_level.grid[start_r + 2][start_c] = .conveyor_up
+				g.editor_level.grid[start_r + 1][start_c] = .conveyor_up
+				g.editor_level.entities[start_r + 1][start_c + 1] = .heart_frame
+			}
+		}
+		3 {
+			// Turret Bunker: Medusa with protective Emerald Shields
+			if start_c + 3 <= grid_cols && start_r + 3 <= grid_rows {
+				g.editor_level.entities[start_r + 1][start_c + 1] = .medusa
+				g.editor_level.entities[start_r + 1][start_c] = .emerald_frame
+				g.editor_level.entities[start_r + 1][start_c + 2] = .emerald_frame
+				g.editor_level.entities[start_r + 2][start_c + 1] = .emerald_frame
+			}
+		}
+		else {
+			// Pressure Gate: Plate wired to Laser Gate
+			if start_c + 3 <= grid_cols && start_r + 2 <= grid_rows {
+				g.editor_level.grid[start_r][start_c] = .pressure_plate
+				g.editor_level.entities[start_r][start_c + 1] = .emerald_frame
+				g.editor_level.grid[start_r + 1][start_c + 2] = .toggle_laser_gate
+			}
+		}
 	}
 }
 

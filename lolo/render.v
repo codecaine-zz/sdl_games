@@ -69,6 +69,11 @@ pub fn draw_game(renderer &sdl.Renderer, game Game, mx int, my int, btn_editor B
 	// 3. Draw Main Cyber Playfield
 	draw_futuristic_playfield(renderer, game, ticks, current_theme, mx, my)
 
+	// 3b. Flashlight Fog-of-War Dark Dungeon Mask
+	if game.mode == .play && game.current_level.is_dark_dungeon {
+		draw_dark_dungeon_mask(renderer, game)
+	}
+
 	// 4. Draw Sci-Fi Sidebar Panel
 	if game.mode == .editor {
 		draw_mario_maker_editor(renderer, game, mx, my, btn_test, btn_clear)
@@ -80,8 +85,10 @@ pub fn draw_game(renderer &sdl.Renderer, game Game, mx int, my int, btn_editor B
 	btn_editor.draw(renderer, mx, my)
 	btn_sound.draw(renderer, mx, my)
 
-	// 6. Draw Achievement Toasts
-	if game.badge_toast != '' {
+	// 6. Draw Achievement Toasts & Hologram Dialogues
+	if game.is_dialogue_open {
+		draw_dialogue_modal(renderer, game.active_dialogue, ticks)
+	} else if game.badge_toast != '' {
 		draw_achievement_toast(renderer, game.badge_toast, ticks)
 	}
 
@@ -292,9 +299,11 @@ fn draw_futuristic_header(renderer &sdl.Renderer, game Game, ticks u32) {
 
 		tool_name := match game.editor_tool {
 			.pencil { 'PENCIL' }
-			.eraser { 'ERASER' }
-			.fill { 'FILL' }
+			.line { 'LINE' }
 			.rect { 'RECT' }
+			.fill { 'FILL' }
+			.eraser { 'ERASER' }
+			.prefab { 'PREFAB' }
 		}
 		draw_text(renderer, 480, 38, 'TOOL: ${tool_name}', 1, Color{ r: 0, g: 240, b: 255 })
 
@@ -713,6 +722,37 @@ fn draw_futuristic_tile(renderer &sdl.Renderer, x int, y int, tile TileType, r i
 		.arrow_down { draw_arrow_tile(renderer, x, y, `v`) }
 		.arrow_left { draw_arrow_tile(renderer, x, y, `<`) }
 		.arrow_right { draw_arrow_tile(renderer, x, y, `>`) }
+		.timed_laser_barrier {
+			sdl.set_render_draw_color(renderer, 40, 24, 18, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, 240, 120, 20, 255)
+			sdl.render_draw_rect(renderer, &rect)
+			if !gate_open {
+				sdl.set_render_draw_color(renderer, 255, 140, 30, 255)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 8, y: y + cell_size / 2 - 3, w: cell_size - 16, h: 6 })
+				draw_char(renderer, x + 18, y + 16, `*`, 2, Color{ r: 255, g: 220, b: 100 })
+			} else {
+				draw_char(renderer, x + 18, y + 16, `*`, 1, Color{ r: 160, g: 90, b: 40 })
+			}
+		}
+		.plate_channel_1, .plate_channel_2 {
+			sdl.set_render_draw_color(renderer, 24, 30, 48, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			ch_name := if tile == .plate_channel_1 { `1` } else { `2` }
+			ch_col := if tile == .plate_channel_1 { Color{ r: 255, g: 60, b: 60 } } else { Color{ r: 60, g: 255, b: 120 } }
+			sdl.set_render_draw_color(renderer, ch_col.r, ch_col.g, ch_col.b, 255)
+			sdl.render_draw_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 6, w: cell_size - 12, h: cell_size - 12 })
+			draw_char(renderer, x + 18, y + 16, ch_name, 2, ch_col)
+		}
+		.gate_channel_1, .gate_channel_2 {
+			sdl.set_render_draw_color(renderer, 30, 35, 52, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			ch_name := if tile == .gate_channel_1 { `1` } else { `2` }
+			ch_col := if tile == .gate_channel_1 { Color{ r: 255, g: 60, b: 60 } } else { Color{ r: 60, g: 255, b: 120 } }
+			sdl.set_render_draw_color(renderer, ch_col.r, ch_col.g, ch_col.b, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 8, y: y + cell_size / 2 - 3, w: cell_size - 16, h: 6 })
+			draw_char(renderer, x + 18, y + 16, ch_name, 1, Color{ r: 255, g: 255, b: 255 })
+		}
 	}
 }
 
@@ -730,6 +770,13 @@ fn draw_futuristic_entity(renderer &sdl.Renderer, x int, y int, ent EntityType, 
 	cy := y + cell_size / 2
 
 	match ent {
+		.holo_terminal {
+			sdl.set_render_draw_color(renderer, 10, 30, 55, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 10, y: y + 14, w: cell_size - 20, h: cell_size - 22 })
+			sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+			sdl.render_draw_rect(renderer, &sdl.Rect{ x: x + 10, y: y + 14, w: cell_size - 20, h: cell_size - 22 })
+			draw_char(renderer, x + 18, y + 18, `i`, 2, Color{ r: 0, g: 255, b: 255 })
+		}
 		.emerald_frame {
 			// Energy Block with 3D Bevel, Emerald Crystal & Rivets
 			sdl.set_render_draw_color(renderer, 0, 180, 95, 255)
@@ -1086,23 +1133,22 @@ fn draw_mario_maker_editor(renderer &sdl.Renderer, game Game, mx int, my int, bt
 		t_col := if is_active { Color{ r: 0, g: 140, b: 220 } } else { Color{ r: 25, g: 35, b: 55 } }
 		sdl.set_render_draw_color(renderer, t_col.r, t_col.g, t_col.b, 255)
 		sdl.render_fill_rect(renderer, &sdl.Rect{ x: tx, y: ty, w: 82, h: 28 })
-		sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
 		sdl.render_draw_rect(renderer, &sdl.Rect{ x: tx, y: ty, w: 82, h: 28 })
 		draw_text_centered(renderer, tx + 41, ty + 6, t_name, 1, Color{ r: 255, g: 255, b: 255 })
 	}
 
-	// Tool Selector: [PENCIL] [ERASER] [FILL] [RECT]
-	tools := ['PENCIL', 'ERASER', 'FILL', 'RECT']
+	// Tool Selector: [PEN] [LINE] [RECT] [FILL] [ERASE] [PREFAB]
+	tools := ['PEN', 'LINE', 'RECT', 'FILL', 'ERASE', 'PREFAB']
 	for i, tool_name in tools {
-		bx := panel_x + 10 + i * 86
+		bx := panel_x + 10 + i * 58
 		by := panel_y + 44
 		is_tool_active := int(game.editor_tool) == i
 		b_col := if is_tool_active { Color{ r: 220, g: 150, b: 20 } } else { Color{ r: 35, g: 45, b: 65 } }
 		sdl.set_render_draw_color(renderer, b_col.r, b_col.g, b_col.b, 255)
-		sdl.render_fill_rect(renderer, &sdl.Rect{ x: bx, y: by, w: 82, h: 26 })
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: bx, y: by, w: 54, h: 26 })
 		sdl.set_render_draw_color(renderer, 150, 150, 150, 255)
-		sdl.render_draw_rect(renderer, &sdl.Rect{ x: bx, y: by, w: 82, h: 26 })
-		draw_text_centered(renderer, bx + 41, by + 5, tool_name, 1, Color{ r: 255, g: 255, b: 255 })
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: bx, y: by, w: 54, h: 26 })
+		draw_text_centered(renderer, bx + 27, by + 5, tool_name, 1, Color{ r: 255, g: 255, b: 255 })
 	}
 
 	// Palette Content
@@ -1144,6 +1190,9 @@ fn draw_tiles_palette(renderer &sdl.Renderer, game Game, px int, py int) {
 		TileType.conveyor_right,
 		TileType.phase_block_alpha,
 		TileType.phase_block_beta,
+		TileType.timed_laser_barrier,
+		TileType.plate_channel_1,
+		TileType.gate_channel_1,
 	]
 	tile_names := [
 		'GRASS',
@@ -1167,6 +1216,9 @@ fn draw_tiles_palette(renderer &sdl.Renderer, game Game, px int, py int) {
 		'CONV >',
 		'PHASE A',
 		'PHASE B',
+		'PULSE GATE',
+		'PLATE CH1',
+		'GATE CH1',
 	]
 
 	for i in 0 .. tiles.len {
@@ -1195,6 +1247,7 @@ fn draw_items_palette(renderer &sdl.Renderer, game Game, px int, py int) {
 		EntityType.hammer,
 		EntityType.key_item,
 		EntityType.speed_boots,
+		EntityType.holo_terminal,
 	]
 	item_names := [
 		'LOLO SPAWN',
@@ -1205,21 +1258,22 @@ fn draw_items_palette(renderer &sdl.Renderer, game Game, px int, py int) {
 		'WRENCH',
 		'KEYCARD',
 		'JET BOOTS',
+		'HOLO BEACON',
 	]
 
 	for i in 0 .. items.len {
-		col := i % 2
-		row := i / 2
-		ix := px + 12 + col * 172
-		iy := py + row * 46
+		col := i % 3
+		row := i / 3
+		ix := px + 12 + col * 114
+		iy := py + row * 36
 
 		is_sel := game.is_entity_selected && game.selected_entity == items[i]
 		bg := if is_sel { Color{ r: 0, g: 140, b: 220 } } else { Color{ r: 25, g: 35, b: 55 } }
 		sdl.set_render_draw_color(renderer, bg.r, bg.g, bg.b, 255)
-		sdl.render_fill_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 164, h: 40 })
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 108, h: 32 })
 		sdl.set_render_draw_color(renderer, 0, 200, 255, 255)
-		sdl.render_draw_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 164, h: 40 })
-		draw_text_centered(renderer, ix + 82, iy + 12, item_names[i], 1, Color{ r: 255, g: 255, b: 255 })
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 108, h: 32 })
+		draw_text_centered(renderer, ix + 54, iy + 10, item_names[i], 1, Color{ r: 255, g: 255, b: 255 })
 	}
 }
 
@@ -1314,17 +1368,26 @@ fn draw_themes_and_slots_palette(renderer &sdl.Renderer, game Game, px int, py i
 		draw_text_centered(renderer, ix + 54, iy + 5, t_name, 1, Color{ r: 220, g: 240, b: 255 })
 	}
 
-	draw_text(renderer, px + 12, py + 172, 'COMMUNITY & CODE SHARING [K]:', 1, Color{ r: 255, g: 215, b: 0 })
-	sdl.set_render_draw_color(renderer, 0, 120, 220, 255)
-	sdl.render_fill_rect(renderer, &sdl.Rect{ x: px + 12, y: py + 190, w: 338, h: 32 })
+	// Dark Dungeon Mode Modifier
+	dark_text := if game.editor_level.is_dark_dungeon { 'DARK VISION: ON' } else { 'DARK VISION: OFF' }
+	dark_col := if game.editor_level.is_dark_dungeon { Color{ r: 255, g: 140, b: 0 } } else { Color{ r: 40, g: 55, b: 85 } }
+	sdl.set_render_draw_color(renderer, dark_col.r, dark_col.g, dark_col.b, 255)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: px + 12, y: py + 170, w: 338, h: 26 })
 	sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
-	sdl.render_draw_rect(renderer, &sdl.Rect{ x: px + 12, y: py + 190, w: 338, h: 32 })
-	draw_text_centered(renderer, px + 181, py + 198, 'OPEN CYBER-CODE SHARING [K]', 1, Color{ r: 255, g: 255, b: 255 })
+	sdl.render_draw_rect(renderer, &sdl.Rect{ x: px + 12, y: py + 170, w: 338, h: 26 })
+	draw_text_centered(renderer, px + 181, py + 175, dark_text, 1, Color{ r: 255, g: 255, b: 255 })
 
-	draw_text(renderer, px + 12, py + 230, 'SAVE / LOAD SLOTS:', 1, Color{ r: 255, g: 215, b: 0 })
+	draw_text(renderer, px + 12, py + 204, 'COMMUNITY & CODE SHARING [K]:', 1, Color{ r: 255, g: 215, b: 0 })
+	sdl.set_render_draw_color(renderer, 0, 120, 220, 255)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: px + 12, y: py + 222, w: 338, h: 28 })
+	sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+	sdl.render_draw_rect(renderer, &sdl.Rect{ x: px + 12, y: py + 222, w: 338, h: 28 })
+	draw_text_centered(renderer, px + 181, py + 228, 'OPEN CYBER-CODE SHARING [K]', 1, Color{ r: 255, g: 255, b: 255 })
+
+	draw_text(renderer, px + 12, py + 258, 'SAVE / LOAD SLOTS:', 1, Color{ r: 255, g: 215, b: 0 })
 	for i in 0 .. 5 {
 		ix := px + 12 + i * 68
-		iy := py + 248
+		iy := py + 276
 		sdl.set_render_draw_color(renderer, 0, 100, 180, 255)
 		sdl.render_fill_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 62, h: 24 })
 		sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
@@ -1673,4 +1736,53 @@ fn draw_level_select_modal(renderer &sdl.Renderer, game Game, mx int, my int) {
 			draw_text(renderer, bx + 8, by + 68, 'PB: --.--s', 1, Color{ r: 120, g: 140, b: 160 })
 		}
 	}
+}
+
+fn draw_dark_dungeon_mask(renderer &sdl.Renderer, game Game) {
+	if !game.current_level.is_dark_dungeon {
+		return
+	}
+	lx := grid_offset_x + game.lolo.x * cell_size + cell_size / 2
+	ly := grid_offset_y + game.lolo.y * cell_size + cell_size / 2
+	radius := 140
+
+	sdl.set_render_draw_blend_mode(renderer, .blend)
+	for r in 0 .. grid_rows {
+		for c in 0 .. grid_cols {
+			cx := grid_offset_x + c * cell_size + cell_size / 2
+			cy := grid_offset_y + r * cell_size + cell_size / 2
+			dist := int(math.sqrt(f64((cx - lx) * (cx - lx) + (cy - ly) * (cy - ly))))
+			if dist > radius {
+				alpha := u8(math_min(255, (dist - radius) * 3 + 120))
+				sdl.set_render_draw_color(renderer, 4, 6, 14, alpha)
+				sdl.render_fill_rect(renderer, &sdl.Rect{
+					x: grid_offset_x + c * cell_size
+					y: grid_offset_y + r * cell_size
+					w: cell_size
+					h: cell_size
+				})
+			}
+		}
+	}
+	sdl.set_render_draw_blend_mode(renderer, .none)
+}
+
+fn draw_dialogue_modal(renderer &sdl.Renderer, dialogue string, ticks u32) {
+	sdl.set_render_draw_blend_mode(renderer, .blend)
+	sdl.set_render_draw_color(renderer, 6, 12, 26, 235)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: 100, y: 440, w: 760, h: 180 })
+
+	sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+	sdl.render_draw_rect(renderer, &sdl.Rect{ x: 100, y: 440, w: 760, h: 180 })
+
+	// Animated beacon icon
+	pulse := int((math.sin(f64(ticks) / 100.0) + 1.0) * 20.0)
+	sdl.set_render_draw_color(renderer, 0, u8(200 + pulse), 255, 255)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: 120, y: 460, w: 32, h: 32 })
+	draw_char(renderer, 130, 468, `i`, 2, Color{ r: 255, g: 255, b: 255 })
+
+	draw_text(renderer, 165, 466, 'CYBERNETIC HOLOGRAM BEACON TERMINAL', 2, Color{ r: 0, g: 240, b: 255 })
+	draw_text(renderer, 120, 510, dialogue, 1, Color{ r: 240, g: 250, b: 255 })
+	draw_text_centered(renderer, 480, 580, '[PRESS SPACE / ENTER / MOVE TO DISMISS LOG]', 1, Color{ r: 255, g: 215, b: 0 })
+	sdl.set_render_draw_blend_mode(renderer, .none)
 }
