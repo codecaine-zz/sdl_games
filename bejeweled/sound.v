@@ -4,10 +4,20 @@ import math
 import rand
 import sdl
 
+pub enum BejeweledBgmType {
+	cosmic_trance
+	electro_rush
+	zen_ambient
+	off
+}
+
 struct SoundManager {
 mut:
 	dev           sdl.AudioDeviceID
 	sound_enabled bool = true
+	bgm_type      BejeweledBgmType = .cosmic_trance
+	bgm_step      int
+	bgm_phase     f64
 }
 
 fn new_sound_manager() SoundManager {
@@ -38,7 +48,168 @@ fn new_sound_manager() SoundManager {
 fn (sm &SoundManager) toggle_sound() bool {
 	mut mutable_sm := unsafe { &SoundManager(sm) }
 	mutable_sm.sound_enabled = !mutable_sm.sound_enabled
+	if !mutable_sm.sound_enabled && sm.dev != 0 {
+		sdl.clear_queued_audio(sm.dev)
+	}
 	return mutable_sm.sound_enabled
+}
+
+fn (sm &SoundManager) cycle_bgm() BejeweledBgmType {
+	mut mutable_sm := unsafe { &SoundManager(sm) }
+	mutable_sm.bgm_type = match mutable_sm.bgm_type {
+		.cosmic_trance { BejeweledBgmType.electro_rush }
+		.electro_rush { BejeweledBgmType.zen_ambient }
+		.zen_ambient { BejeweledBgmType.off }
+		.off { BejeweledBgmType.cosmic_trance }
+	}
+	if mutable_sm.bgm_type == .off && sm.dev != 0 {
+		sdl.clear_queued_audio(sm.dev)
+	}
+	return mutable_sm.bgm_type
+}
+
+// Procedural Multi-Theme Background Music Engine
+fn (sm &SoundManager) update_bgm(_dt f64, is_active bool) {
+	if !sm.sound_enabled || sm.dev == 0 || !is_active || sm.bgm_type == .off {
+		return
+	}
+	queued := sdl.get_queued_audio_size(sm.dev)
+	if queued > u32(44100 * 2 / 5) {
+		return
+	}
+
+	mut mutable_sm := unsafe { &SoundManager(sm) }
+	sample_rate := 44100
+
+	if sm.bgm_type == .electro_rush {
+		// 135 BPM High-Octane Speed Blitz Theme
+		step_dur := 0.111 // ~135 BPM
+		samples_per_step := int(f64(sample_rate) * step_dur)
+		mut pcm := []i16{len: samples_per_step}
+
+		lead_notes := [
+			659.25, 783.99, 987.77, 1318.51, 1174.66, 987.77, 783.99, 659.25,
+			587.33, 698.46, 880.00, 1174.66, 1046.50, 880.00, 698.46, 587.33,
+			523.25, 659.25, 783.99, 1046.50, 987.77, 783.99, 659.25, 523.25,
+			493.88, 587.33, 739.99, 987.77, 880.00, 739.99, 587.33, 493.88,
+		]
+		bass_notes := [
+			164.81, 164.81, 329.63, 164.81, 164.81, 164.81, 329.63, 164.81,
+			146.83, 146.83, 293.66, 146.83, 146.83, 146.83, 293.66, 146.83,
+			130.81, 130.81, 261.63, 130.81, 130.81, 130.81, 261.63, 130.81,
+			123.47, 123.47, 246.94, 123.47, 123.47, 123.47, 246.94, 123.47,
+		]
+
+		step := mutable_sm.bgm_step % lead_notes.len
+		l_freq := lead_notes[step]
+		b_freq := bass_notes[step]
+
+		for i in 0 .. samples_per_step {
+			t := f64(i) / f64(sample_rate)
+			prog := f64(i) / f64(samples_per_step)
+
+			sq := if math.sin(2.0 * math.pi * l_freq * t) > 0.0 { 1.0 } else { -1.0 }
+			lead := sq * math.exp(-7.0 * prog) * 7000.0
+
+			saw := 2.0 * (t * b_freq - math.floor(t * b_freq + 0.5))
+			bass := saw * math.exp(-4.5 * prog) * 8500.0
+
+			mut drum := 0.0
+			if step % 4 == 0 && prog < 0.25 {
+				drum = math.sin(2.0 * math.pi * (120.0 - 80.0 * prog / 0.25) * t) * 7500.0
+			} else if step % 2 == 1 && prog < 0.18 {
+				drum = ((f64((i * 1103515245 + 12345) & 0x7FFFFFFF) / 2147483648.0) * 2.0 - 1.0) * 3500.0
+			}
+
+			pcm[i] = i16(math.max(-32000.0, math.min(32000.0, lead + bass + drum)))
+		}
+
+		sdl.queue_audio(sm.dev, pcm.data, u32(samples_per_step * 2))
+		mutable_sm.bgm_step++
+		return
+	} else if sm.bgm_type == .zen_ambient {
+		// Ethereal Zen Meditation Chime Pad
+		step_dur := 0.320 // Slow relaxing tempo
+		samples_per_step := int(f64(sample_rate) * step_dur)
+		mut pcm := []i16{len: samples_per_step}
+
+		zen_chords := [
+			261.63, 329.63, 392.00, 523.25, 659.25, 523.25, 392.00, 329.63,
+			220.00, 261.63, 329.63, 440.00, 523.25, 440.00, 329.63, 261.63,
+			174.61, 220.00, 261.63, 349.23, 440.00, 349.23, 261.63, 220.00,
+			196.00, 246.94, 293.66, 392.00, 493.88, 392.00, 293.66, 246.94,
+		]
+
+		step := mutable_sm.bgm_step % zen_chords.len
+		freq := zen_chords[step]
+		drone_freq := if step < 8 { 130.81 } else if step < 16 { 110.00 } else if step < 24 { 87.31 } else { 98.00 }
+
+		for i in 0 .. samples_per_step {
+			t := f64(i) / f64(sample_rate)
+			prog := f64(i) / f64(samples_per_step)
+
+			// Bell crystal chime
+			bell := math.sin(2.0 * math.pi * freq * t) * math.exp(-3.0 * prog) * 7500.0
+			bell_shimmer := math.sin(2.0 * math.pi * freq * 2.76 * t) * math.exp(-4.5 * prog) * 3500.0
+			drone := math.sin(2.0 * math.pi * drone_freq * t) * 6000.0
+
+			pcm[i] = i16(math.max(-32000.0, math.min(32000.0, bell + bell_shimmer + drone)))
+		}
+
+		sdl.queue_audio(sm.dev, pcm.data, u32(samples_per_step * 2))
+		mutable_sm.bgm_step++
+		return
+	}
+
+	// Default: Iconic Cosmic Trance Suite (Bejeweled 3 / Twist Suite Arpeggios)
+	step_dur := 0.125 // ~120 BPM
+	samples_per_step := int(f64(sample_rate) * step_dur)
+	mut pcm := []i16{len: samples_per_step}
+
+	trance_lead := [
+		523.25, 659.25, 783.99, 1046.50, 783.99, 659.25, 1046.50, 1318.51,
+		440.00, 523.25, 659.25, 880.00, 659.25, 523.25, 880.00, 1046.50,
+		349.23, 440.00, 523.25, 698.46, 523.25, 440.00, 698.46, 880.00,
+		392.00, 493.88, 587.33, 783.99, 587.33, 493.88, 783.99, 987.77,
+	]
+	trance_bass := [
+		130.81, 130.81, 261.63, 130.81, 130.81, 130.81, 261.63, 130.81,
+		110.00, 110.00, 220.00, 110.00, 110.00, 110.00, 220.00, 110.00,
+		87.31, 87.31, 174.61, 87.31, 87.31, 87.31, 174.61, 87.31,
+		98.00, 98.00, 196.00, 98.00, 98.00, 98.00, 196.00, 98.00,
+	]
+
+	step := mutable_sm.bgm_step % trance_lead.len
+	l_freq := trance_lead[step]
+	b_freq := trance_bass[step]
+
+	for i in 0 .. samples_per_step {
+		t := f64(i) / f64(sample_rate)
+		prog := f64(i) / f64(samples_per_step)
+
+		// Crystal square/sine lead with smooth vibrato
+		vib := 1.0 + 0.015 * math.sin(2.0 * math.pi * 6.0 * t)
+		sq := if math.sin(2.0 * math.pi * (l_freq * vib) * t) > 0.0 { 1.0 } else { -1.0 }
+		harm := math.sin(2.0 * math.pi * (l_freq * 2.0 * vib) * t)
+		lead := (sq * 0.65 + harm * 0.35) * math.exp(-6.5 * prog) * 8000.0
+
+		// Warm resonant triangle bass
+		tri := 2.0 * math.abs(2.0 * (t * b_freq - math.floor(t * b_freq + 0.5))) - 1.0
+		bass := tri * math.exp(-4.0 * prog) * 8500.0
+
+		// Cosmic electronic rhythm
+		mut drum := 0.0
+		if step % 4 == 0 && prog < 0.20 {
+			drum = math.sin(2.0 * math.pi * (110.0 - 75.0 * prog / 0.20) * t) * 7000.0
+		} else if step % 2 == 1 && prog < 0.15 {
+			drum = ((f64((i * 1103515245 + 12345) & 0x7FFFFFFF) / 2147483648.0) * 2.0 - 1.0) * 3000.0
+		}
+
+		pcm[i] = i16(math.max(-32000.0, math.min(32000.0, lead + bass + drum)))
+	}
+
+	sdl.queue_audio(sm.dev, pcm.data, u32(samples_per_step * 2))
+	mutable_sm.bgm_step++
 }
 
 fn (sm &SoundManager) play_pcm(pcm []i16) {
@@ -210,6 +381,70 @@ fn (sm &SoundManager) play_invalid_sound() {
 		attack := if i < attack_samples { f64(i) / f64(attack_samples) } else { 1.0 }
 		sample := math.sin(2.0 * math.pi * freq * t) * env * attack * 14000.0
 		pcm[i] = i16(sample)
+	}
+	sm.play_pcm(pcm)
+}
+
+fn (sm &SoundManager) play_star_laser_sound() {
+	if !sm.sound_enabled || sm.dev == 0 {
+		return
+	}
+	sample_rate := 44100
+	duration_ms := 340
+	num_samples := (sample_rate * duration_ms) / 1000
+	mut pcm := []i16{len: num_samples}
+
+	for i in 0 .. num_samples {
+		t := f64(i) / f64(sample_rate)
+		freq := 900.0 - 650.0 * (f64(i) / f64(num_samples))
+		sq := if math.sin(2.0 * math.pi * freq * t) > 0.0 { 1.0 } else { -1.0 }
+		env := math.exp(-6.0 * t)
+		noise := (rand.f64() * 2.0 - 1.0) * 0.3
+		pcm[i] = i16((sq * 0.7 + noise) * env * 22000.0)
+	}
+	sm.play_pcm(pcm)
+}
+
+fn (sm &SoundManager) play_supernova_sound() {
+	if !sm.sound_enabled || sm.dev == 0 {
+		return
+	}
+	sample_rate := 44100
+	duration_ms := 550
+	num_samples := (sample_rate * duration_ms) / 1000
+	mut pcm := []i16{len: num_samples}
+
+	for i in 0 .. num_samples {
+		t := f64(i) / f64(sample_rate)
+		freq := 350.0 - 280.0 * (f64(i) / f64(num_samples))
+		rumble := math.sin(2.0 * math.pi * freq * t)
+		noise := (rand.f64() * 2.0 - 1.0)
+		env := math.exp(-3.5 * t)
+		pcm[i] = i16((rumble * 0.5 + noise * 0.5) * env * 26000.0)
+	}
+	sm.play_pcm(pcm)
+}
+
+fn (sm &SoundManager) play_level_up_sound() {
+	if !sm.sound_enabled || sm.dev == 0 {
+		return
+	}
+	sample_rate := 44100
+	duration_ms := 480
+	num_samples := (sample_rate * duration_ms) / 1000
+	mut pcm := []i16{len: num_samples}
+
+	notes := [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]
+	note_len := num_samples / notes.len
+
+	for i in 0 .. num_samples {
+		n_idx := math.min(i / note_len, notes.len - 1)
+		freq := notes[n_idx]
+		loc_i := i % note_len
+		t := f64(loc_i) / f64(sample_rate)
+		env := math.exp(-8.0 * t)
+		harm := math.sin(2.0 * math.pi * freq * t) + 0.3 * math.sin(4.0 * math.pi * freq * t)
+		pcm[i] = i16(harm * env * 20000.0)
 	}
 	sm.play_pcm(pcm)
 }

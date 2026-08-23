@@ -17,6 +17,7 @@ const board_y = 150
 enum GameMode {
 	classic
 	time_attack
+	zen
 }
 
 struct GemParticle {
@@ -35,6 +36,26 @@ mut:
 	x     f64
 	y     f64
 	text  string
+	life  f64
+	color Color
+}
+
+struct LaserBeam {
+mut:
+	r1    int
+	c1    int
+	r2    int
+	c2    int
+	life  f64
+	color Color
+}
+
+struct HyperZap {
+mut:
+	fx    f64
+	fy    f64
+	tx    f64
+	ty    f64
 	life  f64
 	color Color
 }
@@ -65,12 +86,18 @@ mut:
 	combo          int
 	selected_r     int = -1
 	selected_c     int = -1
+	cursor_r       int = 3
+	cursor_c       int = 3
 	hover_r        int = -1
 	hover_c        int = -1
 	swap_anim      SwapAnim
 	falling        bool
 	particles      []GemParticle
 	float_texts    []FloatText
+	laser_beams    []LaserBeam
+	hyper_zaps     []HyperZap
+	undo_grid      Grid
+	has_undo       bool
 	hint_p1        Point = Point{r: -1, c: -1}
 	hint_p2        Point = Point{r: -1, c: -1}
 	show_hint      bool
@@ -139,6 +166,8 @@ fn (mut app App) trigger_swap(r1 int, c1 int, r2 int, c2 int) {
 	}
 	app.show_hint = false
 	app.hint_timer = 0.0
+	app.undo_grid = app.grid
+	app.has_undo = true
 
 	app.swap_anim = SwapAnim{
 		r1:       r1
@@ -156,6 +185,8 @@ fn (mut app App) handle_gem_click(r int, c int) {
 	if app.swap_anim.active || app.falling || app.game_over {
 		return
 	}
+	app.cursor_r = r
+	app.cursor_c = c
 
 	if app.selected_r == -1 {
 		app.selected_r = r
@@ -173,6 +204,21 @@ fn (mut app App) handle_gem_click(r int, c int) {
 		app.selected_c = c
 		app.sound_mgr.play_select_sound()
 	}
+}
+
+fn (mut app App) move_cursor(dr int, dc int) {
+	nr := app.cursor_r + dr
+	nc := app.cursor_c + dc
+	if nr >= 0 && nr < grid_size {
+		app.cursor_r = nr
+	}
+	if nc >= 0 && nc < grid_size {
+		app.cursor_c = nc
+	}
+}
+
+fn (mut app App) handle_cursor_action() {
+	app.handle_gem_click(app.cursor_r, app.cursor_c)
 }
 
 fn (mut app App) spawn_match_particles(r int, c int, color Color) {
@@ -194,6 +240,202 @@ fn (mut app App) spawn_match_particles(r int, c int, color Color) {
 	}
 }
 
+fn (mut app App) spawn_flame_blast(r int, c int) {
+	app.sound_mgr.play_flame_explosion_sound()
+	app.shake_timer = 0.25
+
+	for dr := -1; dr <= 1; dr++ {
+		for dc := -1; dc <= 1; dc++ {
+			nr := r + dr
+			nc := c + dc
+			if nr >= 0 && nr < grid_size && nc >= 0 && nc < grid_size {
+				col := if app.grid.cells[nr][nc].kind > 0 { get_gem_color(app.grid.cells[nr][nc].kind) } else { Color{r: 255, g: 150, b: 30} }
+				app.spawn_match_particles(nr, nc, col)
+				app.grid.cells[nr][nc].kind = 0
+				app.grid.cells[nr][nc].special = .none
+			}
+		}
+	}
+	pts := 500 * app.level
+	app.score += pts
+	if app.mode == .time_attack {
+		app.time_left = math.min(99.0, app.time_left + 2.0)
+	}
+	app.float_texts << FloatText{
+		x: f64(board_x + c * cell_size)
+		y: f64(board_y + r * cell_size)
+		text: 'FLAME BLAST! +${pts}'
+		life: 1.2
+		color: Color{r: 255, g: 180, b: 40}
+	}
+}
+
+fn (mut app App) spawn_star_laser(r int, c int) {
+	app.sound_mgr.play_star_laser_sound()
+	app.shake_timer = 0.35
+
+	// Horizontal laser beam
+	app.laser_beams << LaserBeam{
+		r1: r, c1: 0, r2: r, c2: grid_size - 1, life: 0.45, color: Color{r: 80, g: 240, b: 255}
+	}
+	// Vertical laser beam
+	app.laser_beams << LaserBeam{
+		r1: 0, c1: c, r2: grid_size - 1, c2: c, life: 0.45, color: Color{r: 80, g: 240, b: 255}
+	}
+
+	for col_i in 0 .. grid_size {
+		col := if app.grid.cells[r][col_i].kind > 0 { get_gem_color(app.grid.cells[r][col_i].kind) } else { Color{r: 80, g: 240, b: 255} }
+		app.spawn_match_particles(r, col_i, col)
+		app.grid.cells[r][col_i].kind = 0
+		app.grid.cells[r][col_i].special = .none
+	}
+	for row_i in 0 .. grid_size {
+		col := if app.grid.cells[row_i][c].kind > 0 { get_gem_color(app.grid.cells[row_i][c].kind) } else { Color{r: 80, g: 240, b: 255} }
+		app.spawn_match_particles(row_i, c, col)
+		app.grid.cells[row_i][c].kind = 0
+		app.grid.cells[row_i][c].special = .none
+	}
+
+	pts := 1200 * app.level
+	app.score += pts
+	if app.mode == .time_attack {
+		app.time_left = math.min(99.0, app.time_left + 4.0)
+	}
+	app.float_texts << FloatText{
+		x: f64(board_x + c * cell_size)
+		y: f64(board_y + r * cell_size)
+		text: 'STAR LASER! +${pts}'
+		life: 1.4
+		color: Color{r: 100, g: 240, b: 255}
+	}
+}
+
+fn (mut app App) spawn_supernova_blast(r int, c int) {
+	app.sound_mgr.play_supernova_sound()
+	app.shake_timer = 0.50
+
+	// 3x3 blast
+	for dr := -1; dr <= 1; dr++ {
+		for dc := -1; dc <= 1; dc++ {
+			nr := r + dr
+			nc := c + dc
+			if nr >= 0 && nr < grid_size && nc >= 0 && nc < grid_size {
+				col := if app.grid.cells[nr][nc].kind > 0 { get_gem_color(app.grid.cells[nr][nc].kind) } else { Color{r: 255, g: 220, b: 60} }
+				app.spawn_match_particles(nr, nc, col)
+				app.grid.cells[nr][nc].kind = 0
+				app.grid.cells[nr][nc].special = .none
+			}
+		}
+	}
+
+	// Full cross laser
+	app.laser_beams << LaserBeam{
+		r1: r, c1: 0, r2: r, c2: grid_size - 1, life: 0.60, color: Color{r: 255, g: 220, b: 80}
+	}
+	app.laser_beams << LaserBeam{
+		r1: 0, c1: c, r2: grid_size - 1, c2: c, life: 0.60, color: Color{r: 255, g: 220, b: 80}
+	}
+
+	for col_i in 0 .. grid_size {
+		col := if app.grid.cells[r][col_i].kind > 0 { get_gem_color(app.grid.cells[r][col_i].kind) } else { Color{r: 255, g: 220, b: 80} }
+		app.spawn_match_particles(r, col_i, col)
+		app.grid.cells[r][col_i].kind = 0
+		app.grid.cells[r][col_i].special = .none
+	}
+	for row_i in 0 .. grid_size {
+		col := if app.grid.cells[row_i][c].kind > 0 { get_gem_color(app.grid.cells[row_i][c].kind) } else { Color{r: 255, g: 220, b: 80} }
+		app.spawn_match_particles(row_i, c, col)
+		app.grid.cells[row_i][c].kind = 0
+		app.grid.cells[row_i][c].special = .none
+	}
+
+	pts := 3000 * app.level
+	app.score += pts
+	if app.mode == .time_attack {
+		app.time_left = math.min(99.0, app.time_left + 8.0)
+	}
+	app.float_texts << FloatText{
+		x: f64(board_x + c * cell_size)
+		y: f64(board_y + r * cell_size)
+		text: 'SUPERNOVA! +${pts}'
+		life: 1.6
+		color: Color{r: 255, g: 235, b: 60}
+	}
+}
+
+fn (mut app App) trigger_hypercube_zap(r1 int, c1 int, r2 int, c2 int) {
+	app.sound_mgr.play_hypercube_zap_sound()
+	app.shake_timer = 0.40
+
+	g1 := app.grid.cells[r1][c1]
+	g2 := app.grid.cells[r2][c2]
+
+	// Double Hypercube Swap: Board-Clearing Cosmic Singularity!
+	if g1.special == .hypercube && g2.special == .hypercube {
+		for r in 0 .. grid_size {
+			for c in 0 .. grid_size {
+				col := if app.grid.cells[r][c].kind > 0 { get_gem_color(app.grid.cells[r][c].kind) } else { Color{r: 255, g: 255, b: 255} }
+				app.spawn_match_particles(r, c, col)
+				app.grid.cells[r][c].kind = 0
+				app.grid.cells[r][c].special = .none
+			}
+		}
+		pts := 10000 * app.level
+		app.score += pts
+		app.float_texts << FloatText{
+			x: f64(board_x + 2 * cell_size)
+			y: f64(board_y + 3 * cell_size)
+			text: 'COSMIC SINGULARITY! +${pts}'
+			life: 2.0
+			color: Color{r: 255, g: 235, b: 80}
+		}
+		app.falling = true
+		return
+	}
+
+	// Single Hypercube: Zap all gems of the target color
+	target_kind := if g1.special == .hypercube { g2.kind } else { g1.kind }
+	hc_r := if g1.special == .hypercube { r1 } else { r2 }
+	hc_c := if g1.special == .hypercube { c1 } else { c2 }
+
+	h_fx := f64(board_x + hc_c * cell_size + cell_size / 2)
+	h_fy := f64(board_y + hc_r * cell_size + cell_size / 2)
+
+	app.grid.cells[hc_r][hc_c].kind = 0
+	app.grid.cells[hc_r][hc_c].special = .none
+
+	mut zapped := 0
+	for r in 0 .. grid_size {
+		for c in 0 .. grid_size {
+			if app.grid.cells[r][c].kind == target_kind {
+				t_x := f64(board_x + c * cell_size + cell_size / 2)
+				t_y := f64(board_y + r * cell_size + cell_size / 2)
+				app.hyper_zaps << HyperZap{
+					fx: h_fx, fy: h_fy, tx: t_x, ty: t_y, life: 0.50, color: get_gem_color(target_kind)
+				}
+				app.spawn_match_particles(r, c, get_gem_color(target_kind))
+				app.grid.cells[r][c].kind = 0
+				app.grid.cells[r][c].special = .none
+				zapped++
+			}
+		}
+	}
+
+	pts := zapped * 200 * app.level
+	app.score += pts
+	if app.mode == .time_attack {
+		app.time_left = math.min(99.0, app.time_left + f64(zapped))
+	}
+	app.float_texts << FloatText{
+		x: h_fx - 40.0
+		y: h_fy - 20.0
+		text: 'HYPER ZAP! +${pts}'
+		life: 1.5
+		color: Color{r: 255, g: 240, b: 120}
+	}
+	app.falling = true
+}
+
 fn (mut app App) process_matches() bool {
 	groups := app.grid.find_matches()
 	if groups.len == 0 {
@@ -204,11 +446,9 @@ fn (mut app App) process_matches() bool {
 	app.sound_mgr.play_match_sound(app.combo)
 
 	mut pts_to_clear := []Point{}
-	mut flame_created := false
-	mut hypercube_created := false
+	mut special_triggers := []Point{}
 
 	for group in groups {
-		// Award score
 		base_pts := group.points.len * 50 * app.combo * app.level
 		app.score += base_pts
 		app.level_progress += base_pts
@@ -216,7 +456,6 @@ fn (mut app App) process_matches() bool {
 			app.high_score = app.score
 		}
 
-		// Floating text
 		if group.points.len > 0 {
 			mid_pt := group.points[group.points.len / 2]
 			fx := f64(board_x + mid_pt.c * cell_size + 10)
@@ -234,35 +473,41 @@ fn (mut app App) process_matches() bool {
 		for pt in group.points {
 			pts_to_clear << pt
 			app.spawn_match_particles(pt.r, pt.c, get_gem_color(group.kind))
+
+			// Check if already a special gem
+			sp := app.grid.cells[pt.r][pt.c].special
+			if sp != .none {
+				special_triggers << pt
+			}
 		}
 
-		// Special Gem Generation
+		// Generate new Special Gems
+		spawn_pt := group.points[group.points.len / 2]
 		if group.points.len == 4 {
-			// Flame Gem
-			spawn_pt := group.points[0]
 			app.grid.cells[spawn_pt.r][spawn_pt.c].special = .flame
-			flame_created = true
-		} else if group.points.len >= 5 {
-			// Hypercube
-			spawn_pt := group.points[0]
+		} else if group.points.len == 5 {
 			app.grid.cells[spawn_pt.r][spawn_pt.c].special = .hypercube
-			hypercube_created = true
+		} else if group.points.len >= 6 {
+			app.grid.cells[spawn_pt.r][spawn_pt.c].special = .supernova
 		}
 	}
 
-	if flame_created {
-		app.sound_mgr.play_flame_explosion_sound()
-		app.shake_timer = 0.22
-	}
-	if hypercube_created {
-		app.sound_mgr.play_hypercube_zap_sound()
-		app.shake_timer = 0.28
-	}
-
-	// Clear matched gems (except newly created specials)
+	// Clear matched standard gems
 	for pt in pts_to_clear {
 		if app.grid.cells[pt.r][pt.c].special == .none {
 			app.grid.cells[pt.r][pt.c].kind = 0
+		}
+	}
+
+	// Trigger special gem explosions
+	for pt in special_triggers {
+		sp := app.grid.cells[pt.r][pt.c].special
+		if sp == .flame {
+			app.spawn_flame_blast(pt.r, pt.c)
+		} else if sp == .star {
+			app.spawn_star_laser(pt.r, pt.c)
+		} else if sp == .supernova {
+			app.spawn_supernova_blast(pt.r, pt.c)
 		}
 	}
 
@@ -270,7 +515,7 @@ fn (mut app App) process_matches() bool {
 	if app.mode == .classic && app.level_progress >= app.level * 2500 {
 		app.level++
 		app.level_progress = 0
-		app.sound_mgr.play_win_sound()
+		app.sound_mgr.play_level_up_sound()
 	}
 
 	return true
@@ -305,6 +550,24 @@ fn (mut app App) update(dt f64) {
 		}
 	}
 
+	// Update laser beams
+	for i := app.laser_beams.len - 1; i >= 0; i-- {
+		mut lb := unsafe { &app.laser_beams[i] }
+		lb.life -= dt * 2.0
+		if lb.life <= 0 {
+			app.laser_beams.delete(i)
+		}
+	}
+
+	// Update hyper zaps
+	for i := app.hyper_zaps.len - 1; i >= 0; i-- {
+		mut hz := unsafe { &app.hyper_zaps[i] }
+		hz.life -= dt * 2.2
+		if hz.life <= 0 {
+			app.hyper_zaps.delete(i)
+		}
+	}
+
 	// Time Attack countdown
 	if app.mode == .time_attack && !app.game_over {
 		app.time_left -= dt
@@ -333,6 +596,16 @@ fn (mut app App) update(dt f64) {
 		app.swap_anim.progress += dt * 6.0
 		if app.swap_anim.progress >= 1.0 {
 			app.swap_anim.progress = 1.0
+
+			// Check if Hypercube is involved
+			c1_sp := app.grid.cells[app.swap_anim.r1][app.swap_anim.c1].special
+			c2_sp := app.grid.cells[app.swap_anim.r2][app.swap_anim.c2].special
+			if c1_sp == .hypercube || c2_sp == .hypercube {
+				app.trigger_hypercube_zap(app.swap_anim.r1, app.swap_anim.c1, app.swap_anim.r2, app.swap_anim.c2)
+				app.swap_anim.active = false
+				return
+			}
+
 			// Swap in actual grid
 			app.grid.swap(app.swap_anim.r1, app.swap_anim.c1, app.swap_anim.r2, app.swap_anim.c2)
 
@@ -590,7 +863,7 @@ fn draw_gem_shape(renderer &sdl.Renderer, cx int, cy int, size int, kind int, sp
 		}
 	}
 
-	// Special Gem Effects
+	// Special Gem Visual Overlays
 	if special == .flame {
 		// Multi-layered pulsating flame aura with orbiting embers
 		pulse := math.sin(f64(ticks) * 0.012) * 0.5 + 0.5
@@ -613,6 +886,29 @@ fn draw_gem_shape(renderer &sdl.Renderer, cx int, cy int, size int, kind int, sp
 			sdl.render_draw_point(renderer, sx, sy)
 			sdl.render_draw_point(renderer, sx + 1, sy)
 		}
+	} else if special == .star {
+		// Electric Pulsating Star Gem with energy spikes
+		pulse := math.sin(f64(ticks) * 0.015) * 0.5 + 0.5
+		sdl.set_render_draw_color(renderer, 80, 240, 255, 255)
+		sp_len := r + 4 + int(pulse * 4.0)
+
+		sdl.render_draw_line(renderer, cx - sp_len, cy, cx + sp_len, cy)
+		sdl.render_draw_line(renderer, cx, cy - sp_len, cx, cy + sp_len)
+
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+		sdl.render_draw_line(renderer, cx - sp_len / 2, cy, cx + sp_len / 2, cy)
+		sdl.render_draw_line(renderer, cx, cy - sp_len / 2, cx, cy + sp_len / 2)
+	} else if special == .supernova {
+		// Solar Corona Flare
+		for ring in 0 .. 4 {
+			t_ang := f64(ticks) * 0.01 + f64(ring) * 1.57
+			flare_r := r + 4 + int(math.sin(t_ang) * 4.0)
+			sdl.set_render_draw_color(renderer, 255, 220, 60, 220)
+			r_box := sdl.Rect{x: cx - flare_r, y: cy - flare_r, w: flare_r * 2, h: flare_r * 2}
+			sdl.render_draw_rect(renderer, &r_box)
+		}
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{x: cx - 3, y: cy - 3, w: 6, h: 6})
 	} else if special == .hypercube {
 		// Prismatic Rotating Rainbow Vortex
 		for ring in 0 .. 3 {
@@ -745,6 +1041,50 @@ fn (mut app App) render() {
 		}
 	}
 
+	// Render Laser Beams
+	for lb in app.laser_beams {
+		x1 := bx + lb.c1 * cell_size + cell_size / 2
+		y1 := by + lb.r1 * cell_size + cell_size / 2
+		x2 := bx + lb.c2 * cell_size + cell_size / 2
+		y2 := by + lb.r2 * cell_size + cell_size / 2
+		alpha := u8(math.min(255.0, lb.life * 550.0))
+		sdl.set_render_draw_blend_mode(renderer, .blend)
+		sdl.set_render_draw_color(renderer, lb.color.r, lb.color.g, lb.color.b, alpha)
+		for w_i in -3 .. 4 {
+			if lb.r1 == lb.r2 {
+				sdl.render_draw_line(renderer, x1, y1 + w_i, x2, y2 + w_i)
+			} else {
+				sdl.render_draw_line(renderer, x1 + w_i, y1, x2 + w_i, y2)
+			}
+		}
+	}
+
+	// Render Hyper Zaps
+	for hz in app.hyper_zaps {
+		alpha := u8(math.min(255.0, hz.life * 500.0))
+		sdl.set_render_draw_blend_mode(renderer, .blend)
+		sdl.set_render_draw_color(renderer, hz.color.r, hz.color.g, hz.color.b, alpha)
+		mid_x := (hz.fx + hz.tx) / 2.0 + (rand.f64() * 2.0 - 1.0) * 12.0
+		mid_y := (hz.fy + hz.ty) / 2.0 + (rand.f64() * 2.0 - 1.0) * 12.0
+		sdl.render_draw_line(renderer, int(hz.fx), int(hz.fy), int(mid_x), int(mid_y))
+		sdl.render_draw_line(renderer, int(mid_x), int(mid_y), int(hz.tx), int(hz.ty))
+	}
+
+	// Keyboard Cursor Bracket
+	if app.cursor_r >= 0 && app.cursor_c >= 0 {
+		cur_x := bx + app.cursor_c * cell_size
+		cur_y := by + app.cursor_r * cell_size
+		sdl.set_render_draw_color(renderer, 80, 230, 255, 255)
+		sdl.render_draw_line(renderer, cur_x + 4, cur_y + 4, cur_x + 14, cur_y + 4)
+		sdl.render_draw_line(renderer, cur_x + 4, cur_y + 4, cur_x + 4, cur_y + 14)
+		sdl.render_draw_line(renderer, cur_x + cell_size - 4, cur_y + 4, cur_x + cell_size - 14, cur_y + 4)
+		sdl.render_draw_line(renderer, cur_x + cell_size - 4, cur_y + 4, cur_x + cell_size - 4, cur_y + 14)
+		sdl.render_draw_line(renderer, cur_x + 4, cur_y + cell_size - 4, cur_x + 14, cur_y + cell_size - 4)
+		sdl.render_draw_line(renderer, cur_x + 4, cur_y + cell_size - 4, cur_x + 4, cur_y + cell_size - 14)
+		sdl.render_draw_line(renderer, cur_x + cell_size - 4, cur_y + cell_size - 4, cur_x + cell_size - 14, cur_y + cell_size - 4)
+		sdl.render_draw_line(renderer, cur_x + cell_size - 4, cur_y + cell_size - 4, cur_x + cell_size - 4, cur_y + cell_size - 14)
+	}
+
 	// Render Floating Texts
 	for ft in app.float_texts {
 		draw_text(renderer, int(ft.x), int(ft.y), ft.text, 2, ft.color)
@@ -777,7 +1117,7 @@ fn (mut app App) render() {
 	draw_text(renderer, hud_x + 20, hud_y + 46, '${app.score}', 3, Color{r: 255, g: 255, b: 255})
 	draw_text(renderer, hud_x + 20, hud_y + 80, 'BEST: ${app.high_score}', 1, Color{r: 140, g: 160, b: 190})
 
-	// Level / Timer Box
+	// Level / Timer / Zen Box
 	prog_box := sdl.Rect{x: hud_x, y: hud_y + 120, w: 320, h: 110}
 	sdl.set_render_draw_color(renderer, 24, 30, 48, 255)
 	sdl.render_fill_rect(renderer, &prog_box)
@@ -785,10 +1125,9 @@ fn (mut app App) render() {
 	sdl.render_draw_rect(renderer, &prog_box)
 
 	if app.mode == .classic {
-		draw_text(renderer, hud_x + 20, hud_y + 138, 'LEVEL ${app.level}', 2, Color{r: 100, g: 220, b: 255})
+		draw_text(renderer, hud_x + 20, hud_y + 138, 'CLASSIC // LEVEL ${app.level}', 2, Color{r: 100, g: 220, b: 255})
 		target := app.level * 2500
 		pct := math.min(1.0, f64(app.level_progress) / f64(target))
-		// Progress Bar
 		bar_bg := sdl.Rect{x: hud_x + 20, y: hud_y + 175, w: 280, h: 22}
 		sdl.set_render_draw_color(renderer, 15, 20, 32, 255)
 		sdl.render_fill_rect(renderer, &bar_bg)
@@ -796,34 +1135,46 @@ fn (mut app App) render() {
 		sdl.set_render_draw_color(renderer, 70, 180, 255, 255)
 		sdl.render_fill_rect(renderer, &bar_fill)
 		draw_text_centered(renderer, hud_x + 160, hud_y + 204, '${app.level_progress} / ${target}', 1, Color{r: 200, g: 220, b: 255})
-	} else {
-		draw_text(renderer, hud_x + 20, hud_y + 138, 'TIME REMAINING', 2, Color{r: 255, g: 100, b: 100})
+	} else if app.mode == .time_attack {
+		draw_text(renderer, hud_x + 20, hud_y + 138, 'LIGHTNING // BLITZ', 2, Color{r: 255, g: 100, b: 100})
 		time_pct := math.min(1.0, app.time_left / 60.0)
 		bar_bg := sdl.Rect{x: hud_x + 20, y: hud_y + 175, w: 280, h: 22}
 		sdl.set_render_draw_color(renderer, 15, 20, 32, 255)
 		sdl.render_fill_rect(renderer, &bar_bg)
 		bar_fill := sdl.Rect{x: hud_x + 20, y: hud_y + 175, w: int(280.0 * time_pct), h: 22}
-		sdl.set_render_draw_color(renderer, 255, 80, 80, 255)
+		bar_col := if app.time_left < 15.0 { Color{r: 255, g: 45, b: 45} } else { Color{r: 255, g: 140, b: 50} }
+		sdl.set_render_draw_color(renderer, bar_col.r, bar_col.g, bar_col.b, 255)
 		sdl.render_fill_rect(renderer, &bar_fill)
-		draw_text_centered(renderer, hud_x + 160, hud_y + 204, '${int(app.time_left)} SECONDS', 1, Color{r: 255, g: 200, b: 200})
+		draw_text_centered(renderer, hud_x + 160, hud_y + 204, '${int(app.time_left)}s REMAINING (+5s SPECIAL)', 1, Color{r: 255, g: 220, b: 200})
+	} else {
+		draw_text(renderer, hud_x + 20, hud_y + 138, 'ZEN // RELAXATION', 2, Color{r: 120, g: 255, b: 150})
+		draw_text(renderer, hud_x + 20, hud_y + 175, 'ENDLESS TRANQUIL PLAY', 1, Color{r: 180, g: 235, b: 200})
+		draw_text(renderer, hud_x + 20, hud_y + 195, 'NO TIMERS // NO GAME OVER', 1, Color{r: 140, g: 200, b: 170})
 	}
 
-	// Instructions box
-	inst_card := sdl.Rect{x: hud_x, y: hud_y + 245, w: 320, h: 275}
+	// Instructions / Powers Box
+	inst_card := sdl.Rect{x: hud_x, y: hud_y + 245, w: 320, h: 285}
 	sdl.set_render_draw_color(renderer, 20, 24, 38, 255)
 	sdl.render_fill_rect(renderer, &inst_card)
 	sdl.set_render_draw_color(renderer, 50, 65, 100, 255)
 	sdl.render_draw_rect(renderer, &inst_card)
 
-	draw_text_centered(renderer, hud_x + 160, hud_y + 260, 'GEM POWERS', 2, Color{r: 255, g: 215, b: 70})
-	draw_text(renderer, hud_x + 16, hud_y + 295, '- Match 3: Clear gems & score', 1, Color{r: 200, g: 220, b: 245})
-	draw_text(renderer, hud_x + 16, hud_y + 325, '- Match 4: Creates Flame Gem', 1, Color{r: 255, g: 140, b: 60})
-	draw_text(renderer, hud_x + 16, hud_y + 345, '  (Explodes 3x3 surrounding gems)', 1, Color{r: 170, g: 180, b: 210})
-	draw_text(renderer, hud_x + 16, hud_y + 375, '- Match 5: Creates Hypercube', 1, Color{r: 100, g: 230, b: 255})
-	draw_text(renderer, hud_x + 16, hud_y + 395, '  (Zaps all gems of chosen color)', 1, Color{r: 170, g: 180, b: 210})
-	draw_text(renderer, hud_x + 16, hud_y + 425, '- Combos: Multiplies chain points!', 1, Color{r: 120, g: 255, b: 150})
-	draw_text(renderer, hud_x + 16, hud_y + 455, '- H: Show Hint / R: Reset', 1, Color{r: 170, g: 190, b: 230})
-	draw_text(renderer, hud_x + 16, hud_y + 480, '- M: Switch Mode / S: Sound', 1, Color{r: 170, g: 190, b: 230})
+	draw_text_centered(renderer, hud_x + 160, hud_y + 258, 'SPECIAL GEM POWERS', 2, Color{r: 255, g: 215, b: 70})
+	draw_text(renderer, hud_x + 16, hud_y + 288, '- Match 4 : Flame Gem (3x3 Blast)', 1, Color{r: 255, g: 140, b: 60})
+	draw_text(renderer, hud_x + 16, hud_y + 310, '- Match 5 L/T : Star Gem (Cross Laser)', 1, Color{r: 80, g: 240, b: 255})
+	draw_text(renderer, hud_x + 16, hud_y + 332, '- Match 5 Line : Hypercube (Color Zap)', 1, Color{r: 255, g: 180, b: 245})
+	draw_text(renderer, hud_x + 16, hud_y + 354, '- Match 6+ : Supernova (Mega Blast)', 1, Color{r: 255, g: 225, b: 70})
+
+	bgm_name := match app.sound_mgr.bgm_type {
+		.cosmic_trance { 'COSMIC TRANCE' }
+		.electro_rush { 'ELECTRO RUSH' }
+		.zen_ambient { 'ZEN AMBIENT' }
+		.off { 'OFF' }
+	}
+	draw_text(renderer, hud_x + 16, hud_y + 386, 'MUSIC : ${bgm_name} [T/B]', 1, Color{r: 100, g: 230, b: 255})
+	draw_text(renderer, hud_x + 16, hud_y + 408, 'CONTROLS : WASD / ARROWS / MOUSE', 1, Color{r: 200, g: 220, b: 240})
+	draw_text(renderer, hud_x + 16, hud_y + 430, '[SPACE/ENTER] SWAP  [U] UNDO', 1, Color{r: 220, g: 220, b: 230})
+	draw_text(renderer, hud_x + 16, hud_y + 452, '[H] HINT  [M] MODE  [S] SOUND  [R] RESET', 1, Color{r: 180, g: 200, b: 230})
 
 	// Game Over Banner
 	if app.game_over {
@@ -840,7 +1191,11 @@ fn (mut app App) render() {
 	app.btn_reset.render(renderer, mx, my)
 	app.btn_hint.render(renderer, mx, my)
 
-	app.btn_mode.text = if app.mode == .classic { 'CLASSIC [M]' } else { 'TIME ATTACK [M]' }
+	app.btn_mode.text = match app.mode {
+		.classic { 'CLASSIC [M]' }
+		.time_attack { 'LIGHTNING [M]' }
+		.zen { 'ZEN [M]' }
+	}
 	app.btn_mode.render(renderer, mx, my)
 
 	app.btn_sound.text = if app.sound_mgr.sound_enabled { 'SOUND: ON [S]' } else { 'SOUND: OFF [S]' }
@@ -918,6 +1273,9 @@ fn main() {
 		dt := f64(ticks - last_ticks) / 1000.0
 		last_ticks = ticks
 
+		// Update Background Music
+		app.sound_mgr.update_bgm(dt, !app.game_over)
+
 		mut event := sdl.Event{}
 		for sdl.poll_event(&event) != 0 {
 			match event.@type {
@@ -950,7 +1308,11 @@ fn main() {
 							app.sound_mgr.play_select_sound()
 						}
 					} else if app.btn_mode.is_hovered(mx, my) {
-						app.mode = if app.mode == .classic { .time_attack } else { .classic }
+						app.mode = match app.mode {
+							.classic { GameMode.time_attack }
+							.time_attack { GameMode.zen }
+							.zen { GameMode.classic }
+						}
 						app.time_left = 60.0
 						app.game_over = false
 						app.sound_mgr.play_swap_sound()
@@ -967,7 +1329,35 @@ fn main() {
 					sym := int(event.key.keysym.sym)
 					if sym == int(sdl.KeyCode.escape) {
 						return
-					} else if sym == int(sdl.KeyCode.r) {
+					}
+					// WASD / Arrow Movement
+					else if sym == int(sdl.KeyCode.w) || sym == int(sdl.KeyCode.up) {
+						app.move_cursor(-1, 0)
+					} else if sym == int(sdl.KeyCode.s) || sym == int(sdl.KeyCode.down) {
+						app.move_cursor(1, 0)
+					} else if sym == int(sdl.KeyCode.a) || sym == int(sdl.KeyCode.left) {
+						app.move_cursor(0, -1)
+					} else if sym == int(sdl.KeyCode.d) || sym == int(sdl.KeyCode.right) {
+						app.move_cursor(0, 1)
+					}
+					// Space / Enter / J / Z Action
+					else if sym == int(sdl.KeyCode.space) || sym == int(sdl.KeyCode.@return) || sym == int(sdl.KeyCode.j) || sym == int(sdl.KeyCode.z) {
+						app.handle_cursor_action()
+					}
+					// Undo (U)
+					else if sym == int(sdl.KeyCode.u) {
+						if app.has_undo && !app.swap_anim.active && !app.falling {
+							app.grid = app.undo_grid
+							app.has_undo = false
+							app.sound_mgr.play_swap_sound()
+						}
+					}
+					// Cycle Soundtrack (T / B)
+					else if sym == int(sdl.KeyCode.t) || sym == int(sdl.KeyCode.b) {
+						app.sound_mgr.cycle_bgm()
+					}
+					// Restart (R)
+					else if sym == int(sdl.KeyCode.r) {
 						app.grid = new_grid()
 						app.score = 0
 						app.level = 1
@@ -978,7 +1368,9 @@ fn main() {
 						app.selected_c = -1
 						app.show_hint = false
 						app.sound_mgr.play_swap_sound()
-					} else if sym == int(sdl.KeyCode.h) {
+					}
+					// Hint (H / G)
+					else if sym == int(sdl.KeyCode.h) || sym == int(sdl.KeyCode.g) {
 						p1, p2, ok := app.grid.find_hint_move()
 						if ok {
 							app.hint_p1 = p1
@@ -986,12 +1378,20 @@ fn main() {
 							app.show_hint = true
 							app.sound_mgr.play_select_sound()
 						}
-					} else if sym == int(sdl.KeyCode.m) {
-						app.mode = if app.mode == .classic { .time_attack } else { .classic }
+					}
+					// Switch Mode (M)
+					else if sym == int(sdl.KeyCode.m) {
+						app.mode = match app.mode {
+							.classic { GameMode.time_attack }
+							.time_attack { GameMode.zen }
+							.zen { GameMode.classic }
+						}
 						app.time_left = 60.0
 						app.game_over = false
 						app.sound_mgr.play_swap_sound()
-					} else if sym == int(sdl.KeyCode.s) {
+					}
+					// Toggle Sound (S)
+					else if sym == int(sdl.KeyCode.s) {
 						app.sound_mgr.toggle_sound()
 					}
 				}

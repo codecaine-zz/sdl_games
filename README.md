@@ -1,6 +1,6 @@
 # 🕹️ V Arcade SDL Games Suite
 
-A massive collection of **81 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
+A massive collection of **86 playable 2D and 3D arcade games, retro classics, puzzle adventures, board games, and physics simulations** built in [V](https://vlang.io/) using [vlang/sdl](https://github.com/vlang/sdl). 
 
 Every single game is engineered with **zero external asset dependencies** — utilizing 100% procedural PCM sound synthesis, vector graphics rasterization, and embedded pixel/bitmap fonts.
 
@@ -18,14 +18,12 @@ v install sdl
 > **System Dependencies**: `vlang/sdl` requires SDL2 development libraries on your machine:
 > - **macOS**: `brew install sdl2 sdl2_gfx`
 > - **Linux (Ubuntu/Debian)**: `sudo apt install libsdl2-dev libsdl2-gfx-dev`
-> - **Windows**: Pre-built SDL2 DLLs or via `vpkg`
-
 ---
 
-## 🎮 Master Game Index (81 Games)
+## 🎮 Master Game Index (86 Games)
 
 | # | Game | Folder | Genre | Quick Controls | How to Play |
-| :-: | :--- | :--- | :--- | :--- | :-: |
+| :-: | :--- | :--- | :--- | :--- | :--- | :-: |
 | **1** | [Air Hockey](#1-hyper-air-hockey-airhockey) | `airhockey/` | Sports / Physics | `Mouse` / `WASD` (P1), `Arrows` / `IJKL` (P2) | [Guide](#1-hyper-air-hockey-airhockey) |
 | **2** | [Asteroids Pro](#2-asteroids-pro-asteroids) | `asteroids/` | Vector Space Shooter | `A`/`D` rotate, `W` thrust, `Space` fire, `H` hyper | [Guide](#2-asteroids-pro-asteroids) |
 | **3** | [Balloon Fight](#3-nes-balloon-fight-balloonfight) | `balloonfight/` | 1984 Flight Arcade | `WASD`/`Arrows` steer, `W`/`Space` flap, `P` pause | [Guide](#3-nes-balloon-fight-balloonfight) |
@@ -85,13 +83,76 @@ v install sdl
 | **57** | [Sokoban Master](#57-sokoban-master-sokoban) | `sokoban/` | Warehouse Box Pushing | `WASD`/`Arrows` move, `U` undo, `N`/`P` level | [Guide](#57-sokoban-master-sokoban) |
 | **58** | [Space Invaders Pro](#58-space-invaders-pro-spaceinvaders) | `spaceinvaders/` | 1978 Space Defense | `A`/`D` steer cannon, `Space` fire laser | [Guide](#58-space-invaders-pro-spaceinvaders) |
 | **59** | [Modern Tetris](#59-modern-tetris-tetris) | `tetris/` | SRS Matrix Puzzle | `Left`/`Right` move, `Up` rotate, `Space` hard drop, `C` hold | [Guide](#59-modern-tetris-tetris) |
-| **60** | [Cyber Tower Defense](#60-cyber-tower-defense-towerdefense) | `towerdefense/` | Strategic Path Defense | `1-3` select tower, `Mouse Click` build, `U` upgrade | [Guide](#60-cyber-tower-defense-towerdefense) |
-| **61** | [Party Trivia Show](#61-party-trivia-show-trivia) | `trivia/` | TV Studio Quiz Battle | `1-4`/`A-D` (P1), `U-P` (P2), `Space` next | [Guide](#61-party-trivia-show-trivia) |
-| **62** | [CyberType Typist](#62-cybertype-neon-typist-typing) | `typing/` | Typing Space Shooter | `A-Z` type target words, `Backspace` cancel lock | [Guide](#62-cybertype-neon-typist-typing) |
-| **63** | [Yahtzee Deluxe](#63-yahtzee-deluxe-yahtzee) | `yahtzee/` | 5-Dice Strategy | `Space`/`Click` roll, `1-5` hold dice, `Click row` score | [Guide](#63-yahtzee-deluxe-yahtzee) |
-| **64** | [Bowling Pro](#64-bowling-pro-bowling) | `bowling/` | 10-Pin Sports / Physics | `WASD`/`Arrows` aim pos & angle, `Space` power, `Z`/`X` hook | [Guide](#64-bowling-pro-bowling) |
-| **65** | [Darts Masters](#65-darts-masters-darts) | `darts/` | 501/301/Cricket Darts | `Mouse`/`WASD` aim reticle, `Space`/`Click` timing | [Guide](#65-darts-masters-darts) |
-| **66** | [Billiards Pro](#66-billiards-pro-pool) | `pool/` | 8-Ball & 9-Ball Pool | `Mouse`/`Arrows` aim cue, `Drag`/`Space` strike | [Guide](#66-billiards-pro-pool) |
+## 🎮 Master Game Index (85 Games)
+
+| # | Game | Folder | Genre / Style | Key Controls | Guide |
+|---|---|---|---|---|---|
+| **1** | [Hyper Air Hockey](#1-hyper-air-hockey-airhockey) | `airhockey/` | 2D Physics Table Sports | `Mouse Aim`/`Drag`, `P` pause, `R` reset | [Guide](#1-hyper-air-hockey-airhockey) |
+| **2** | [Vector Asteroids](#2-vector-asteroids-asteroids) | `asteroids/` | 1979 Vector Space Shooter | `A`/`D` rotate, `W` thrust, `Space` shoot, `S` hyperspace | [Guide](#2-vector-asteroids-asteroids) |
+| **3** | [Balloon Fight](#3-balloon-fight-balloonfight) | `balloonfight/` | 1984 8-Bit Platformer | `A`/`D` move, `Space`/`W` flap, `S` dive | [Guide](#3-balloon-fight-balloonfight) |
+| **4** | [Naval Battleship](#4-naval-battleship-battleship) | `battleship/` | Turn-Based Grid Strategy | `Mouse Click` fire/place, `R` rotate, `A` AI duel | [Guide](#4-naval-battleship-battleship) |
+| **5** | [Bejeweled Deluxe](#5-bejeweled-match-3-bejeweled) | `bejeweled/` | Cascading Match-3 Gems | `Click`/`WASD`/`Space` swap, `U` undo, `T` music, `M` mode | [Guide](#5-bejeweled-match-3-bejeweled) |
+| **6** | [Atomic Bomberman](#6-atomic-bomberman-bomberman) | `bomberman/` | 4-Player Maze Arena | `WASD` move, `Space` bomb, `E` remote | [Guide](#6-atomic-bomberman-bomberman) |
+| **7** | [Boulder Dash](#7-boulder-dash-boulderdash) | `boulderdash/` | 1984 Cave Digger Puzzle | `WASD`/`Arrows` dig/move, `Space` grab | [Guide](#7-boulder-dash-boulderdash) |
+| **8** | [10-Pin Bowling](#8-10-pin-bowling-bowling) | `bowling/` | 3D Perspective Sports | `A`/`D` position, `Space` meter (aim & spin) | [Guide](#8-10-pin-bowling-bowling) |
+| **9** | [Neon Breakout](#9-neon-breakout-breakout) | `breakout/` | Arcade Brick Breaker | `Mouse`/`A`/`D` paddle, `Space` launch/laser | [Guide](#9-neon-breakout-breakout) |
+| **10** | [Bubble Shooter](#10-bubble-shooter-bubbleshooter) | `bubbleshooter/` | Match-3 Bubble Physics | `Mouse Aim`, `Left Click`/`Space` launch | [Guide](#10-bubble-shooter-bubbleshooter) |
+| **11** | [Centipede Arcade](#11-centipede-arcade-centipede) | `centipede/` | 1980 Trackball Shooter | `WASD`/`Arrows` move, `Space` rapid fire | [Guide](#11-centipede-arcade-centipede) |
+| **12** | [Chimp Memory Test](#12-chimp-memory-test-chimptest) | `chimptest/` | Cognitive Benchmark | `Mouse Click` ascending number sequence | [Guide](#12-chimp-memory-test-chimptest) |
+| **13** | [Chip's Challenge](#13-chips-challenge-chipschallenge) | `chipschallenge/` | 1989 Tile Puzzle Classic | `WASD`/`Arrows` walk, `R` restart level | [Guide](#13-chips-challenge-chipschallenge) |
+| **14** | [Clicker Arcade Empire](#14-clicker-arcade-empire-clickarcade) | `clickarcade/` | Incremental Idle Tycoon | `Mouse Click` earn tokens, buy arcade cabs | [Guide](#14-clicker-arcade-empire-clickarcade) |
+| **15** | [Connect Four 3D](#15-connect-four-3d-connect4) | `connect4/` | Vertical 4-in-a-Row Strategy | `1-7`/`Click` drop disc, `U` undo, `A` AI vs | [Guide](#15-connect-four-3d-connect4) |
+| **16** | [Cyber Runner 2088](#16-cyber-runner-2088-cyberrunner) | `cyberrunner/` | Cyberpunk Endless Runner | `A`/`D` strafe, `Space` jump, `S` slide | [Guide](#16-cyber-runner-2088-cyberrunner) |
+| **17** | [Pub Darts 501 / Cricket](#17-pub-darts-501--cricket-darts) | `darts/` | Realistic Dartboard Sports | `Mouse Aim`, `Hold Left Click` draw, `Release` throw | [Guide](#17-pub-darts-501--cricket-darts) |
+| **18** | [Dig Dug Classic](#18-dig-dug-classic-digdug) | `digdug/` | 1982 Underground Harpooner | `WASD` dig, `Space` pump harpoon, `F` rock drop | [Guide](#18-dig-dug-classic-digdug) |
+| **19** | [Donkey Kong Arcade](#19-donkey-kong-arcade-donkeykong) | `donkeykong/` | 1981 Girder Climbing Platformer | `A`/`D` run, `Space` jump, `W`/`S` climb ladders | [Guide](#19-donkey-kong-arcade-donkeykong) |
+| **20** | [Dope Wars: NYC Underworld](#20-dope-wars-nyc-underworld-dopewars) | `dopewars/` | Turn-Based Commodity Trading | `1-8` buy/sell, `T` travel subway, `B` bank, `L` loan shark | [Guide](#20-dope-wars-nyc-underworld-dopewars) |
+| **21** | [Duke Nukem 1991](#21-duke-nukem-1991-duke) | `duke/` | Apogee 2D Action Platformer | `A`/`D` move, `W`/`S` aim/look, `Space` jump, `J`/`Ctrl` fire | [Guide](#21-duke-nukem-1991-duke) |
+| **22** | [Etch-a-Sketch Studio](#22-etch-a-sketch-studio-etchasketch) | `etchasketch/` | Mechanical Dual-Knob Drawing | `WASD`/`Arrows` dual knobs, `Space` shake clear | [Guide](#22-etch-a-sketch-studio-etchasketch) |
+| **23** | [Flappy Wings 3D](#23-flappy-wings-3d-flappy) | `flappy/` | Precision Obstacle Tapper | `Space`/`Click` flap wings, `P` pause | [Guide](#23-flappy-wings-3d-flappy) |
+| **24** | [Frogger Arcade](#24-frogger-arcade-frogger) | `frogger/` | 1981 Konami Traffic & River | `WASD`/`Arrows` leap frog forward/side | [Guide](#24-frogger-arcade-frogger) |
+| **25** | [Galaga: Tactical Fighter](#25-galaga-tactical-fighter-galaga) | `galaga/` | 1981 Fixed Space Shooter | `A`/`D` strafe, `Space` dual photon torpedoes | [Guide](#25-galaga-tactical-fighter-galaga) |
+| **26** | [2048 Hex & Classic](#26-2048-hex--classic-game2048) | `game2048/` | Sliding Tile Math Puzzle | `WASD`/`Arrows` slide tiles, `H` hex mode toggle | [Guide](#26-2048-hex--classic-game2048) |
+| **27** | [GNU Jump (Xjump Deluxe)](#27-gnu-jump-xjump-deluxe-gnujump) | `gnujump/` | Vertical Tower Tower Platformer | `A`/`D` run, `Space` high spring jump | [Guide](#27-gnu-jump-xjump-deluxe-gnujump) |
+| **28** | [Gold Miner Classic](#28-gold-miner-classic-goldminer) | `goldminer/` | Winches & Dynamite Digger | `S`/`Down` launch claw, `W`/`Up` toss dynamite | [Guide](#28-gold-miner-classic-goldminer) |
+| **29** | [JezzBall Studio](#29-jezzball-studio-jezzball) | `jezzball/` | 1992 Windows Containment | `Left Click` build wall, `Right Click`/`Space` flip axis | [Guide](#29-jezzball-studio-jezzball) |
+| **30** | [Lemmings: Tribe Command](#30-lemmings-tribe-command-lemmings) | `lemmings/` | 1991 Lemming Tribe Strategy | `1-8` select skill, `Left Click` assign, `P` pause | [Guide](#30-lemmings-tribe-command-lemmings) |
+| **31** | [Liar's Dice (Perudo)](#31-liars-dice-perudo-liarsdice) | `liarsdice/` | Bluffing Dice Tournament | `1-6` quantity/face bid, `C` challenge/call liar | [Guide](#31-liars-dice-perudo-liarsdice) |
+| **32** | [TRON Light Cycles 3D](#32-tron-light-cycles-3d-lightcycles) | `lightcycles/` | Grid Trail Survival Combat | `WASD` (P1), `Arrows` (P2), `Space` turbo boost | [Guide](#32-tron-light-cycles-3d-lightcycles) |
+| **33** | [Adventures of Lolo](#33-adventures-of-lolo-lolo) | `lolo/` | HAL Laboratory Block Puzzler | `WASD` walk, `Space` magic shot, `R` restart room | [Guide](#33-adventures-of-lolo-lolo) |
+| **34** | [Lunar Lander Simulator](#34-lunar-lander-simulator-lunarlander) | `lunarlander/` | Vector Gravity Physics Lander | `A`/`D` tilt thrusters, `W`/`Space` main throttle | [Guide](#34-lunar-lander-simulator-lunarlander) |
+| **35** | [Mappy: Micro Police](#35-mappy-micro-police-mappy) | `mappy/` | 1983 Namco Trampoline Chase | `A`/`D` run, `Space` open door/microwave blast | [Guide](#35-mappy-micro-police-mappy) |
+| **36** | [Memory Tile Match 3D](#36-memory-tile-match-3d-memorymatch) | `memorymatch/` | Card Matching Memory Puzzle | `Mouse Click` flip card pair, `T` theme change | [Guide](#36-memory-tile-match-3d-memorymatch) |
+| **37** | [Micro Mayhem: RC Racers](#37-micro-mayhem-rc-racers-micromayhem) | `micromayhem/` | Tabletop RC Isometric Racing | `W`/`S` accelerate/brake, `A`/`D` steer, `Space` nitro | [Guide](#37-micro-mayhem-rc-racers-micromayhem) |
+| **38** | [Minesweeper Classic](#38-minesweeper-classic-minesweeper) | `minesweeper/` | Windows Grid Logic Sweeper | `Left Click` reveal, `Right Click` flag, `1-3` difficulty | [Guide](#38-minesweeper-classic-minesweeper) |
+| **39** | [Missile Command Defender](#39-missile-command-defender-missilecommand) | `missilecommand/` | 1980 ICBM Ballistic Defense | `Mouse Aim`, `1`/`2`/`3` or `Left Click` fire battery | [Guide](#39-missile-command-defender-missilecommand) |
+| **40** | [Pac-Man Championship](#40-pac-man-championship-pacman) | `pacman/` | 1980 Maze Dot Muncher | `WASD`/`Arrows` steer, `P` pause | [Guide](#40-pac-man-championship-pacman) |
+| **41** | [Peggle: Extreme Pachinko](#41-peggle-extreme-pachinko-peggle) | `peggle/` | Peg-Popping Physics Ball | `Mouse Aim`, `Left Click` launch ball | [Guide](#41-peggle-extreme-pachinko-peggle) |
+| **42** | [Picross Nonogram Studio](#42-picross-nonogram-studio-picross) | `picross/` | Picture Logic Number Cross | `Left Click` chisel, `Right Click` cross-out | [Guide](#42-picross-nonogram-studio-picross) |
+| **43** | [Space Cadet Pinball](#43-space-cadet-pinball-pinball) | `pinball/` | Windows 3D Table Simulation | `Z`/`Slash` flippers, `Space` pull plunger | [Guide](#43-space-cadet-pinball-pinball) |
+| **44** | [Pong 1972 Vector](#44-pong-1972-vector-pong) | `pong/` | Atari First Video Game | `W`/`S` (P1), `Up`/`Down` (P2), `1`/`2` modes | [Guide](#44-pong-1972-vector-pong) |
+| **45** | [8-Ball Pool Billiards](#45-8-ball-pool-billiards-pool) | `pool/` | Cue Stick Ball Physics | `Mouse Aim`, `Hold Drag` cue power, `Release` stroke | [Guide](#45-8-ball-pool-billiards-pool) |
+| **46** | [Puyo Puyo Tsu](#46-puyo-puyo-tsu-puyopuyo) | `puyopuyo/` | Sega Competitive Match-4 | `A`/`D` move, `W` rotate, `S` soft drop, `Space` hard drop | [Guide](#46-puyo-puyo-tsu-puyopuyo) |
+| **47** | [Q*bert Isometric](#47-qbert-isometric-qbert) | `qbert/` | 1982 Pyramid Tile Hopper | `Q`/`E`/`Z`/`C` or `WASD` hop diagonal steps | [Guide](#47-qbert-isometric-qbert) |
+| **48** | [OutRun Retro Racer](#48-outrun-retro-racer-racer) | `racer/` | Pseudo-3D Highway Racer | `A`/`D` steer, `W` accelerate, `S` brake, `Space` turbo | [Guide](#48-outrun-retro-racer-racer) |
+| **49** | [Ragdoll Physics Playground](#49-ragdoll-physics-playground-ragdoll) | `ragdoll/` | Interactive Particle Sandbox | `Mouse Drag` toss ragdoll, `Space` blast shockwave | [Guide](#49-ragdoll-physics-playground-ragdoll) |
+| **50** | [Matrix Digital Rain](#50-matrix-digital-rain-rain) | `rain/` | Cyberpunk Phosphor Visualizer | `1-5` color palette, `Space` freeze code streams | [Guide](#50-matrix-digital-rain-rain) |
+| **51** | [Othello / Reversi](#51-othello--reversi-reversi) | `reversi/` | Flanking Flips Strategy | `Mouse Click` place disc, `U` undo, `A` AI vs | [Guide](#51-othello--reversi-reversi) |
+| **52** | [Rodent's Revenge](#52-rodents-revenge-rodentsrevenge) | `rodentsrevenge/` | 1991 Windows Mouse & Cats | `WASD`/`Arrows` push blocks to trap cats into cheese | [Guide](#52-rodents-revenge-rodentsrevenge) |
+| **53** | [Scorched Earth Artillery](#53-scorched-earth-artillery-scorchedearth) | `scorchedearth/` | Destructible Voxel Artillery | `A`/`D` aim angle, `W`/`S` power, `Space` launch missile | [Guide](#53-scorched-earth-artillery-scorchedearth) |
+| **54** | [Shinobi Ninja Shadow](#54-shinobi-ninja-shadow-shinobi) | `shinobi/` | 1987 Sega Ninja Action | `A`/`D` run, `Space` jump, `J` shuriken, `K` katana slash | [Guide](#54-shinobi-ninja-shadow-shinobi) |
+| **55** | [Moon Patrol Side-Scroller](#55-moon-patrol-side-scroller-sidescroller) | `sidescroller/` | 1982 Moon Rover Buggy | `A`/`D` accelerate/brake, `Space` vertical jump, `J` cannons | [Guide](#55-moon-patrol-side-scroller-sidescroller) |
+| **56** | [Simon Memory Electronic](#56-simon-memory-electronic-simon) | `simon/` | 1978 Milton Bradley Audio | `1-4`/`Click` quadrant buttons, `R` restart | [Guide](#56-simon-memory-electronic-simon) |
+| **57** | [Sink the Submarine (Sub Chase)](#57-sink-the-submarine-sub-chase-sinksub) | `sinksub/` | 1982 Destroyer Depth Charges | `A`/`D` steer destroyer, `J`/`K` drop port/starboard depth charges | [Guide](#57-sink-the-submarine-sub-chase-sinksub) |
+| **58** | [SkiFree 1991 Windows](#58-skifree-1991-windows-skifree) | `skifree/` | Windows Slalom & Yeti Chase | `A`/`D` steer skis, `S` tuck speed, `Space` jump moguls | [Guide](#58-skifree-1991-windows-skifree) |
+| **59** | [Viper Snake Classic](#59-viper-snake-classic-snake) | `snake/` | Nokia Nibbles Snake | `WASD`/`Arrows` steer snake, `P` pause | [Guide](#59-viper-snake-classic-snake) |
+| **60** | [Sokoban Warehouse Master](#60-sokoban-warehouse-master-sokoban) | `sokoban/` | 1982 Warehouse Crate Puzzler | `WASD`/`Arrows` push crates, `U` undo, `R` restart room | [Guide](#60-sokoban-warehouse-master-sokoban) |
+| **61** | [Space Invaders 1978](#61-space-invaders-1978-spaceinvaders) | `spaceinvaders/` | Taito Fixed Wave Shooter | `A`/`D` move bunker base, `Space` laser cannon | [Guide](#61-space-invaders-1978-spaceinvaders) |
+| **62** | [Tamagotchi Virtual Pet](#62-tamagotchi-virtual-pet-tamagotchi) | `tamagotchi/` | 1996 Bandai Digital Companion | `A`/`B`/`C` device buttons to feed, play, clean, and cure | [Guide](#62-tamagotchi-virtual-pet-tamagotchi) |
+| **63** | [Tetris Soviet Master](#63-tetris-soviet-master-tetris) | `tetris/` | 1984 Falling Tetromino Legend | `A`/`D` move, `W`/`Up` rotate, `S` soft drop, `Space` hard drop | [Guide](#63-tetris-soviet-master-tetris) |
+| **64** | [Kingdom Tower Defense](#64-kingdom-tower-defense-towerdefense) | `towerdefense/` | Strategic Turret Defense | `1-4` select turret type, `Click` place on grid | [Guide](#64-kingdom-tower-defense-towerdefense) |
+| **65** | [Trivia Quest Master](#65-trivia-quest-master-trivia) | `trivia/` | Quiz Arcade Showdown | `1-4`/`Click` answer options, `50/50` lifeline | [Guide](#65-trivia-quest-master-trivia) |
+| **66** | [Nitro Typist Speed Test](#66-nitro-typist-speed-test-typing) | `typing/` | Arcade Typing Benchmark | `Type Keys` match stream words, `Backspace` correct | [Guide](#66-nitro-typist-speed-test-typing) |
 | **67** | [Vegas Jackpot Slots](#67-vegas-jackpot-slots-slots) | `slots/` | Casino / 777 Slots | `Space`/`Click` spin lever, `1-3` hold, `T` theme | [Guide](#67-vegas-jackpot-slots-slots) |
 | **68** | [Uno Master](#68-uno-master-uno) | `uno/` | Classic Color Match Card | `A`/`D` select card, `Space` play, `X` draw, `U` Uno! | [Guide](#68-uno-master-uno) |
 | **69** | [War Card Battle](#69-war-card-battle-war) | `war/` | 52-Card War Showdown | `Space`/`Click` flip duel, `A` auto-play, `R` restart | [Guide](#69-war-card-battle-war) |
@@ -107,7 +168,11 @@ v install sdl
 | **79** | [Panel de Pon / Puzzle League](#79-panel-de-pon-puzzle-league-paneldepon) | `paneldepon/` | Horizontal Swap Match-3 | `WASD`/`Arrows` move, `Space`/`J` swap, `LShift`/`K` raise | [Guide](#79-panel-de-pon-puzzle-league-paneldepon) |
 | **80** | [SameGame / Collapse](#80-samegame--collapse-samegame) | `samegame/` | Gem Cluster Collapse | `Mouse Hover` select, `Left Click` shatter, `T` mode toggle | [Guide](#80-samegame--collapse-samegame) |
 | **81** | [Mario Bros. Arcade](#81-mario-bros-arcade-mariobros) | `mariobros/` | Platformer Classic / 2P Co-op | `WASD`/`Space` (P1), `J`/`L`/`I` (P2), `P` pause | [Guide](#81-mario-bros-arcade-mariobros) |
-
+| **82** | [The Legend of Kage](#82-the-legend-of-kage-legendofkage) | `legendofkage/` | 1985 Taito Ninja Acrobatic Classic | `A`/`D` move, `Space`/`W` super leap, `J` sword, `K` shuriken | [Guide](#82-the-legend-of-kage-legendofkage) |
+| **83** | [Yie Ar Kung-Fu](#83-yie-ar-kung-fu-yiearkungfu) | `yiearkungfu/` | 1985 Konami 1v1 Fighting Legend | `WASD` move/jump, `J` punch, `K` kick, deflect weapons | [Guide](#83-yie-ar-kung-fu-yiearkungfu) |
+| **84** | [Kung-Fu Master (Spartan X)](#84-kung-fu-master-spartan-x-kungfu) | `kungfu/` | 1984 Irem Beat 'Em Up Classic | `WASD` move/jump/crouch, `J` punch, `K` kick, wiggle escape | [Guide](#84-kung-fu-master-spartan-x-kungfu) |
+| **85** | [Dr. Mario](#85-dr-mario-drmario) | `drmario/` | 1990 Falling Megavitamin Puzzle | `A`/`D` move, `S` soft drop, `Space` hard drop, `W`/`J` rotate CW, `K` CCW, `Shift` hold | [Guide](#85-dr-mario-drmario) |
+| **86** | [Yoshi's Cookie](#86-yoshis-cookie-yoshicookie) | `yoshicookie/` | 1992 Line-Sliding Bakery Puzzle | `WASD`/`Arrows` move, `Hold Space/J/Z` + `Move` shift row/col | [Guide](#86-yoshis-cookie-yoshicookie) |
 
 ---
 
@@ -209,24 +274,35 @@ v run battleship
 ---
 
 ### 5. Bejeweled Match-3 (`bejeweled/`)
-*Cascading Gem Match-3 with Explosive Flame & Hypercube Gems*
+*Modernized Match-3 with Star Lasers, Supernovas, Hypercube Singularity & Procedural BGM*
 
 ```bash
 v run bejeweled
 ```
 ![Bejeweled Match-3](screenshots/bejeweled.png)
 
-- **Objective**: Swap adjacent gems to form horizontal or vertical lines of 3 or more matching colors to clear them from the board and trigger gravity cascades.
+- **Objective**: Swap adjacent gems to form horizontal or vertical lines of 3 or more matching colors to score points, trigger explosive gravity cascades, and unleash high-energy celestial power gems!
+- **Game Modes (`M`)**:
+  - **Classic Mode**: Progressive level milestones with escalating point targets.
+  - **Lightning Speed Blitz**: 60-second speed challenge where triggering special gems extends remaining time (+4s Star, +5s Flame, +8s Supernova).
+  - **Zen Endless Mode**: Infinite relaxing meditation mode with ambient chime chords and zero game overs.
 - **Controls**:
-  - `Left Click` or `Mouse Drag`: Select and swap adjacent gems.
-  - `H`: Highlight a valid legal move hint.
-  - `M`: Switch between **Classic Mode** (Score Milestones) and **Time Attack Mode** (60s Blitz).
-  - `R`: Reset board.
-  - `S`: Toggle sound.
-- **Special Power Gems**:
-  - **Flame Gem (4-Match)**: Explodes a 3x3 grid area upon being matched, clearing 9 gems at once.
-  - **Hypercube (5-Match)**: Swapping with any adjacent gem obliterates every single gem of that color from the entire board!
-- **Pro Tip**: Focus your matches near the bottom of the grid to trigger cascading chain reactions that rack up massive multiplier combos automatically.
+  - `Mouse Click` / `Drag`: Select and swap adjacent gems.
+  - `WASD` / `Arrow Keys`: Move glowing keyboard cursor bracket.
+  - `Space` / `Enter` / `J` / `Z`: Select cursor gem or swap with adjacent gem.
+  - `U`: **Undo** last gem swap.
+  - `H` / `G`: Highlight a valid legal move hint.
+  - `T` / `B`: Cycle Procedural Soundtrack (**Cosmic Trance** / **Electro Rush** / **Zen Ambient** / **Off**).
+  - `M`: Switch Game Mode (**Classic** / **Lightning** / **Zen**).
+  - `S`: Toggle audio effects.
+  - `R`: Reset game.
+- **Special Power Gems & Combos**:
+  - **Flame Gem (4 in a line)**: Detonates a 3x3 surrounding grid shockwave with flame embers.
+  - **Star Gem (5 in T or L shape)**: Fires dual cross laser beams that clear the entire row and column simultaneously!
+  - **Hypercube (5 in a line)**: Swapping with any adjacent gem fires branching lightning electric arcs, vaporizing every gem of that color from the board.
+  - **Supernova (6+ in a line)**: Mega solar explosion combining a 3x3 shockwave with dual full-screen cross lasers!
+  - **Cosmic Singularity (Hypercube + Hypercube)**: Swapping two hypercubes together obliterates the entire 8x8 board in a single blast!
+- **Pro Tip**: Set up T and L intersections to forge Star Gems, then detonate them during high multiplier cascades for massive score bonuses.
 
 ---
 
@@ -2027,8 +2103,163 @@ v run mariobros
 
 ---
 
+## 82. The Legend of Kage (`legendofkage/`)
+*1985 Taito Acrobatic Ninja Classic & Feudal Japan Rescue Adventure*
+
+```bash
+v run legendofkage
+```
+![The Legend of Kage](screenshots/legendofkage.png)
+
+- **Goal**: Rescue Princess Kiri from warlord forces by leaping into ancient cedar tree canopies, scaling fortress battlements, parrying enemy shurikens in mid-air, and collecting Ninjutsu scrolls!
+- **Ninjutsu Magic Scrolls**:
+  - **Lightning (Raiko)**: Flashes the entire screen with thunder and electrocutes all on-screen enemies.
+  - **Shadow Clones (Bunshin)**: Spawns dual ninja afterimages that mirror your movement and unleash triple shurikens!
+  - **Fire Shield (Katon)**: Encircles Kage with orbiting fireballs that vaporize approaching enemies.
+  - **Hayate Speed Boost (Golden Garb)**: Grants blazing running speed and maximum leap altitude.
+- **Controls**:
+  - `A` / `D` or `Left` / `Right`: Move and aerial directional control
+  - `Space` or `W` / `Up`: Super Ninja High Leap (leap into tall trees and perch on branches)
+  - `J` or `Z`: Katana Slash (slices enemies and parries/deflects incoming shurikens & fireballs!)
+  - `K` or `X`: 8-Way Shuriken Throw
+  - `P` to pause, `M` to mute audio, `C` to toggle CRT scanlines, `R` to restart, `ESC` for title.
+
+---
+
+## 83. Yie Ar Kung-Fu (`yiearkungfu/`)
+*1985 Konami 1-on-1 Arcade & NES Fighting Pioneer*
+
+```bash
+v run yiearkungfu
+```
+![Yie Ar Kung-Fu](screenshots/yiearkungfu.png)
+
+- **Goal**: Take control of martial artist Oolong and defeat the 5 legendary Weapon Masters in the Dojo Temple to claim the title of Grand Master!
+- **The 5 Weapon Masters**:
+  - **Wang**: Bo Staff Master — attacks with long-range thrusts and low sweeps.
+  - **Tao**: Fireball Master — launches deadly fire breath projectiles.
+  - **Chen**: Chain Whip Master — strikes with a heavy metallic flail chain.
+  - **Lang**: Shuriken Fan Master — throws rapid steel stars with evasive backflips.
+  - **Mu**: Flying Somersault Master — executes aerial dive-bombs and flight kicks.
+- **16-Move Combat System**:
+  - `A` / `D` or `Left` / `Right`: Walk forward / backward
+  - `W` or `Up`: Jump straight or diagonal (combine with attacks for aerial kicks!)
+  - `S` or `Down`: Crouch and duck under high projectiles
+  - `J` or `Z`: Punch (High Punch with Up, Mid Punch, Low Punch with Down)
+  - `K` or `X`: Kick (High Kick with Up, Mid Kick, Crouch Sweep with Down, Flying Kick in mid-air)
+  - **Deflection**: Time your punches and kicks to knock away incoming shurikens, fireballs, and staff strikes!
+  - `P` to pause, `M` to mute audio, `C` to toggle CRT scanlines, `R` to restart, `ESC` for title.
+
+---
+
+## 84. Kung-Fu Master (Spartan X) (`kungfu/`)
+*1984 Irem / Nintendo Side-Scrolling Beat 'Em Up Legend*
+
+```bash
+v run kungfu
+```
+![Kung-Fu Master](screenshots/kungfu.png)
+
+- **Goal**: Fight through all 5 floors of the Devil's Pagoda to rescue Sylvia from crime boss Mr. X!
+- **The 5 Pagoda Floors & Bosses**:
+  - **Floor 1**: Stick Fighter (*Wang*) — wields a long-reaching wooden staff.
+  - **Floor 2**: Boomerang Fighter (*Tao*) — throws returning boomerangs at high and low trajectories.
+  - **Floor 3**: Giant Bruiser (*Chen*) — towering brawler with devastating heavy punches.
+  - **Floor 4**: Black Magician (*Lang*) — casts illusions, snakes, and fire apparitions.
+  - **Floor 5**: Gang Leader (*Mr. X*) — master martial artist with lightning-fast counter-attacks.
+- **Enemies & Hazards**:
+  - **Grippers**: Puddle upon you to drain your vitality. Wiggle `Left`/`Right` rapidly to shake them off!
+  - **Knife Throwers**: Hurl knives high and low. Duck or jump to dodge, or punch/kick the knives in mid-air!
+  - **Tom Toms & Falling Pots**: Acrobatic dwarfs and descending clay jars releasing snakes and fire-dragons.
+- **Controls**:
+  - `A` / `D` or `Left` / `Right`: Walk forward / backward
+  - `W` or `Up` / `Space`: Jump (combine with J/K for Jump Kick / Jump Punch)
+  - `S` or `Down`: Crouch (combine with J/K for Low Sweep / Low Punch)
+  - `J` or `Z`: Punch (200 pts)
+  - `K` or `X`: Kick (100 pts)
+  - `Left` / `Right` rapid alternating: Wiggle-escape from grabbing Grippers!
+  - `P` to pause, `M` to mute audio, `C` to toggle CRT scanlines, `R` to restart, `ESC` for title.
+
+---
+
+## 85. Dr. Mario (`drmario/`)
+*1990 Nintendo Classic Falling-Block Action Puzzle*
+
+```bash
+v run drmario
+```
+![Dr. Mario](screenshots/drmario.png)
+
+- **Goal**: Clear the 8x16 medicine bottle playing field by tossing 2-colored Megavitamin capsules to connect 4 or more matching color segments (Red, Yellow, Blue) in horizontal or vertical lines to eradicate all viruses!
+- **Core Mechanics**:
+  - **Viruses**: Red (Fever), Yellow (Chill), and Blue (Weird) viruses populate the bottle based on Level (0 to 20).
+  - **Megavitamin Capsules**: 2-colored pills that rotate clockwise/counter-clockwise with authentic wall kicks.
+  - **Cascading Gravity Physics**: When lines clear and pills split, unsupported pill halves drop into lower openings, triggering massive chain-reaction combo multipliers!
+  - **Microscope Petri Dish**: Animated giant dancing viruses on the left that disappear as their corresponding viruses are completely eradicated from the bottle.
+- **Modern Quality-of-Life Enhancements**:
+  - **Ghost Projection Shadow**: Translucent projection showing exact capsule landing position (Toggle with `G`).
+  - **Instant Hard Drop**: Slam capsules directly to the bottom with impact particles & bonus points (`Space` / `Enter`).
+  - **Capsule Hold / Stash Queue**: Stash an upcoming capsule or swap with current capsule (`LShift` / `RShift` / `H`).
+  - **Dual Iconic Soundtracks**: Authentic procedural **Fever** (funk groove) and **Chill** (smooth latin jazz) synthesizers (Cycle with `T` or `B`).
+  - **Title Screen Level Select**: Start on any level from `00` to `20` with `Left` / `Right` arrow keys.
+- **Controls**:
+  - `A` / `D` or `Left` / `Right`: Move capsule horizontally
+  - `S` or `Down`: Soft drop (accelerate descent)
+  - `Space` / `Enter`: Instant Hard Drop
+  - `W` / `Up` / `J` / `Z`: Rotate capsule Clockwise
+  - `K` or `X`: Rotate capsule Counter-Clockwise
+  - `LShift` / `RShift` / `H`: Hold capsule queue (stash / swap)
+  - `G`: Toggle Ghost landing projection
+  - `T` / `B`: Cycle soundtrack (FEVER / CHILL / OFF)
+  - `1` / `2` / `3`: Change drop speed (LOW, MED, HI)
+  - `P` to pause, `M` to mute audio, `C` to toggle CRT scanlines, `R` to restart, `ESC` for title.
+
+---
+
+## 86. Yoshi's Cookie (`yoshicookie/`)
+*1992 Nintendo / BPS Classic Line-Sliding Bakery Puzzle*
+
+```bash
+v run yoshicookie
+```
+![Yoshi's Cookie](screenshots/yoshicookie.png)
+
+- **Goal**: Clear the 8x8 baking tray by shifting complete rows and columns so that an entire horizontal row or vertical column is filled with the exact same cookie type!
+- **Cookie Varieties**:
+  - 🍩 **Donut**: Golden glazed ring with strawberry icing and rainbow sprinkles.
+  - ❤️ **Heart**: Frosted pink strawberry sugar cookie.
+  - 💎 **Diamond**: Crisp almond wafer with waffle hash marks.
+  - 🔲 **Checkered**: Two-tone chocolate and vanilla butter square.
+  - 🌙 **Crescent**: Golden flaky vanilla croissant.
+  - ⭐️ **Yoshi Star**: Green dino star wildcard cookie.
+- **Core Mechanics**:
+  - **Wrap-Around Tile Sliding**: Grabbing a row or column and moving shifts all cookies across with seamless wrap-around physics.
+  - **Line Matching**: Full matching rows or columns shatter into delicious crumb bursts and clear from the tray.
+  - **Compacting & Combos**: Remaining cookies settle inward toward the center. Cascading matches yield compounding score multipliers!
+  - **Conveyor Timer Threat**: A kitchen timer gauge counts down. When empty, a new row or column of cookies enters from the top or right. If cookies overflow past the 8x8 baking pan border, it's Game Over!
+- **Modern Quality-of-Life Enhancements**:
+  - **Reserve Cookie Plate**: Stash a cookie or swap with the porcelain reserve dish on the countertop (`LShift` / `RShift` / `H` or direct mouse click).
+  - **Direct Shift Keys**: Instant `I` / `J` / `K` / `L` shift keys without needing to hold a grab button.
+  - **Mouse Drag & Perimeter Arrow Buttons**: Click and drag cookies directly, or click the perimeter directional buttons ($\blacktriangleleft \blacktriangleright \blacktriangle \blacktriangledown$).
+  - **Instant Conveyor Rush**: Manual conveyor push (`Space` / `Enter`) granting +50 bonus points.
+  - **Dual Iconic Soundtracks**: Authentic procedural **Type A (Bakery Ragtime)** and **Type B (Fast Bouncy Swing)** synthesizer tracks (Cycle with `T` or `B`).
+  - **Title Screen Round Selector**: Choose starting round from `01` to `10` with `Left` / `Right` arrows.
+- **Controls**:
+  - **Mouse**: Click & Drag cookies, or click perimeter arrow buttons ($\blacktriangleleft \blacktriangleright \blacktriangle \blacktriangledown$), or click the Reserve Plate.
+  - **Direct Shift**: `I` / `J` / `K` / `L` to shift row or column instantly.
+  - **Classic Movement**: `W` / `A` / `S` / `D` or `Arrow Keys` to move cursor.
+  - **Shift with Grab**: Hold `Z` + `WASD` / `Arrows` to shift row or column.
+  - **Reserve Plate**: `LShift` / `RShift` / `H` to stash or swap active cookie.
+  - **Conveyor Fast Push**: `Space` / `Enter` for instant manual push (+50 pts).
+  - **Soundtrack**: `T` / `B` to cycle music (Type A / Type B / Off).
+  - `1` / `2` / `3`: Set conveyor speed (LOW, MED, HI)
+  - `P` to pause, `M` to mute audio, `C` to toggle CRT scanlines, `R` to restart, `ESC` for title.
+
+---
+
 ## 📜 License & Credits
 
 Built with ❤️ in [V](https://vlang.io/) using [SDL2](https://www.libsdl.org/) and [vlang/sdl](https://github.com/vlang/sdl).
 All game logic, physics engines, procedural sound synthesizers, and vector graphics are custom-built for high performance and zero external binary dependencies.
+
 

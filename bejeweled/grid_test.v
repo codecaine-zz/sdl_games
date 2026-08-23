@@ -52,3 +52,26 @@ fn test_hint_finding() {
 	assert ok
 	assert is_adjacent(p1.r, p1.c, p2.r, p2.c)
 }
+
+fn test_special_gems_and_bgm_cycle() {
+	mut sm := new_sound_manager()
+	assert sm.bgm_type == .cosmic_trance
+	sm.cycle_bgm()
+	assert sm.bgm_type == .electro_rush
+	sm.cycle_bgm()
+	assert sm.bgm_type == .zen_ambient
+	sm.cycle_bgm()
+	assert sm.bgm_type == .off
+	sm.cycle_bgm()
+	assert sm.bgm_type == .cosmic_trance
+
+	mut g := Grid{}
+	g.cells[2][3] = Gem{kind: 1, special: .flame}
+	g.cells[2][4] = Gem{kind: 2, special: .star}
+	g.cells[2][5] = Gem{kind: 3, special: .hypercube}
+	g.cells[2][6] = Gem{kind: 4, special: .supernova}
+	assert g.cells[2][3].special == .flame
+	assert g.cells[2][4].special == .star
+	assert g.cells[2][5].special == .hypercube
+	assert g.cells[2][6].special == .supernova
+}

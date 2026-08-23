@@ -5,10 +5,13 @@ import rand
 const grid_size = 8
 const num_gem_types = 7
 
-enum SpecialType {
+pub enum SpecialType {
 	none
 	flame
+	star
 	hypercube
+	supernova
+	time_bonus
 }
 
 struct Point {
