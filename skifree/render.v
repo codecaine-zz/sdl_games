@@ -420,7 +420,7 @@ fn render_ski_hud(renderer &sdl.Renderer, g SkiGame, win_w int) {
 	draw_text(renderer, 260, 12, 'TIME: ${min:02d}:${sec:02d}', 1, Color{20, 20, 20, 255})
 	draw_text(renderer, 390, 12, 'SCORE: ${g.score}', 1, Color{180, 20, 20, 255})
 	draw_text(renderer, 530, 12, 'MODE: ${mode_str} [M]', 1, Color{0, 80, 180, 255})
-	draw_text(renderer, win_w - 140, 12, 'RESTART: [R]', 1, Color{80, 80, 80, 255})
+	draw_text(renderer, win_w - 140, 12, 'RESTART: [R]  [F11] Fullscreen', 1, Color{80, 80, 80, 255})
 
 	// Animated In-Game Banner Message
 	if g.banner_timer > 0.0 && g.banner_text != '' {

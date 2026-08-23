@@ -100,7 +100,7 @@ fn render_galaga_game(renderer &sdl.Renderer, mut g GalagaGame) {
 		draw_text_centered(renderer, 400, 180, "GALAGA ARCADE", 4, Color{ r: 255, g: 50, b: 50, a: 255 })
 		draw_text_centered(renderer, 400, 240, "CYBER SPACE SHOOTER", 2, Color{ r: 0, g: 200, b: 255, a: 255 })
 		draw_text_centered(renderer, 400, 340, "PRESS SPACE TO START", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
-		draw_text_centered(renderer, 400, 400, "CONTROLS: A/D OR ARROWS MOVE | SPACE FIRE", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
+		draw_text_centered(renderer, 400, 400, "CONTROLS: A/D OR ARROWS MOVE | SPACE FIRE | F11: Fullscreen", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
 		draw_text_centered(renderer, 400, 420, "DUAL CANNON RESCUE | M MUTE | R RESET", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
 	} else if g.state == .game_over {
 		draw_text_centered(renderer, 400, 240, "GAME OVER", 4, Color{ r: 255, g: 50, b: 50, a: 255 })

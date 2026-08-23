@@ -580,7 +580,7 @@ fn render_title_screen(renderer &sdl.Renderer, mut g YoshiCookieGame) {
 		Color{ r: 255, g: 215, b: 110, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
 	draw_text_centered_shadow(renderer, 400, 392, 'T / B : SWITCH SOUNDTRACK (TYPE A / TYPE B / OFF)', 1,
 		Color{ r: 110, g: 255, b: 140, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
-	draw_text_centered_shadow(renderer, 400, 420, '[P] PAUSE  [M] MUTE AUDIO  [C] CRT SCANLINES  [R] RESTART', 1,
+	draw_text_centered_shadow(renderer, 400, 420, '[P] PAUSE  [M] MUTE AUDIO  [C] CRT SCANLINES  [R] RESTART  [F11] Fullscreen', 1,
 		Color{ r: 180, g: 180, b: 190, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
 
 	draw_text_centered_shadow(renderer, 400, 560, '(C) 1992 NINTENDO / BPS', 1,

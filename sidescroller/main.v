@@ -35,7 +35,7 @@ fn (app &App) init() bool {
 
 	mut mutable_app := unsafe { &App(app) }
 
-	window_flags := u32(sdl.WindowFlags.shown)
+	window_flags := u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	mutable_app.window = sdl.create_window('Cyberpunk Vanguard - Advanced 2D Side-Scroller'.str,
 		sdl.windowpos_centered, sdl.windowpos_centered, 960, 540, window_flags)
 
@@ -51,6 +51,8 @@ fn (app &App) init() bool {
 		eprintln('Failed to create renderer')
 		return false
 	}
+
+	sdl.render_set_logical_size(mutable_app.renderer, 960, 540)
 
 	sdl.set_render_draw_blend_mode(mutable_app.renderer, .blend)
 	return true
@@ -70,7 +72,9 @@ fn (app &App) run() {
 				}
 				.keydown {
 					sym := event.key.keysym.sym
-					if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(mutable_app.window)
+					} else if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) {
 						mutable_app.key_left = true
 					} else if sym == int(sdl.KeyCode.right) || sym == int(sdl.KeyCode.d) {
 						mutable_app.key_right = true
@@ -189,5 +193,14 @@ fn main() {
 	mut app := new_app()
 	if app.init() {
 		app.run()
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

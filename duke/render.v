@@ -532,7 +532,7 @@ pub fn render_duke_game(renderer &sdl.Renderer, game &DukeGame, screen_w int, sc
 	draw_text(renderer, screen_w - 240, 30, 'LIVES: ${game.player.lives} | SECTOR ${game.level_num}', 1, Color{r: 140, g: 200, b: 255})
 
 	// Controls Footer Hint
-	draw_text_centered(renderer, screen_w / 2, screen_h - 18, '[A/D/ARROWS] MOVE  [W/UP] CLIMB/AIM  [S/DOWN] CROUCH  [SPACE] JUMP  [CTRL/J/F] FIRE  [R] RESTART', 1, Color{r: 160, g: 180, b: 220})
+	draw_text_centered(renderer, screen_w / 2, screen_h - 18, '[A/D/ARROWS] MOVE  [W/UP] CLIMB/AIM  [S/DOWN] CROUCH  [SPACE] JUMP  [CTRL/J/F] FIRE  [R] RESTART  [F11] Fullscreen', 1, Color{r: 160, g: 180, b: 220})
 
 	// Mission Debrief / Victory / Game Over Overlays
 	if game.state == .sector_debrief || game.state == .game_won || game.state == .game_over {

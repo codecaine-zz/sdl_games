@@ -226,7 +226,7 @@ pub fn draw_fire_game(renderer &sdl.Renderer, game &FireGame) {
 	draw_rect(renderer, 60, 480, 200, 75, Color{ r: 100, g: 90, b: 70 })
 	draw_text_centered(renderer, 160, 492, 'GAME A / B', 1, g_lcd_ink)
 	draw_text_centered(renderer, 160, 510, '[1] Game A  [2] Game B', 1, g_lcd_ink)
-	draw_text_centered(renderer, 160, 530, '[M] Toggle Sound', 1, g_lcd_ink)
+	draw_text_centered(renderer, 160, 530, '[M] Toggle Sound  [F11] Fullscreen', 1, g_lcd_ink)
 
 	fill_rect(renderer, 280, 480, 240, 75, Color{ r: 200, g: 180, b: 140 })
 	draw_rect(renderer, 280, 480, 240, 75, Color{ r: 100, g: 90, b: 70 })
@@ -246,7 +246,7 @@ pub fn draw_fire_game(renderer &sdl.Renderer, game &FireGame) {
 		}
 		.game_over {
 			draw_text_centered(renderer, 640, 510, 'GAME OVER!', 2, g_accent_red)
-			draw_text_centered(renderer, 640, 532, 'PRESS [SPACE] TO RESTART', 1, g_lcd_ink)
+			draw_text_centered(renderer, 640, 532, 'PRESS [SPACE] TO RESTART  [F11] Fullscreen', 1, g_lcd_ink)
 		}
 	}
 }

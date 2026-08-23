@@ -306,7 +306,7 @@ fn render_breakout_game(renderer &sdl.Renderer, game &BreakoutGame, particles []
 		})
 		draw_text_centered(renderer, world_w / 2, 280, 'FINAL SCORE: ${game.score}', 2,
 			Color{r: 255, g: 255, b: 255})
-		draw_text_centered(renderer, world_w / 2, 320, 'PRESS [R] TO RESTART', 2, Color{
+		draw_text_centered(renderer, world_w / 2, 320, 'PRESS [R] TO RESTART  [F11] Fullscreen', 2, Color{
 			r: 0
 			g: 255
 			b: 200

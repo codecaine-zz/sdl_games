@@ -109,7 +109,7 @@ fn main() {
 		sdl.windowpos_centered,
 		800,
 		600,
-		u32(sdl.WindowFlags.shown)
+		u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	)
 	if unsafe { window == nil } {
 		eprintln('Failed to create window')
@@ -123,6 +123,7 @@ fn main() {
 		return
 	}
 	defer { sdl.destroy_renderer(renderer) }
+	sdl.render_set_logical_size(renderer, 800, 600)
 
 	mut app := new_app()
 	app.window = window
@@ -194,7 +195,9 @@ fn main() {
 				}
 				.keydown {
 					sym := event.key.keysym.sym
-					if sym == int(sdl.KeyCode._1) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(window)
+					} else if sym == int(sdl.KeyCode._1) {
 						app.game.load_arena(.funhouse)
 					} else if sym == int(sdl.KeyCode._2) {
 						app.game.load_arena(.staircase)
@@ -251,5 +254,14 @@ fn main() {
 
 		sdl.render_present(app.renderer)
 		sdl.delay(10)
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

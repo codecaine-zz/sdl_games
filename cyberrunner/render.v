@@ -579,7 +579,7 @@ fn draw_hud(mut app App) {
 			size: 14
 		})
 
-		draw_text_centered(app, card_y + 250, '[M] : Sound  |  [P] : Pause  |  [CMD+Q] / [ESC] : Quit', gg.TextCfg{
+		draw_text_centered(app, card_y + 250, '[M] : Sound  |  [P] : Pause  |  [CMD+Q] / [ESC] : Quit | F11: Fullscreen', gg.TextCfg{
 			color: gg.white
 			size: 14
 		})
@@ -634,7 +634,7 @@ fn draw_hud(mut app App) {
 			size: 17
 		})
 
-		draw_text_centered(app, card_y + 240, 'PRESS [R] OR [SPACE] TO RESTART', gg.TextCfg{
+		draw_text_centered(app, card_y + 240, 'PRESS [R] OR [SPACE] TO RESTART  [F11] Fullscreen', gg.TextCfg{
 			color: color_neon_green
 			size: 20
 			bold: true

@@ -75,7 +75,7 @@ fn (mut app App) init_sdl() bool {
 		sdl.windowpos_centered,
 		800,
 		680,
-		u32(sdl.WindowFlags.shown)
+		u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	)
 
 	if unsafe { app.window == nil } {
@@ -88,6 +88,8 @@ fn (mut app App) init_sdl() bool {
 		eprintln('Failed to create renderer')
 		return false
 	}
+
+	sdl.render_set_logical_size(app.renderer, 800, 680)
 
 	sdl.set_render_draw_blend_mode(app.renderer, sdl.BlendMode.blend)
 	return true
@@ -107,7 +109,9 @@ fn (mut app App) handle_events() bool {
 			}
 			.keydown {
 				sym := ev.key.keysym.sym
-				if sym == int(sdl.KeyCode.a) || sym == int(sdl.KeyCode.left) {
+				if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(app.window)
+					} else if sym == int(sdl.KeyCode.a) || sym == int(sdl.KeyCode.left) {
 					app.key_left = true
 				} else if sym == int(sdl.KeyCode.d) || sym == int(sdl.KeyCode.right) {
 					app.key_right = true
@@ -222,4 +226,13 @@ fn main() {
 	}
 	mut app := new_app()
 	app.run()
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
+	}
 }

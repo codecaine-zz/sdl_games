@@ -835,7 +835,7 @@ pub fn (g &Game) render_hud(renderer &sdl.Renderer) {
 		.hard { 'HARD' }
 		.inferno { 'INFERNO' }
 	}
-	draw_text(renderer, 20, win_height - 24, 'WASD: MOVE  [SPACE] ULT  [H] SPEED: ${spd_str}  [D] DIFF: ${diff_str}  [T/B] ${bgm_name}', 1, Color{r: 170, g: 190, b: 230})
+	draw_text(renderer, 20, win_height - 24, 'WASD: MOVE  [SPACE] ULT  [H] SPEED: ${spd_str}  [D] DIFF: ${diff_str}  [T/B] ${bgm_name}  [F11] Fullscreen', 1, Color{r: 170, g: 190, b: 230})
 }
 
 // Level Up Card Selection Modal
@@ -1009,7 +1009,7 @@ pub fn (g &Game) render_character_select(renderer &sdl.Renderer) {
 	draw_text_centered(renderer, win_width / 2, 555, coop_str, 2, Color{r: 255, g: 220, b: 80})
 	draw_text_centered(renderer, win_width / 2, 595, diff_str, 2, diff_col)
 	draw_text_centered(renderer, win_width / 2, 635, 'PRESS [1-4] TO SELECT HERO & START SURVIVING', 2, Color{r: 255, g: 255, b: 255})
-	draw_text_centered(renderer, win_width / 2, 675, 'WASD/ARROWS: MOVE  [SPACE] ULTIMATE  [H] SPEED  [D] DIFF', 1, Color{r: 180, g: 195, b: 230})
+	draw_text_centered(renderer, win_width / 2, 675, 'WASD/ARROWS: MOVE  [SPACE] ULTIMATE  [H] SPEED  [D] DIFF  [F11] Fullscreen', 1, Color{r: 180, g: 195, b: 230})
 }
 
 // Game Over Banner

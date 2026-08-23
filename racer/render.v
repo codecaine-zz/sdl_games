@@ -192,6 +192,6 @@ fn render_racer_hud(renderer &sdl.Renderer, game &RacerGame) {
 		sdl.render_fill_rect(renderer, &full_rect)
 
 		draw_text_centered(renderer, 480, 240, 'RACE FINISHED!', 5, Color{r: 255, g: 215, b: 0})
-		draw_text_centered(renderer, 480, 320, 'PRESS [R] TO RESTART', 2, Color{r: 255, g: 255, b: 255})
+		draw_text_centered(renderer, 480, 320, 'PRESS [R] TO RESTART  [F11] Fullscreen', 2, Color{r: 255, g: 255, b: 255})
 	}
 }

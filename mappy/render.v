@@ -518,7 +518,7 @@ fn draw_hud(renderer &sdl.Renderer, g &GameEngine) {
 	}
 
 	// Controls reminder
-	draw_text(renderer, 600, 562, '[SPACE] DOOR  [P] PAUSE', 1, Color{ r: 150, g: 150, b: 150 })
+	draw_text(renderer, 600, 562, '[SPACE] DOOR  [P] PAUSE  [F11] Fullscreen', 1, Color{ r: 150, g: 150, b: 150 })
 }
 
 fn draw_title_screen(renderer &sdl.Renderer, g &GameEngine) {
@@ -593,8 +593,8 @@ fn draw_title_screen(renderer &sdl.Renderer, g &GameEngine) {
 	// Start Prompts
 	draw_text_centered(renderer, 400, 450, 'PRESS [SPACE] OR [ENTER] TO START GAME', 2, Color{ r: 50, g: 255, b: 100 })
 	draw_text_centered(renderer, 400, 485, 'PRESS [5] OR [B] FOR BALLOON BONUS STAGE', 2, Color{ r: 255, g: 220, b: 50 })
-	draw_text_centered(renderer, 400, 525, 'CONTROLS: [A]/[D] OR ARROWS TO MOVE  |  [SPACE]/[W] OPEN DOOR', 1, Color{ r: 180, g: 180, b: 190 })
-	draw_text_centered(renderer, 400, 550, '[D] CYCLE DIFFICULTY  |  [M] SOUND  |  [P] PAUSE  |  [R] RESTART', 1, Color{ r: 140, g: 140, b: 150 })
+	draw_text_centered(renderer, 400, 525, 'CONTROLS: [A]/[D] OR ARROWS TO MOVE  |  [SPACE]/[W] OPEN DOOR | F11: Fullscreen', 1, Color{ r: 180, g: 180, b: 190 })
+	draw_text_centered(renderer, 400, 550, '[D] CYCLE DIFFICULTY  |  [M] SOUND  |  [P] PAUSE  |  [R] RESTART | F11: Fullscreen', 1, Color{ r: 140, g: 140, b: 150 })
 }
 
 fn draw_pause_screen(renderer &sdl.Renderer) {

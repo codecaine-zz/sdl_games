@@ -247,7 +247,7 @@ fn render_donkeykong_game(renderer &sdl.Renderer, mut g DonkeyKongGame) {
 		draw_text_centered(renderer, 400, 180, "DONKEY KONG", 4, Color{ r: 255, g: 40, b: 60, a: 255 })
 		draw_text_centered(renderer, 400, 240, "VERTICAL LADDER PLATFORMER", 2, Color{ r: 255, g: 215, b: 0, a: 255 })
 		draw_text_centered(renderer, 400, 340, "PRESS SPACE TO START", 2, Color{ r: 255, g: 255, b: 255, a: 255 })
-		draw_text_centered(renderer, 400, 400, "CONTROLS: WASD / ARROWS CLIMB & MOVE | SPACE JUMP", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
+		draw_text_centered(renderer, 400, 400, "CONTROLS: WASD / ARROWS CLIMB & MOVE | SPACE JUMP | F11: Fullscreen", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
 		draw_text_centered(renderer, 400, 420, "CLIMB LADDERS, DODGE BARRELS & FIREBALLS TO RESCUE PAULINE!", 1, Color{ r: 180, g: 180, b: 180, a: 255 })
 	} else if g.state == .victory {
 		draw_text_centered(renderer, 400, 220, "PAULINE RESCUED! VICTORY!", 3, Color{ r: 0, g: 255, b: 100, a: 255 })

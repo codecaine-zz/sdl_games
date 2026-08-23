@@ -143,5 +143,5 @@ pub fn render_airhockey_game(renderer &sdl.Renderer, mut g AirHockeyGame, w int,
 	}
 
 	// Bottom Controls Help
-	draw_text_centered(renderer, w / 2, h - 22, 'P1: Mouse/WASD | P2: Arrows/IJKL | M: Mode | Tab: AI Diff | R: Reset | V: Sound', 1, Color{r:160,g:180,b:200})
+	draw_text_centered(renderer, w / 2, h - 22, 'P1: Mouse/WASD | P2: Arrows/IJKL | M: Mode | Tab: AI Diff | R: Reset | V: Sound | F11: Fullscreen', 1, Color{r:160,g:180,b:200})
 }

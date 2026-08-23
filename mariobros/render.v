@@ -890,7 +890,7 @@ fn render_title_screen(renderer &sdl.Renderer, mut g MarioBrosGame) {
 		Color{ r: 110, g: 255, b: 130, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
 	draw_text_centered_shadow(renderer, 400, 470, 'HIT THE POW BLOCK IN EMERGENCIES (3 USES)', 1,
 		Color{ r: 100, g: 210, b: 255, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
-	draw_text_centered_shadow(renderer, 400, 495, '[P] PAUSE  [M] MUTE  [C] CRT SCANLINES  [R] RESET', 1,
+	draw_text_centered_shadow(renderer, 400, 495, '[P] PAUSE  [M] MUTE  [C] CRT SCANLINES  [R] RESET  [F11] Fullscreen', 1,
 		Color{ r: 255, g: 215, b: 110, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
 
 	draw_text_centered_shadow(renderer, 400, 560, '(C) 1983 NINTENDO ARCADE CLASSIC', 1,

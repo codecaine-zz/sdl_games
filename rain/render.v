@@ -182,6 +182,6 @@ fn render_rain_game(renderer &sdl.Renderer, mut game RainGame) {
 
 	draw_text(renderer, 20, game.screen_h - 82, 'CONTROLS & SHORTCUTS:', 1, Color{r: 0, g: 220, b: 255})
 	draw_text(renderer, 20, game.screen_h - 68, '[1-5] Rain Intensity Presets (Drizzle -> Typhoon -> M4 Armageddon)', 1, Color{r: 220, g: 230, b: 250})
-	draw_text(renderer, 20, game.screen_h - 54, '[WASD/Arrows] Wind Force | [TAB] Weather Theme | [M] Sound | [B] Mode', 1, Color{r: 220, g: 230, b: 250})
+	draw_text(renderer, 20, game.screen_h - 54, '[WASD/Arrows] Wind Force | [TAB] Weather Theme | [M] Sound | [B] Mode | F11: Fullscreen', 1, Color{r: 220, g: 230, b: 250})
 	draw_text(renderer, 20, game.screen_h - 40, '[[] / []] or [- / +] Adjust Allocated RAM (64MB -> 32GB) | [Up/Dn] Drops', 1, Color{r: 255, g: 220, b: 100})
 }

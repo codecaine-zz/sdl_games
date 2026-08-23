@@ -212,7 +212,7 @@ fn main() {
 	mut app := new_app()
 
 	app.window = sdl.create_window('Breakout Pro: Brick Breaker Overdrive'.str, sdl.windowpos_centered,
-		sdl.windowpos_centered, world_w, world_h, u32(sdl.WindowFlags.shown))
+		sdl.windowpos_centered, world_w, world_h, u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable))
 	if unsafe { app.window == nil } {
 		eprintln('Failed to create SDL Window')
 		return
@@ -229,6 +229,7 @@ fn main() {
 	defer {
 		sdl.destroy_renderer(app.renderer)
 	}
+	sdl.render_set_logical_size(app.renderer, world_w, world_h)
 
 	mut last_ticks := sdl.get_ticks()
 
@@ -272,7 +273,9 @@ fn main() {
 				}
 				.keydown {
 					sym := event.key.keysym.sym
-					if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) || sym == int(sdl.KeyCode.h) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(app.window)
+					} else if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) || sym == int(sdl.KeyCode.h) {
 						app.key_left = true
 					} else if sym == int(sdl.KeyCode.right) || sym == int(sdl.KeyCode.d) || sym == int(sdl.KeyCode.l) {
 						app.key_right = true
@@ -335,5 +338,14 @@ fn main() {
 
 		sdl.render_present(app.renderer)
 		sdl.delay(16)
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

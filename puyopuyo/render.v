@@ -239,7 +239,7 @@ pub fn render_puyo_game(renderer &sdl.Renderer, game &PuyoGame, win_w int, win_h
 	draw_text(renderer, board_x + board_w + 40, 390, '[X] ROTATE CCW', 1, Color{r: 160, g: 180, b: 220})
 	draw_text(renderer, board_x + board_w + 40, 410, '[S / DOWN] FAST DROP', 1, Color{r: 160, g: 180, b: 220})
 	draw_text(renderer, board_x + board_w + 40, 430, '[SPACE] HARD DROP', 1, Color{r: 160, g: 180, b: 220})
-	draw_text(renderer, board_x + board_w + 40, 450, '[R] RESTART  [M] SOUND', 1, Color{r: 160, g: 180, b: 220})
+	draw_text(renderer, board_x + board_w + 40, 450, '[R] RESTART  [M] SOUND  [F11] Fullscreen', 1, Color{r: 160, g: 180, b: 220})
 
 	// Game Over Modal
 	if game.state == .game_over {

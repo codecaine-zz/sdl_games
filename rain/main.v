@@ -117,7 +117,7 @@ fn main() {
 		sdl.windowpos_centered,
 		960,
 		640,
-		u32(sdl.WindowFlags.shown)
+		u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	)
 	if unsafe { app.window == nil } {
 		eprintln('Failed to create SDL Window')
@@ -134,6 +134,7 @@ fn main() {
 		return
 	}
 	defer { sdl.destroy_renderer(app.renderer) }
+	sdl.render_set_logical_size(app.renderer, 960, 640)
 
 	app.last_ticks = sdl.get_ticks()
 	mut running := true
@@ -195,7 +196,9 @@ fn main() {
 				}
 				.keydown {
 					sym := ev.key.keysym.sym
-					if sym == int(sdl.KeyCode.escape) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(app.window)
+					} else if sym == int(sdl.KeyCode.escape) {
 						running = false
 					} else if sym == int(sdl.KeyCode.tab) {
 						app.game.cycle_theme()
@@ -262,5 +265,14 @@ fn main() {
 		if frame_time < 16 {
 			sdl.delay(u32(16 - frame_time))
 		}
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

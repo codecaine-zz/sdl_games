@@ -27,7 +27,7 @@ fn (app &App) init() bool {
 
 	mut mutable_app := unsafe { &App(app) }
 
-	window_flags := u32(sdl.WindowFlags.shown)
+	window_flags := u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	mutable_app.window = sdl.create_window('CyberType - Neon Arcade Space Typist'.str,
 		sdl.windowpos_centered, sdl.windowpos_centered, 800, 600, window_flags)
 
@@ -43,6 +43,8 @@ fn (app &App) init() bool {
 		eprintln('Failed to create renderer')
 		return false
 	}
+
+	sdl.render_set_logical_size(mutable_app.renderer, 800, 600)
 
 	sdl.set_render_draw_blend_mode(mutable_app.renderer, .blend)
 	sdl.start_text_input()
@@ -93,7 +95,9 @@ fn (app &App) run() {
 					sym := event.key.keysym.sym
 
 					// Global shortcuts that don't collide with typing
-					if sym == int(sdl.KeyCode.f1) || sym == int(sdl.KeyCode.pause) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(mutable_app.window)
+					} else if sym == int(sdl.KeyCode.f1) || sym == int(sdl.KeyCode.pause) {
 						if mutable_app.game.state == .playing {
 							mutable_app.game.state = .paused
 						} else if mutable_app.game.state == .paused {
@@ -177,5 +181,14 @@ fn main() {
 	mut app := new_app()
 	if app.init() {
 		app.run()
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

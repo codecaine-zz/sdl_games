@@ -759,7 +759,7 @@ fn draw_hud_and_announcements(renderer &sdl.Renderer, sx int, sy int, g &WarGame
 	sdl.set_render_draw_color(renderer, 60, 85, 140, 255)
 	sdl.render_draw_rect(renderer, &bar_rect)
 
-	draw_text_centered(renderer, 400 + sx, 574 + sy, '[SPACE/CLICK] BATTLE | [A] AUTO-PLAY | [R] RESTART | [M] SOUND', 1, Color{ r: 215, g: 235, b: 255 })
+	draw_text_centered(renderer, 400 + sx, 574 + sy, '[SPACE/CLICK] BATTLE | [A] AUTO-PLAY | [R] RESTART | [M] SOUND | F11: Fullscreen', 1, Color{ r: 215, g: 235, b: 255 })
 
 	// War Celebration Banner
 	if g.celebration != '' && g.phase != .game_over {

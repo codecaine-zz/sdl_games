@@ -80,7 +80,7 @@ fn main() {
 		sdl.windowpos_centered,
 		800,
 		600,
-		u32(sdl.WindowFlags.shown)
+		u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	)
 	if unsafe { window == nil } {
 		return
@@ -92,6 +92,7 @@ fn main() {
 		return
 	}
 	defer { sdl.destroy_renderer(renderer) }
+	sdl.render_set_logical_size(renderer, 800, 600)
 
 	mut game := new_galaga_game()
 
@@ -107,7 +108,9 @@ fn main() {
 				}
 				.keydown {
 					sym := event.key.keysym.sym
-					if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(window)
+					} else if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) {
 						game.key_left = true
 					} else if sym == int(sdl.KeyCode.right) || sym == int(sdl.KeyCode.d) {
 						game.key_right = true
@@ -154,5 +157,14 @@ fn main() {
 		render_galaga_game(renderer, mut game)
 
 		sdl.delay(16)
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

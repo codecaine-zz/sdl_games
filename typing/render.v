@@ -298,7 +298,7 @@ fn draw_hud(renderer &sdl.Renderer, g &GameEngine) {
 	draw_text(renderer, 540, 568, combo_txt, 2, combo_col)
 
 	// Sound & Pause Hint
-	draw_text(renderer, 690, 570, '[ESC] PAUSE', 1, Color{ r: 130, g: 140, b: 160 })
+	draw_text(renderer, 690, 570, '[ESC] PAUSE  [F11] Fullscreen', 1, Color{ r: 130, g: 140, b: 160 })
 }
 
 fn draw_title_screen(renderer &sdl.Renderer, g &GameEngine) {
@@ -368,7 +368,7 @@ fn draw_title_screen(renderer &sdl.Renderer, g &GameEngine) {
 	// Start Prompts
 	draw_text_centered(renderer, 400, 455, 'PRESS [SPACE] OR [ENTER] TO LAUNCH SHIP', 2, Color{ r: 0, g: 255, b: 160 })
 	draw_text_centered(renderer, 400, 495, 'SELECT MODE WITH [1-4] OR [TAB]', 2, Color{ r: 255, g: 215, b: 0 })
-	draw_text_centered(renderer, 400, 540, '[M] SOUND  |  [ESC] PAUSE  |  [F5] RESTART', 1, Color{ r: 150, g: 160, b: 180 })
+	draw_text_centered(renderer, 400, 540, '[M] SOUND  |  [ESC] PAUSE  |  [F5] RESTART | F11: Fullscreen', 1, Color{ r: 150, g: 160, b: 180 })
 }
 
 fn draw_pause_screen(renderer &sdl.Renderer) {
@@ -434,5 +434,5 @@ fn draw_victory_screen(renderer &sdl.Renderer, g &GameEngine) {
 	draw_text_centered(renderer, 400, 315, 'SPEED: ${wpm} WPM  |  ACCURACY: ${acc}%', 2, Color{ r: 80, g: 255, b: 120 })
 	draw_text_centered(renderer, 400, 355, 'TOTAL WORDS DESTROYED: ${g.words_typed}', 2, Color{ r: 255, g: 140, b: 200 })
 
-	draw_text_centered(renderer, 400, 440, 'PRESS [SPACE] OR [R] TO RESTART', 2, Color{ r: 0, g: 255, b: 160 })
+	draw_text_centered(renderer, 400, 440, 'PRESS [SPACE] OR [R] TO RESTART  [F11] Fullscreen', 2, Color{ r: 0, g: 255, b: 160 })
 }

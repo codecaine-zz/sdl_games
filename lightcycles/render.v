@@ -164,7 +164,7 @@ pub fn render_lightcycles_arena(renderer &sdl.Renderer, game &LightCyclesGame, w
 	sdl.render_fill_rect(renderer, &sdl.Rect{x: win_w - arena_pad_x - 85, y: 38, w: int(game.p2.boost_energy * 0.85), h: 14})
 
 	// Bottom Instructions
-	draw_text_centered(renderer, win_w / 2, win_h - 28, '[WASD/ARROWS] P1 MOVE  [SPACE] BOOST  [M] MODE  [D] DIFF  [R] RESTART', 1, Color{r: 140, g: 160, b: 200})
+	draw_text_centered(renderer, win_w / 2, win_h - 28, '[WASD/ARROWS] P1 MOVE  [SPACE] BOOST  [M] MODE  [D] DIFF  [R] RESTART  [F11] Fullscreen', 1, Color{r: 140, g: 160, b: 200})
 
 	// Round Over / Match Over Modal Overlay
 	if game.state == .round_over || game.state == .match_over {

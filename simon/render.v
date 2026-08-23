@@ -133,7 +133,7 @@ pub fn render_simon_console(renderer &sdl.Renderer, game &SimonGame, screen_w in
 
 	// 7. Bottom Instructions Footer
 	footer_y := screen_h - 28
-	draw_text_centered(renderer, screen_w / 2, footer_y, '[CLICK/KEYS 1-4/Q-S] PLAY PAD  [SPACE] START  [M] MODE  [R] RESET  [S] SOUND', 1, Color{r: 160, g: 175, b: 210})
+	draw_text_centered(renderer, screen_w / 2, footer_y, '[CLICK/KEYS 1-4/Q-S] PLAY PAD  [SPACE] START  [M] MODE  [R] RESET  [S] SOUND  [F11] Fullscreen', 1, Color{r: 160, g: 175, b: 210})
 
 	sdl.render_present(renderer)
 }

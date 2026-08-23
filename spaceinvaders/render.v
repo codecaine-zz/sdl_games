@@ -277,7 +277,7 @@ pub fn render_space_invaders(renderer &sdl.Renderer, game &SpaceInvadersGame) {
 		draw_player_cannon(renderer, lx, world_h - 35, 26, 16)
 	}
 
-	draw_text_centered(renderer, world_w / 2 + 60, world_h - 32, '[A/D or ARROWS] MOVE  [SPACE] FIRE  [R] RESTART', 1, Color{r: 160, g: 180, b: 210})
+	draw_text_centered(renderer, world_w / 2 + 60, world_h - 32, '[A/D or ARROWS] MOVE  [SPACE] FIRE  [R] RESTART  [F11] Fullscreen', 1, Color{r: 160, g: 180, b: 210})
 
 	// Game Over / Wave Clear Overlays
 	if game.state == .game_over {

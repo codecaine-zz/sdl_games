@@ -41,6 +41,7 @@ fn main() {
 		renderer := sdl.create_software_renderer(surface)
 		if unsafe { renderer == nil } { return }
 		defer { sdl.destroy_renderer(renderer) }
+	sdl.render_set_logical_size(renderer, win_w, win_h)
 
 		mut snap_game := new_jezz_game()
 		snap_game.start_wall(arena_w / 2, arena_h / 2)
@@ -61,7 +62,7 @@ fn main() {
 		sdl.windowpos_centered,
 		win_w,
 		win_h,
-		u32(sdl.WindowFlags.shown)
+		u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	)
 	if unsafe { window == nil } {
 		eprintln('Failed to create SDL window')
@@ -127,7 +128,9 @@ fn main() {
 				}
 				.keydown {
 					sym := int(event.key.keysym.sym)
-					if sym == int(sdl.KeyCode.escape) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(window)
+					} else if sym == int(sdl.KeyCode.escape) {
 						running = false
 					} else if sym == int(sdl.KeyCode.space) {
 						if app.game.is_won {
@@ -170,5 +173,14 @@ fn main() {
 
 		render_jezz_game(renderer, mut app.game, win_w, win_h, app.mouse_x, app.mouse_y)
 		sdl.render_present(renderer)
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

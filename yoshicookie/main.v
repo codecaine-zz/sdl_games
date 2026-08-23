@@ -84,7 +84,7 @@ fn main() {
 		sdl.windowpos_centered,
 		800,
 		600,
-		u32(sdl.WindowFlags.shown)
+		u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	)
 	if unsafe { window == nil } {
 		eprintln('Failed to create window')
@@ -98,6 +98,7 @@ fn main() {
 		return
 	}
 	defer { sdl.destroy_renderer(renderer) }
+	sdl.render_set_logical_size(renderer, 800, 600)
 
 	mut game := new_yoshi_cookie_game()
 
@@ -122,7 +123,9 @@ fn main() {
 				.keydown {
 					sym := event.key.keysym.sym
 					// Left
-					if sym == int(sdl.KeyCode.a) || sym == int(sdl.KeyCode.left) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(window)
+					} else if sym == int(sdl.KeyCode.a) || sym == int(sdl.KeyCode.left) {
 						if game.state == .title {
 							if game.round > 1 { game.round-- }
 						} else {
@@ -252,5 +255,14 @@ fn main() {
 		render_yoshi_cookie_game(renderer, mut game)
 		sdl.render_present(renderer)
 		sdl.delay(16)
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

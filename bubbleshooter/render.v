@@ -248,7 +248,7 @@ pub fn render_bubbleshooter_game(renderer &sdl.Renderer, game &BubbleShooterGame
 	draw_text(renderer, ax + aw + 40, ay + 360, '[MOUSE] AIM', 1, Color{r: 160, g: 180, b: 220})
 	draw_text(renderer, ax + aw + 40, ay + 380, '[CLICK/SPACE] SHOOT', 1, Color{r: 160, g: 180, b: 220})
 	draw_text(renderer, ax + aw + 40, ay + 400, '[A/D] ARROW AIM', 1, Color{r: 160, g: 180, b: 220})
-	draw_text(renderer, ax + aw + 40, ay + 420, '[R] RESTART', 1, Color{r: 160, g: 180, b: 220})
+	draw_text(renderer, ax + aw + 40, ay + 420, '[R] RESTART  [F11] Fullscreen', 1, Color{r: 160, g: 180, b: 220})
 	draw_text(renderer, ax + aw + 40, ay + 440, '[S] SOUND TOGGLE', 1, Color{r: 160, g: 180, b: 220})
 
 	// Game Over / Victory Modal Overlay

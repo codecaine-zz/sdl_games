@@ -296,7 +296,7 @@ fn (mut app App) render() {
 		banner := sdl.Rect{x: 0, y: 690, w: win_width, h: 55}
 		sdl.set_render_draw_color(renderer, 75, 20, 25, 230)
 		sdl.render_fill_rect(renderer, &banner)
-		draw_text_centered(renderer, win_width / 2, 708, 'GAME OVER - OUT OF LIVES! PRESS [R] TO RESTART', 2, Color{r: 255, g: 100, b: 100})
+		draw_text_centered(renderer, win_width / 2, 708, 'GAME OVER - OUT OF LIVES! PRESS [R] TO RESTART  [F11] Fullscreen', 2, Color{r: 255, g: 100, b: 100})
 	} else if cave.player_dead {
 		banner := sdl.Rect{x: 0, y: 690, w: win_width, h: 55}
 		sdl.set_render_draw_color(renderer, 75, 50, 20, 230)
@@ -355,7 +355,7 @@ fn main() {
 		sdl.windowpos_centered,
 		win_width,
 		win_height,
-		u32(sdl.WindowFlags.shown)
+		u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	)
 	if window == unsafe { nil } {
 		return
@@ -371,6 +371,7 @@ fn main() {
 	defer {
 		sdl.destroy_renderer(renderer)
 	}
+	sdl.render_set_logical_size(renderer, win_width, win_height)
 
 	app.window = window
 	app.renderer = renderer
@@ -405,7 +406,9 @@ fn main() {
 					sym := int(event.key.keysym.sym)
 					mut cave := unsafe { &app.caves[app.current_idx] }
 
-					if sym == int(sdl.KeyCode.escape) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(window)
+					} else if sym == int(sdl.KeyCode.escape) {
 						return
 					} else if sym == int(sdl.KeyCode.r) {
 						app.reset_current_level()
@@ -432,5 +435,14 @@ fn main() {
 		app.update(dt)
 		app.render()
 		sdl.delay(16)
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

@@ -1174,7 +1174,7 @@ fn (mut app App) render() {
 	draw_text(renderer, hud_x + 16, hud_y + 386, 'MUSIC : ${bgm_name} [T/B]', 1, Color{r: 100, g: 230, b: 255})
 	draw_text(renderer, hud_x + 16, hud_y + 408, 'CONTROLS : WASD / ARROWS / MOUSE', 1, Color{r: 200, g: 220, b: 240})
 	draw_text(renderer, hud_x + 16, hud_y + 430, '[SPACE/ENTER] SWAP  [U] UNDO', 1, Color{r: 220, g: 220, b: 230})
-	draw_text(renderer, hud_x + 16, hud_y + 452, '[H] HINT  [M] MODE  [S] SOUND  [R] RESET', 1, Color{r: 180, g: 200, b: 230})
+	draw_text(renderer, hud_x + 16, hud_y + 452, '[H] HINT  [M] MODE  [S] SOUND  [R] RESET  [F11] Fullscreen', 1, Color{r: 180, g: 200, b: 230})
 
 	// Game Over Banner
 	if app.game_over {
@@ -1246,7 +1246,7 @@ fn main() {
 		sdl.windowpos_centered,
 		win_width,
 		win_height,
-		u32(sdl.WindowFlags.shown)
+		u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	)
 	if window == unsafe { nil } {
 		return
@@ -1262,6 +1262,7 @@ fn main() {
 	defer {
 		sdl.destroy_renderer(renderer)
 	}
+	sdl.render_set_logical_size(renderer, win_width, win_height)
 
 	app.window = window
 	app.renderer = renderer
@@ -1327,7 +1328,9 @@ fn main() {
 				}
 				.keydown {
 					sym := int(event.key.keysym.sym)
-					if sym == int(sdl.KeyCode.escape) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(window)
+					} else if sym == int(sdl.KeyCode.escape) {
 						return
 					}
 					// WASD / Arrow Movement
@@ -1402,5 +1405,14 @@ fn main() {
 		app.update(dt)
 		app.render()
 		sdl.delay(16)
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

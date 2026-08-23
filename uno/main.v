@@ -28,7 +28,7 @@ fn (app &App) init() bool {
 	mut mutable_app := unsafe { &App(app) }
 	mutable_app.sound_mgr.init()
 
-	window_flags := u32(sdl.WindowFlags.shown)
+	window_flags := u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	mutable_app.window = sdl.create_window('Uno Master 4-Player - Arcade Card Classic'.str,
 		sdl.windowpos_centered, sdl.windowpos_centered, 800, 600, window_flags)
 
@@ -44,6 +44,8 @@ fn (app &App) init() bool {
 		eprintln('Failed to create renderer')
 		return false
 	}
+
+	sdl.render_set_logical_size(mutable_app.renderer, 800, 600)
 
 	sdl.set_render_draw_blend_mode(mutable_app.renderer, .blend)
 	return true
@@ -158,7 +160,9 @@ fn (app &App) run() {
 				}
 				.keydown {
 					sym := event.key.keysym.sym
-					if sym == int(sdl.KeyCode.escape) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(mutable_app.window)
+					} else if sym == int(sdl.KeyCode.escape) {
 						running = false
 					} else if mutable_app.game.state == .color_pick {
 						if sym == int(sdl.KeyCode._1) || sym == int(sdl.KeyCode.r) {
@@ -225,5 +229,14 @@ fn main() {
 	mut app := new_app()
 	if app.init() {
 		app.run()
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

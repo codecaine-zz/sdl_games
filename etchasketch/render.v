@@ -239,7 +239,7 @@ fn render_control_bar(renderer &sdl.Renderer, g EtchGame, x int, y int, w int) {
 		.spirograph {
 			status := if g.spiro.running { 'RUNNING (AUTO-GEAR)' } else { 'PAUSED [SPACE TO RUN]' }
 			draw_text(renderer, x + 16, y + 12, 'SPIROGRAPH STUDIO - PRESET #${g.spiro.preset + 1} (${status})', 1, Color{255, 255, 255, 255})
-			draw_text(renderer, x + 16, y + 28, 'PRESETS [TAB]  |  AUTO-DRAW [SPACE]  |  SPEED [UP/DN]', 1, Color{255, 230, 110, 255})
+			draw_text(renderer, x + 16, y + 28, 'PRESETS [TAB]  |  AUTO-DRAW [SPACE]  |  SPEED [UP/DN] | F11: Fullscreen', 1, Color{255, 230, 110, 255})
 			draw_text(renderer, x + 16, y + 44, 'GEAR RATIO: R=${int(g.spiro.r_outer)} r=${int(g.spiro.r_inner)} d=${int(g.spiro.d_pen)}', 1, Color{200, 230, 255, 255})
 		}
 		.stencil {

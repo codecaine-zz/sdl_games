@@ -113,7 +113,7 @@ fn (mut app App) init_sdl() bool {
 	}
 
 	app.window = sdl.create_window(c'Pac-Man Arcade - V & SDL2', sdl.windowpos_centered,
-		sdl.windowpos_centered, win_w, win_h, u32(sdl.WindowFlags.shown))
+		sdl.windowpos_centered, win_w, win_h, u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable))
 	if app.window == unsafe { nil } {
 		eprintln('Failed to create window')
 		return false
@@ -124,6 +124,8 @@ fn (mut app App) init_sdl() bool {
 		eprintln('Failed to create renderer')
 		return false
 	}
+
+	sdl.render_set_logical_size(app.renderer, win_w, win_h)
 
 	return true
 }
@@ -172,7 +174,9 @@ fn (mut app App) run() {
 				}
 				.keydown {
 					sym := ev.key.keysym.sym
-					if sym == int(sdl.KeyCode.up) || sym == int(sdl.KeyCode.w) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(app.window)
+					} else if sym == int(sdl.KeyCode.up) || sym == int(sdl.KeyCode.w) {
 						app.game.pacman.next_dir = .up
 					} else if sym == int(sdl.KeyCode.down) || sym == int(sdl.KeyCode.s) {
 						app.game.pacman.next_dir = .down
@@ -305,4 +309,13 @@ fn main() {
 		app.cleanup()
 	}
 	app.run()
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
+	}
 }

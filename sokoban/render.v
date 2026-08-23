@@ -207,7 +207,7 @@ pub fn render_sokoban_game(renderer &sdl.Renderer, game &SokobanGame, win_w int,
 	draw_text(renderer, 620, stats_y, 'TARGETS: ${game.targets_filled}/${game.total_targets}', 2, if game.level_cleared { Color{r: 80, g: 255, b: 120} } else { Color{r: 255, g: 100, b: 120} })
 
 	// Bottom Controls Bar
-	draw_text_centered(renderer, win_w / 2, win_h - 40, '[ARROWS/WASD] MOVE  [U] UNDO  [R] RESET  [N] NEXT  [P] PREV', 1, Color{r: 160, g: 180, b: 210})
+	draw_text_centered(renderer, win_w / 2, win_h - 40, '[ARROWS/WASD] MOVE  [U] UNDO  [R] RESET  [N] NEXT  [P] PREV  [F11] Fullscreen', 1, Color{r: 160, g: 180, b: 210})
 
 	// Victory Modal Overlay
 	if game.level_cleared {

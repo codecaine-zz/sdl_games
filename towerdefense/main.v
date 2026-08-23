@@ -30,7 +30,7 @@ fn main() {
 		sdl.windowpos_centered,
 		800,
 		600,
-		u32(sdl.WindowFlags.shown)
+		u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable)
 	)
 	if unsafe { window == nil } { return }
 	defer { sdl.destroy_window(window) }
@@ -38,6 +38,7 @@ fn main() {
 	renderer := sdl.create_renderer(window, -1, u32(sdl.RendererFlags.accelerated) | u32(sdl.RendererFlags.presentvsync))
 	if unsafe { renderer == nil } { return }
 	defer { sdl.destroy_renderer(renderer) }
+	sdl.render_set_logical_size(renderer, 800, 600)
 
 	mut game := new_towerdefense_game()
 
@@ -70,7 +71,9 @@ fn main() {
 				.keydown {
 					sym := event.key.keysym.sym
 					// 1. Select Turret Type: 1, 2, 3, Keypad 1/2/3, L, C, F
-					if sym == int(sdl.KeyCode._1) || sym == int(sdl.KeyCode.kp_1) || sym == int(sdl.KeyCode.l) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(window)
+					} else if sym == int(sdl.KeyCode._1) || sym == int(sdl.KeyCode.kp_1) || sym == int(sdl.KeyCode.l) {
 						game.selected_type = .laser
 					} else if sym == int(sdl.KeyCode._2) || sym == int(sdl.KeyCode.kp_2) || sym == int(sdl.KeyCode.c) {
 						game.selected_type = .cannon
@@ -134,5 +137,14 @@ fn main() {
 		render_towerdefense_game(renderer, mut game)
 
 		sdl.delay(16)
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

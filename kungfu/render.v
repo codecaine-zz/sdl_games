@@ -708,7 +708,7 @@ fn render_title_screen(renderer &sdl.Renderer) {
 		Color{ r: 100, g: 240, b: 120, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
 	draw_text_centered_shadow(renderer, 400, 475, 'K / X : KICK (HIGH / LOW / JUMP KICK - 100 PTS)', 1,
 		Color{ r: 100, g: 240, b: 120, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
-	draw_text_centered_shadow(renderer, 400, 500, '[P] PAUSE  [M] MUTE  [C] CRT SCANLINES  [R] RESTART', 1,
+	draw_text_centered_shadow(renderer, 400, 500, '[P] PAUSE  [M] MUTE  [C] CRT SCANLINES  [R] RESTART  [F11] Fullscreen', 1,
 		Color{ r: 255, g: 215, b: 110, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
 
 	draw_text_centered_shadow(renderer, 400, 560, '(C) 1984 IREM CORP. / NINTENDO', 1,

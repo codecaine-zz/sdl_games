@@ -208,7 +208,7 @@ fn render_jezz_hud(renderer &sdl.Renderer, g JezzGame, win_w int, win_h int, ox 
 		.vertical { 'VERTICAL [R-CLICK / SPACE]' }
 	}
 	draw_text(renderer, ox, by, 'WALL ORIENTATION: ${orient_str}', 1, Color{255, 230, 80, 255})
-	draw_text(renderer, ox + arena_w - 240, by, 'RESTART [R]  |  SOUND [O]', 1, Color{180, 190, 210, 255})
+	draw_text(renderer, ox + arena_w - 240, by, 'RESTART [R]  |  SOUND [O] | F11: Fullscreen', 1, Color{180, 190, 210, 255})
 
 	// Animated Center Announcement Banner
 	if g.banner_timer > 0.0 && g.banner_text != '' {

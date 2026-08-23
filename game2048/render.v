@@ -159,7 +159,7 @@ pub fn render_game_2048(renderer &sdl.Renderer, game &Game2048, win_w int, win_h
 	render_merge_particles(renderer, particles)
 
 	// Bottom Instructions
-	draw_text_centered(renderer, win_w / 2, win_h - 45, '[ARROWS or WASD] SLIDE TILES  [U] UNDO  [R] RESTART  [S] SOUND', 1, Color{r: 150, g: 175, b: 215})
+	draw_text_centered(renderer, win_w / 2, win_h - 45, '[ARROWS or WASD] SLIDE TILES  [U] UNDO  [R] RESTART  [S] SOUND  [F11] Fullscreen', 1, Color{r: 150, g: 175, b: 215})
 
 	// Victory Modal
 	if game.state == .won && !game.keep_playing {
@@ -173,7 +173,7 @@ pub fn render_game_2048(renderer &sdl.Renderer, game &Game2048, win_w int, win_h
 		draw_text_centered(renderer, win_w / 2, my + 30, 'YOU WIN! 2048 REACHED!', 3, Color{r: 255, g: 215, b: 0})
 		draw_text_centered(renderer, win_w / 2, my + 80, 'Score: ${game.score}', 2, Color{r: 80, g: 220, b: 255})
 		draw_text_centered(renderer, win_w / 2, my + 130, 'PRESS [SPACE] TO KEEP PLAYING', 2, Color{r: 80, g: 255, b: 120})
-		draw_text_centered(renderer, win_w / 2, my + 165, 'PRESS [R] TO RESTART', 1, Color{r: 180, g: 200, b: 230})
+		draw_text_centered(renderer, win_w / 2, my + 165, 'PRESS [R] TO RESTART  [F11] Fullscreen', 1, Color{r: 180, g: 200, b: 230})
 	} else if game.state == .game_over {
 		sdl.set_render_draw_color(renderer, 0, 0, 0, 190)
 		sdl.render_fill_rect(renderer, &sdl.Rect{x: 0, y: 0, w: win_w, h: win_h})

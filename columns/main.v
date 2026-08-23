@@ -541,7 +541,7 @@ fn (mut app App) render() {
 		sdl.set_render_draw_color(renderer, 255, 65, 85, 255)
 		sdl.render_draw_rect(renderer, &over_box)
 		draw_text_centered(renderer, bx + grid_w / 2, by + grid_h / 2 - 35, 'GAME OVER', 3, Color{r: 255, g: 75, b: 95})
-		draw_text_centered(renderer, bx + grid_w / 2, by + grid_h / 2 + 15, 'PRESS [R] TO RESTART', 2, Color{r: 255, g: 255, b: 255})
+		draw_text_centered(renderer, bx + grid_w / 2, by + grid_h / 2 + 15, 'PRESS [R] TO RESTART  [F11] Fullscreen', 2, Color{r: 255, g: 255, b: 255})
 	} else if app.paused {
 		p_box := sdl.Rect{x: bx + 10, y: by + grid_h / 2 - 50, w: grid_w - 20, h: 100}
 		sdl.set_render_draw_color(renderer, 15, 20, 35, 245)
@@ -591,7 +591,7 @@ fn main() {
 		sdl.windowpos_centered,
 		win_width,
 		win_height,
-		u32(sdl.WindowFlags.shown),
+		u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable),
 	)
 	if window == unsafe { nil } {
 		eprintln('Failed to create window')
@@ -609,6 +609,7 @@ fn main() {
 	defer {
 		sdl.destroy_renderer(renderer)
 	}
+	sdl.render_set_logical_size(renderer, win_width, win_height)
 
 	app.window = window
 	app.renderer = renderer
@@ -639,7 +640,9 @@ fn main() {
 				}
 				.keydown {
 					sym := int(event.key.keysym.sym)
-					if sym == int(sdl.KeyCode.escape) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(window)
+					} else if sym == int(sdl.KeyCode.escape) {
 						return
 					} else if sym == int(sdl.KeyCode.r) {
 						app.game = new_columns_game()
@@ -674,5 +677,14 @@ fn main() {
 		app.update(dt)
 		app.render()
 		sdl.delay(16)
+	}
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
 	}
 }

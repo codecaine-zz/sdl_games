@@ -152,7 +152,7 @@ fn render_top_bar(renderer &sdl.Renderer, g LemmingsGame, win_w int, mouse_x int
 	sdl.set_render_draw_color(renderer, if rst_hover { u8(70) } else { u8(45) }, 55, 80, 255)
 	rst_btn := sdl.Rect{rst_x, 8, 80, 24}
 	sdl.render_fill_rect(renderer, &rst_btn)
-	draw_text_centered(renderer, rst_x + 40, 13, 'RESET [R]', 1, Color{230, 230, 230, 255})
+	draw_text_centered(renderer, rst_x + 40, 13, 'RESET [R]  [F11] Fullscreen', 1, Color{230, 230, 230, 255})
 
 	// Next Level Button
 	nxt_x := win_w - 240
@@ -231,7 +231,7 @@ fn render_skill_panel(renderer &sdl.Renderer, g LemmingsGame, win_w int, win_h i
 	sdl.set_render_draw_color(renderer, if p_hover { u8(65) } else { pause_col.r }, if p_hover { u8(90) } else { pause_col.g }, if p_hover { u8(120) } else { pause_col.b }, 255)
 	p_btn := sdl.Rect{sx + 8, panel_y + 10, 70, 48}
 	sdl.render_fill_rect(renderer, &p_btn)
-	draw_text_centered(renderer, sx + 43, panel_y + 26, if g.is_paused { 'RESUME [P]' } else { 'PAUSE [P]' }, 1, if g.is_paused { Color{30, 20, 10, 255} } else { Color{255, 255, 255, 255} })
+	draw_text_centered(renderer, sx + 43, panel_y + 26, if g.is_paused { 'RESUME [P]' } else { 'PAUSE [P]  [F11] Fullscreen' }, 1, if g.is_paused { Color{30, 20, 10, 255} } else { Color{255, 255, 255, 255} })
 
 	// Fast Forward Button
 	spd_str := '${int(g.game_speed)}X [F]'

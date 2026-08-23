@@ -647,7 +647,7 @@ fn render_title_screen(renderer &sdl.Renderer, mut g DrMarioGame) {
 		Color{ r: 100, g: 220, b: 255, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
 	draw_text_centered_shadow(renderer, 400, 392, 'T : SWITCH SOUNDTRACK (FEVER / CHILL / OFF)', 1,
 		Color{ r: 255, g: 215, b: 110, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
-	draw_text_centered_shadow(renderer, 400, 420, '[P] PAUSE  [M] MUTE  [C] CRT SCANLINES  [R] RESTART', 1,
+	draw_text_centered_shadow(renderer, 400, 420, '[P] PAUSE  [M] MUTE  [C] CRT SCANLINES  [R] RESTART  [F11] Fullscreen', 1,
 		Color{ r: 180, g: 180, b: 190, a: 255 }, Color{ r: 0, g: 0, b: 0, a: 255 })
 
 	draw_text_centered_shadow(renderer, 400, 560, '(C) 1990 NINTENDO R&D1', 1,

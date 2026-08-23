@@ -342,7 +342,7 @@ fn (mut app App) init_sdl() bool {
 	}
 
 	app.window = sdl.create_window(c'SinkSub Pro: Tactical Overdrive - V & SDL2', sdl.windowpos_centered,
-		sdl.windowpos_centered, ocean_width, ocean_height, u32(sdl.WindowFlags.shown))
+		sdl.windowpos_centered, ocean_width, ocean_height, u32(sdl.WindowFlags.shown) | u32(sdl.WindowFlags.fullscreen_desktop) | u32(sdl.WindowFlags.resizable))
 
 	if app.window == unsafe { nil } {
 		eprintln('Failed to create SDL Window')
@@ -354,6 +354,8 @@ fn (mut app App) init_sdl() bool {
 		eprintln('Failed to create SDL Renderer')
 		return false
 	}
+
+	sdl.render_set_logical_size(app.renderer, ocean_width, ocean_height)
 
 	return true
 }
@@ -571,7 +573,7 @@ fn (mut app App) render() {
 		}
 
 		// Controls overlay hint at bottom
-		draw_text_centered(app.renderer, ocean_width / 2, ocean_height - 30, 'CONTROLS: ARROWS = MOVE | Z/J = STERN CHARGE | X/K = BOW ROCKET | SPACE = NUKE',
+		draw_text_centered(app.renderer, ocean_width / 2, ocean_height - 30, 'CONTROLS: ARROWS = MOVE | Z/J = STERN CHARGE | X/K = BOW ROCKET | SPACE = NUKE | F11: Fullscreen',
 			1, Color{ r: 148, g: 163, b: 184 })
 	}
 
@@ -679,7 +681,9 @@ fn (mut app App) run() {
 				.keydown {
 					sym := evt.key.keysym.sym
 					now := sdl.get_ticks()
-					if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) {
+					if sym == int(sdl.KeyCode.f11) {
+						toggle_fullscreen(app.window)
+					} else if sym == int(sdl.KeyCode.left) || sym == int(sdl.KeyCode.a) {
 						app.key_left = true
 					} else if sym == int(sdl.KeyCode.right) || sym == int(sdl.KeyCode.d) {
 						app.key_right = true
@@ -775,4 +779,13 @@ fn main() {
 		app.cleanup()
 	}
 	app.run()
+}
+
+fn toggle_fullscreen(window &sdl.Window) {
+	flags := sdl.get_window_flags(window)
+	if (flags & u32(sdl.WindowFlags.fullscreen_desktop)) != 0 || (flags & u32(sdl.WindowFlags.fullscreen)) != 0 {
+		sdl.set_window_fullscreen(window, 0)
+	} else {
+		sdl.set_window_fullscreen(window, u32(sdl.WindowFlags.fullscreen_desktop))
+	}
 }

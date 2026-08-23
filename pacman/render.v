@@ -394,7 +394,7 @@ fn draw_game(renderer &sdl.Renderer, game &Game, mouse_x int, mouse_y int, btn_r
 	btn_pause.draw(renderer, mouse_x, mouse_y)
 
 	// Footer instructions
-	draw_text_centered(renderer, win_w / 2, 755, 'CONTROLS: [ARROWS/WASD] MOVE  |  [R] RESET  |  [P] PAUSE  |  [S] SOUND',
+	draw_text_centered(renderer, win_w / 2, 755, 'CONTROLS: [ARROWS/WASD] MOVE  |  [R] RESET  |  [P] PAUSE  |  [S] SOUND | F11: Fullscreen',
 		1, Color{
 		r: 140
 		g: 160

@@ -188,7 +188,7 @@ pub fn render_goldminer_game(renderer &sdl.Renderer, game &GoldMinerGame, win_w 
 	draw_text(renderer, win_w - 210, 42, 'DYNAMITE: ${game.dynamite_count}', 2, Color{r: 255, g: 110, b: 60})
 
 	// Controls at bottom of screen
-	draw_text_centered(renderer, win_w / 2, win_h - 22, '[DOWN/SPACE/CLICK] DROP CLAW  [UP/W] USE DYNAMITE  [R] RESTART', 1, Color{r: 200, g: 180, b: 150})
+	draw_text_centered(renderer, win_w / 2, win_h - 22, '[DOWN/SPACE/CLICK] DROP CLAW  [UP/W] USE DYNAMITE  [R] RESTART  [F11] Fullscreen', 1, Color{r: 200, g: 180, b: 150})
 
 	// Won Level / Game Over Modal
 	if game.state == .won_level || game.state == .game_over {

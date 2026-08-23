@@ -164,7 +164,7 @@ fn render_bomberman_game(renderer &sdl.Renderer, mut g BombermanGame) {
 	// 6. Draw HUD
 	draw_text(renderer, 20, 10, "CYBER BOMBERMAN", 2, Color{ r: 255, g: 220, b: 0, a: 255 })
 	draw_text(renderer, 250, 10, "P1 LIVES: ${g.players[0].lives} | BOMBS: ${g.players[0].max_bombs} | FLAME: ${g.players[0].flame_radius}", 2, Color{ r: 0, g: 200, b: 255, a: 255 })
-	draw_text_centered(renderer, 400, 575, "[SPACE] DROP BOMB TO DESTROY WALLS & ENEMIES | [WASD] MOVE | [P] PAUSE | [M] MUTE", 1, Color{ r: 220, g: 220, b: 220, a: 255 })
+	draw_text_centered(renderer, 400, 575, "[SPACE] DROP BOMB TO DESTROY WALLS & ENEMIES | [WASD] MOVE | [P] PAUSE | [M] MUTE | F11: Fullscreen", 1, Color{ r: 220, g: 220, b: 220, a: 255 })
 
 	// 7. Overlay Menus
 	if g.state == .menu {
