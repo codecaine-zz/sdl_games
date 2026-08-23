@@ -73,7 +73,7 @@ v run mariobros
 | **38** | [Lemmings Master](#38-lemmings-master-lemmings) | `lemmings/` | Colony Puzzle Strategy | `Mouse Click assign skills, 1-8 skill select, F fast forward` | [Guide](#38-lemmings-master-lemmings) |
 | **39** | [Liar's Dice (Perudo)](#39-liars-dice-perudo-liarsdice) | `liarsdice/` | Bluffing Dice Party | `Space bid, L call Liar!, C Spot On!, 1-6 dice face` | [Guide](#39-liars-dice-perudo-liarsdice) |
 | **40** | [TRON Light Cycles](#40-tron-light-cycles-lightcycles) | `lightcycles/` | Grid Arena Racing | `WASD P1 move + Space boost, Arrows/IJKL P2` | [Guide](#40-tron-light-cycles-lightcycles) |
-| **41** | [Adventures of Lolo](#41-adventures-of-lolo-lolo) | `lolo/` | Top-Down Grid Puzzle | `WASD/Arrows move/push, Space magic shot, R restart` | [Guide](#41-adventures-of-lolo-lolo) |
+| **41** | [Adventures of Lolo: Cyberpunk Edition](#41-adventures-of-lolo-lolo) | `lolo/` | Cyber Puzzle & Level Maker | `WASD move, Space shoot, Q phase, C skin, Tab editor, K share` | [Guide](#41-adventures-of-lolo-lolo) |
 | **42** | [Lunar Lander Simulator](#42-lunar-lander-simulator-lunarlander) | `lunarlander/` | Vector Moon Landing | `A/D rotate, W/Up/Space thruster, P pause` | [Guide](#42-lunar-lander-simulator-lunarlander) |
 | **43** | [Mappy Arcade](#43-mappy-arcade-mappy) | `mappy/` | Police Trampoline Run | `A/D move, Space open doors/microwave blast` | [Guide](#43-mappy-arcade-mappy) |
 | **44** | [Mario Bros. Arcade](#44-mario-bros-arcade-mariobros) | `mariobros/` | 1983 Sewer Platformer | `WASD/Space (P1), Arrows/L (P2), P pause, 1/2 players` | [Guide](#44-mario-bros-arcade-mariobros) |
@@ -1239,27 +1239,38 @@ v run lightcycles
 ---
 
 <a id="lolo"></a>
-### 41. Adventures of Lolo (`lolo/`)
-*HAL Laboratory Puzzle Platformer with Emerald Frames & Magic Shots*
+### 41. Adventures of Lolo: Cyberpunk Edition (`lolo/`)
+*Hyper-Futuristic Puzzle-Arcade Powerhouse, Mario Maker Level Sandbox & Speedrun Platform*
 
 ```bash
 v run lolo
 ```
-![Adventures of Lolo](screenshots/lolo.png)
+![Adventures of Lolo](screenshots/lolo_play.png)
 
-- **Objective**: Guide Prince Lolo through puzzle chambers in the Haunted Castle, collect all Heart Framers to unlock the Jewel Chest, grab the Great Jewel, and escape to the next room!
-- **Controls**:
-  - `WASD` or `Arrow Keys`: Move Lolo and push Emerald Frames.
-  - `Space` or `J`: Fire Magic Shot (encases enemies in eggs for 1 shot, or blasts them off screen for 2 shots).
-  - `R`: Restart current room puzzle.
-  - `[` / `]`: Navigate room levels (1 to 10).
-  - `M`: Toggle sound.
-- **Rules & Mechanics**:
-  - Heart Framers: Collecting all hearts opens the treasure chest and often grants 2 Magic Shots.
-  - Emerald Frames: Movable green boxes that block enemy lines of sight and seal water flows.
-  - Enemies: Snakey (peaceful until attacked), Gol (shoots fireballs when all hearts are collected), Skull (awakes when all hearts are collected), Alma, and Medusa (kills instantly on line of sight).
-  - Egg Physics: Pushing an enemy encased in an egg into water creates a floating raft!
-- **Pro Tip**: Push Emerald Frames directly in front of Medusa statues before collecting the final Heart Framer to avoid getting vaporized by her stare!
+- **Objective**: Guide Prince Lolo through high-tech cyber sectors, collect all Antimatter Power Cores to unlock the Central Matrix Vault, access the Subspace Gateway, and rescue Princess Lala from King Egger!
+- **Core Key Controls**:
+  - `WASD` / `Arrow Keys`: Move Lolo & push Energy Blocks.
+  - `Space` / `Enter`: Fire High-Energy Plasma Shot (encase enemies in stasis eggs / rotate prisms).
+  - `Q`: Quantum Dimension Phase Shift (toggle between Dimension Alpha ↔ Beta).
+  - `C`: Cycle 5 Cyber Chassis Skins (Neon Blue, Cyber Magenta, Obsidian Gold, Toxic Lime, Dark Matter).
+  - `H`: Toggle AI Hint navigation breadcrumbs to next objective.
+  - `V`: Instant Ghost Replay playback of your room clear.
+  - `K`: Open Level Code Sharing console & 5 Featured Community Challenge Packs.
+  - `Tab`: Open the full Mario Maker-style Level Designer console.
+  - `U` / `Z`: Instant Quantum Undo step.
+  - `P`: 20-Sector Warp directory modal.
+  - `M`: Toggle 4-track procedural cyberpunk synth BGM.
+  - `F5`: Instant 1-key playtest inside Designer.
+  - `F11`: Toggle fullscreen desktop mode.
+- **Modern Mechanics & Level Maker**:
+  - **Laser Prisms (`/` & `\`)**: 45° optical crystal mirrors that bounce Medusa lasers 90° across the room.
+  - **Quantum Phase Blocks (`Phase A` & `Phase B`)**: Solid only in active dimension, allowing Lolo and lasers to phase through when out-of-phase.
+  - **Pressure Plates & Forcefields**: Stand on conductive plates or push blocks to lower lethal laser barriers.
+  - **Directional Conveyor Belts**: Kinetic accelerator tracks that push traveling entities.
+  - **Live AI Solver Verifier**: BFS search engine in the Designer that checks reachability and validates levels (`[PASS]`).
+  - **6 Procedural Cyber Biomes**: Neo Cyber-Core, Quantum Biosphere, Solar Outpost, Cryo-Stasis Lab, Plasma Fusion Reactor, Void Singularity.
+  - **13 Cybernetic Mecha Enemies**: Snakey-Bot, Alma-Mech, Leeper-Droid, Plasma Skull, Laser Sentinel, Dreadnoughts, Gol Dragon Tank, King Egger, Aero Gobby, Titan Golem, Turbine Moby, Phantom Wisp, Tesla Spike Traps.
+- **Pro Tip**: Use `Q` to phase out of sync with laser turrets, and rotate `/` prisms to deflect deadly beams around corners into enemy tanks!
 
 ---
 

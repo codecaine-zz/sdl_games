@@ -33,766 +33,1414 @@ pub fn (b Button) draw(renderer &sdl.Renderer, mx int, my int) {
 	sdl.set_render_draw_color(renderer, bg.r, bg.g, bg.b, bg.a)
 	sdl.render_fill_rect(renderer, &rect)
 
-	// Top/Left bevel highlight
-	sdl.set_render_draw_color(renderer, u8(math_min(int(bg.r) + 45, 255)), u8(math_min(int(bg.g) + 45, 255)),
-		u8(math_min(int(bg.b) + 45, 255)), bg.a)
+	// Cyber Top/Left Neon Bevel
+	br := if is_hover { b.border_color } else { Color{ r: u8(math_min(int(bg.r) + 60, 255)), g: u8(math_min(int(bg.g) + 60, 255)), b: u8(math_min(int(bg.b) + 60, 255)) } }
+	sdl.set_render_draw_color(renderer, br.r, br.g, br.b, 255)
 	sdl.render_draw_line(renderer, b.x, b.y, b.x + b.w, b.y)
 	sdl.render_draw_line(renderer, b.x, b.y, b.x, b.y + b.h)
 
-	// Bottom/Right shadow
-	sdl.set_render_draw_color(renderer, u8(math_max(int(bg.r) - 35, 0)), u8(math_max(int(bg.g) - 35, 0)),
-		u8(math_max(int(bg.b) - 35, 0)), bg.a)
-	sdl.render_draw_line(renderer, b.x, b.y + b.h - 1, b.x + b.w, b.y + b.h - 1)
-	sdl.render_draw_line(renderer, b.x + b.w - 1, b.y, b.x + b.w - 1, b.y + b.h)
-
-	// Border outline
+	// Cyber Cut-Corner Accents
 	sdl.set_render_draw_color(renderer, b.border_color.r, b.border_color.g, b.border_color.b, b.border_color.a)
 	sdl.render_draw_rect(renderer, &rect)
 
-	draw_text_centered(renderer, b.x + b.w / 2, b.y + (b.h - 16) / 2, b.text, 2, b.text_color)
+	sdl.render_draw_line(renderer, b.x + 2, b.y + 2, b.x + 6, b.y + 2)
+	sdl.render_draw_line(renderer, b.x + b.w - 7, b.y + b.h - 3, b.x + b.w - 3, b.y + b.h - 3)
+
+	text_scale := if b.text.len * 16 > b.w - 10 { 1 } else { 2 }
+	text_h := 8 * text_scale
+	draw_text_centered(renderer, b.x + b.w / 2, b.y + (b.h - text_h) / 2, b.text, text_scale, b.text_color)
 }
 
-fn math_min(a int, b int) int { return if a < b { a } else { b } }
-fn math_max(a int, b int) int { return if a > b { a } else { b } }
+fn math_min(a int, b int) int {
+	return if a < b { a } else { b }
+}
 
 pub fn draw_game(renderer &sdl.Renderer, game Game, mx int, my int, btn_editor Button, btn_restart Button, btn_sound Button, btn_prev Button, btn_next Button, btn_test Button, btn_clear Button, btn_undo Button, btn_level_select Button) {
-	// Deep Royal Castle Background
-	sdl.set_render_draw_color(renderer, 12, 14, 22, 255)
-	sdl.render_clear(renderer)
-
-	// Castle Masonry Background Pattern
 	ticks := sdl.get_ticks()
-	for r in 0 .. 15 {
-		y := r * 48
-		for c in 0 .. 20 {
-			x := c * 48
-			sdl.set_render_draw_color(renderer, 18, 22, 34, 255)
-			sdl.render_draw_rect(renderer, &sdl.Rect{ x: x, y: y, w: 48, h: 48 })
-		}
-	}
+	current_theme := if game.mode == .editor { game.editor_level.theme } else { game.current_level.theme }
 
-	// Draw Header Bar
-	draw_header(renderer, game)
+	// 1. Draw Masterpiece Themed Cyber Ambient World
+	draw_futuristic_background(renderer, current_theme)
+	draw_ambient_world_effects(renderer, current_theme, ticks)
 
-	// Draw Main Playfield / Grid
-	draw_playfield(renderer, game, ticks)
+	// 2. Draw Holographic Header Bar
+	draw_futuristic_header(renderer, game, ticks)
 
-	// Draw Sidebar / UI Controls
+	// 3. Draw Main Cyber Playfield
+	draw_futuristic_playfield(renderer, game, ticks, current_theme, mx, my)
+
+	// 4. Draw Sci-Fi Sidebar Panel
 	if game.mode == .editor {
-		draw_editor_palette(renderer, game, mx, my, btn_test, btn_clear)
+		draw_mario_maker_editor(renderer, game, mx, my, btn_test, btn_clear)
 	} else {
 		draw_hud_panel(renderer, game, mx, my, btn_prev, btn_next, btn_restart, btn_undo, btn_level_select)
 	}
 
-	// Draw Common UI Action Buttons
+	// 5. Draw Top UI Buttons
 	btn_editor.draw(renderer, mx, my)
 	btn_sound.draw(renderer, mx, my)
 
-	// Grand Victory Ending Cutscene
-	if game.status == .won {
+	// 6. Draw Achievement Toasts
+	if game.badge_toast != '' {
+		draw_achievement_toast(renderer, game.badge_toast, ticks)
+	}
+
+	// 7. Modals & Overlays
+	if game.is_replaying {
+		draw_replay_overlay(renderer, ticks)
+	} else if game.status == .won {
 		draw_victory_ending(renderer, game, ticks)
 	} else if game.status == .lost || game.status == .level_clear {
 		draw_status_overlay(renderer, game)
 	}
 
-	// Level Select Modal Dialog
-	if game.is_level_select_open {
+	if game.is_share_modal_open {
+		draw_share_and_community_modal(renderer, game, mx, my)
+	} else if game.is_level_select_open {
 		draw_level_select_modal(renderer, game, mx, my)
 	}
+
+	// 8. Subtle Arcade CRT Scanlines
+	draw_subtle_crt_scanlines(renderer)
 }
 
-fn draw_header(renderer &sdl.Renderer, game Game) {
+fn draw_futuristic_background(renderer &sdl.Renderer, theme LevelTheme) {
+	match theme {
+		.castle {
+			sdl.set_render_draw_color(renderer, 6, 10, 20, 255)
+			sdl.render_clear(renderer)
+			for r in 0 .. 15 {
+				y := r * 48
+				for c in 0 .. 20 {
+					x := c * 48
+					sdl.set_render_draw_color(renderer, 12, 22, 42, 255)
+					sdl.render_draw_rect(renderer, &sdl.Rect{ x: x, y: y, w: 48, h: 48 })
+				}
+			}
+		}
+		.forest {
+			sdl.set_render_draw_color(renderer, 4, 16, 12, 255)
+			sdl.render_clear(renderer)
+			for r in 0 .. 15 {
+				y := r * 48
+				for c in 0 .. 20 {
+					x := c * 48
+					sdl.set_render_draw_color(renderer, 10, 32, 22, 255)
+					sdl.render_draw_rect(renderer, &sdl.Rect{ x: x, y: y, w: 48, h: 48 })
+				}
+			}
+		}
+		.desert {
+			sdl.set_render_draw_color(renderer, 24, 14, 6, 255)
+			sdl.render_clear(renderer)
+			for r in 0 .. 15 {
+				y := r * 48
+				for c in 0 .. 20 {
+					x := c * 48
+					sdl.set_render_draw_color(renderer, 46, 26, 12, 255)
+					sdl.render_draw_rect(renderer, &sdl.Rect{ x: x, y: y, w: 48, h: 48 })
+				}
+			}
+		}
+		.ice {
+			sdl.set_render_draw_color(renderer, 6, 16, 28, 255)
+			sdl.render_clear(renderer)
+			for r in 0 .. 15 {
+				y := r * 48
+				for c in 0 .. 20 {
+					x := c * 48
+					sdl.set_render_draw_color(renderer, 14, 35, 60, 255)
+					sdl.render_draw_rect(renderer, &sdl.Rect{ x: x, y: y, w: 48, h: 48 })
+				}
+			}
+		}
+		.volcanic {
+			sdl.set_render_draw_color(renderer, 20, 6, 8, 255)
+			sdl.render_clear(renderer)
+			for r in 0 .. 15 {
+				y := r * 48
+				for c in 0 .. 20 {
+					x := c * 48
+					sdl.set_render_draw_color(renderer, 45, 14, 16, 255)
+					sdl.render_draw_rect(renderer, &sdl.Rect{ x: x, y: y, w: 48, h: 48 })
+				}
+			}
+		}
+		.haunted {
+			sdl.set_render_draw_color(renderer, 12, 6, 22, 255)
+			sdl.render_clear(renderer)
+			for r in 0 .. 15 {
+				y := r * 48
+				for c in 0 .. 20 {
+					x := c * 48
+					sdl.set_render_draw_color(renderer, 26, 14, 45, 255)
+					sdl.render_draw_rect(renderer, &sdl.Rect{ x: x, y: y, w: 48, h: 48 })
+				}
+			}
+		}
+	}
+}
+
+fn draw_ambient_world_effects(renderer &sdl.Renderer, theme LevelTheme, ticks u32) {
+	sdl.set_render_draw_blend_mode(renderer, .blend)
+
+	match theme {
+		.castle {
+			// Cyan Data Packets streaming along conduits
+			for i in 0 .. 14 {
+				cx := (i * 75 + int(ticks / 15)) % win_w
+				cy := (i * 49) % win_h
+				sdl.set_render_draw_color(renderer, 0, 240, 255, 180)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx, y: cy, w: 10, h: 3 })
+			}
+		}
+		.forest {
+			// Rising bioluminescent quantum energy spores
+			for i in 0 .. 24 {
+				fx := (i * 43 + int(ticks / 24)) % win_w
+				fy := win_h - ((i * 31 + int(ticks / 16)) % win_h)
+				glow := int((math.sin(f64(ticks) / 120.0 + f64(i)) + 1.0) * 40.0)
+				sdl.set_render_draw_color(renderer, 50, u8(210 + glow), 140, 200)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: fx, y: fy, w: 3, h: 3 })
+			}
+		}
+		.desert {
+			// Solar amber atmospheric radiation motes
+			for i in 0 .. 18 {
+				sx := (i * 55 + int(ticks / 20)) % win_w
+				sy := (i * 37 + int(ticks / 28)) % win_h
+				sdl.set_render_draw_color(renderer, 255, 190, 40, 180)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: sx, y: sy, w: 4, h: 2 })
+			}
+		}
+		.ice {
+			// Drifting cryo snow crystals & floor sheen puddles (Mario Bros style)
+			for i in 0 .. 30 {
+				cx := (i * 35 + int(ticks / 22)) % win_w
+				cy := (i * 41 + int(ticks / 12)) % win_h
+				sdl.set_render_draw_color(renderer, 180, 240, 255, 220)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx, y: cy, w: 2, h: 4 })
+			}
+			for p in 0 .. 3 {
+				px := 100 + p * 280
+				py := win_h - 40
+				ripple := int(math.sin(f64(ticks) / 200.0 + f64(p)) * 2.0)
+				sdl.set_render_draw_color(renderer, 40, 140, 220, 60)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: px, y: py, w: 90, h: 6 + ripple })
+				sdl.set_render_draw_color(renderer, 200, 240, 255, 120)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: px + 20, y: py + 1, w: 50, h: 2 })
+			}
+		}
+		.volcanic {
+			// Molten plasma embers rising from below
+			for i in 0 .. 28 {
+				px := (i * 37 + int(ticks / 18)) % win_w
+				py := win_h - ((i * 27 + int(ticks / 10)) % win_h)
+				col := if i % 2 == 0 { Color{ r: 255, g: 140, b: 20 } } else { Color{ r: 255, g: 40, b: 50 } }
+				sdl.set_render_draw_color(renderer, col.r, col.g, col.b, 230)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: px, y: py, w: 3, h: 4 })
+			}
+		}
+		.haunted {
+			// Floating spectral phantom wisps & cosmic stars
+			for i in 0 .. 16 {
+				wx := (i * 67 + int(ticks / 26)) % win_w
+				wy := (i * 43 + int(math.sin(f64(ticks) / 90.0 + f64(i)) * 20.0) + 180) % win_h
+				sdl.set_render_draw_color(renderer, 210, 120, 255, 190)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: wx, y: wy, w: 4, h: 4 })
+			}
+		}
+	}
+	sdl.set_render_draw_blend_mode(renderer, .none)
+}
+
+fn draw_subtle_crt_scanlines(renderer &sdl.Renderer) {
+	sdl.set_render_draw_blend_mode(renderer, .blend)
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 18)
+	for y := 0; y < win_h; y += 4 {
+		sdl.render_draw_line(renderer, 0, y, win_w, y)
+	}
+	sdl.set_render_draw_blend_mode(renderer, .none)
+}
+
+fn draw_futuristic_header(renderer &sdl.Renderer, game Game, ticks u32) {
 	hdr_rect := sdl.Rect{ x: 0, y: 0, w: win_w, h: 64 }
-	sdl.set_render_draw_color(renderer, 24, 30, 44, 255)
+	sdl.set_render_draw_color(renderer, 14, 18, 30, 255)
 	sdl.render_fill_rect(renderer, &hdr_rect)
 
-	// Gold header dividing rail
-	sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+	pulse := int((math.sin(f64(ticks) / 120.0) + 1.0) * 30.0)
+	sdl.set_render_draw_color(renderer, 0, u8(190 + pulse), 255, 255)
 	sdl.render_draw_line(renderer, 0, 62, win_w, 62)
 	sdl.render_draw_line(renderer, 0, 63, win_w, 63)
-	sdl.set_render_draw_color(renderer, 160, 120, 0, 255)
+	sdl.set_render_draw_color(renderer, 0, 100, 180, 255)
 	sdl.render_draw_line(renderer, 0, 64, win_w, 64)
 
-	// Title & Floor Room
 	draw_text(renderer, 20, 12, 'ADVENTURES OF LOLO', 2, Color{ r: 255, g: 215, b: 0 })
 
-	lvl_name := if game.mode == .editor {
-		'INTERACTIVE LEVEL DESIGNER & TESTER'
+	if game.mode == .editor {
+		draw_text(renderer, 20, 36, 'CYBER MAKER DESIGNER', 2, Color{ r: 0, g: 230, b: 255 })
+
+		theme_name := match game.editor_level.theme {
+			.castle { 'CYBER-CORE' }
+			.forest { 'QUANTUM BIO' }
+			.desert { 'SOLAR OUTPOST' }
+			.ice { 'CRYO-STASIS' }
+			.volcanic { 'PLASMA CORE' }
+			.haunted { 'VOID NETHER' }
+		}
+		draw_text(renderer, 480, 16, 'BIOME: ${theme_name}', 1, Color{ r: 255, g: 215, b: 0 })
+
+		tool_name := match game.editor_tool {
+			.pencil { 'PENCIL' }
+			.eraser { 'ERASER' }
+			.fill { 'FILL' }
+			.rect { 'RECT' }
+		}
+		draw_text(renderer, 480, 38, 'TOOL: ${tool_name}', 1, Color{ r: 0, g: 240, b: 255 })
+
+		tab_name := match game.editor_tab {
+			.tiles { 'TILES' }
+			.items { 'ITEMS' }
+			.enemies { 'ENEMIES' }
+			.themes { 'SETTINGS' }
+			.gizmos { 'GIZMOS' }
+		}
+		draw_text(renderer, 620, 38, 'TAB: ${tab_name}', 1, Color{ r: 255, g: 160, b: 100 })
 	} else {
-		'FLOOR ${game.current_level.floor} - ${game.current_level.name} [PASS: ${game.current_level.password}]'
+		lvl_name := 'SECTOR ${game.current_level.floor} - ${game.current_level.name}'
+		l_scale := if lvl_name.len > 20 { 1 } else { 2 }
+		l_y := if l_scale == 1 { 38 } else { 36 }
+		draw_text(renderer, 20, l_y, lvl_name, l_scale, Color{ r: 0, g: 230, b: 255 })
+
+		// Speedrun Timer Telemetry
+		sec := int(game.level_time_ms / 1000)
+		ms := int((game.level_time_ms % 1000) / 10)
+		time_str := 'TIME: ${sec:02d}.${ms:02d}s'
+		draw_text(renderer, 480, 16, time_str, 1, Color{ r: 255, g: 255, b: 255 })
+
+		dim_str := if game.active_dimension == .alpha { 'DIM: ALPHA [Q]' } else { 'DIM: BETA [Q]' }
+		dim_col := if game.active_dimension == .alpha { Color{ r: 0, g: 240, b: 255 } } else { Color{ r: 255, g: 100, b: 255 } }
+		draw_text(renderer, 480, 38, dim_str, 1, dim_col)
+
+		skin_name := match game.skin {
+			.neon_blue { 'BLUE' }
+			.cyber_magenta { 'MAGENTA' }
+			.obsidian_gold { 'GOLD' }
+			.toxic_lime { 'LIME' }
+			.dark_matter { 'VOID' }
+		}
+		draw_text(renderer, 620, 38, 'SKIN: ${skin_name} [C]', 1, Color{ r: 255, g: 200, b: 80 })
 	}
-	draw_text(renderer, 20, 36, lvl_name, 2, Color{ r: 180, g: 225, b: 255 })
-
-	// Score & Moves & Lives
-	score_str := 'SCORE: ${game.score:06d}'
-	draw_text(renderer, 570, 14, score_str, 2, Color{ r: 255, g: 255, b: 255 })
-
-	moves_str := 'MOVES: ${game.moves_count}'
-	draw_text(renderer, 570, 36, moves_str, 2, Color{ r: 140, g: 220, b: 255 })
-
-	lives_str := 'LIVES: ${game.lives}'
-	draw_text(renderer, 680, 36, lives_str, 2, Color{ r: 255, g: 120, b: 120 })
 }
 
-fn draw_playfield(renderer &sdl.Renderer, game Game, ticks u32) {
-	// Heavy 3D Castle Wall Outer Frame
+fn draw_futuristic_playfield(renderer &sdl.Renderer, game Game, ticks u32, theme LevelTheme, mx int, my int) {
 	frame_rect := sdl.Rect{
 		x: grid_offset_x - 12
 		y: grid_offset_y - 12
 		w: (grid_cols * cell_size) + 24
 		h: (grid_rows * cell_size) + 24
 	}
-	sdl.set_render_draw_color(renderer, 75, 60, 50, 255)
+
+	frame_col := match theme {
+		.castle { Color{ r: 18, g: 38, b: 72 } }
+		.forest { Color{ r: 14, g: 50, b: 30 } }
+		.desert { Color{ r: 70, g: 42, b: 18 } }
+		.ice { Color{ r: 20, g: 65, b: 105 } }
+		.volcanic { Color{ r: 75, g: 22, b: 22 } }
+		.haunted { Color{ r: 42, g: 20, b: 68 } }
+	}
+	sdl.set_render_draw_color(renderer, frame_col.r, frame_col.g, frame_col.b, 255)
 	sdl.render_fill_rect(renderer, &frame_rect)
 
-	// Castle wall brick blocks on frame border
-	sdl.set_render_draw_color(renderer, 50, 40, 32, 255)
-	for i in 0 .. (grid_cols + 1) {
-		bx := grid_offset_x - 12 + i * cell_size
-		sdl.render_draw_line(renderer, bx, grid_offset_y - 12, bx, grid_offset_y)
-		sdl.render_draw_line(renderer, bx, grid_offset_y + grid_rows * cell_size, bx, grid_offset_y + grid_rows * cell_size + 12)
+	neon_glow := match theme {
+		.castle { Color{ r: 0, g: 230, b: 255 } }
+		.forest { Color{ r: 50, g: 255, b: 120 } }
+		.desert { Color{ r: 255, g: 190, b: 30 } }
+		.ice { Color{ r: 120, g: 220, b: 255 } }
+		.volcanic { Color{ r: 255, g: 80, b: 40 } }
+		.haunted { Color{ r: 210, g: 90, b: 255 } }
 	}
+	sdl.set_render_draw_color(renderer, neon_glow.r, neon_glow.g, neon_glow.b, 255)
+	sdl.render_draw_rect(renderer, &sdl.Rect{ x: grid_offset_x - 4, y: grid_offset_y - 4, w: (grid_cols * cell_size) + 8, h: (grid_rows * cell_size) + 8 })
 
-	// Inner Gold Trim
-	gold_trim := sdl.Rect{
-		x: grid_offset_x - 4
-		y: grid_offset_y - 4
-		w: (grid_cols * cell_size) + 8
-		h: (grid_rows * cell_size) + 8
-	}
-	sdl.set_render_draw_color(renderer, 220, 180, 20, 255)
-	sdl.render_draw_rect(renderer, &gold_trim)
-
-	inner_rect := sdl.Rect{
-		x: grid_offset_x
-		y: grid_offset_y
-		w: grid_cols * cell_size
-		h: grid_rows * cell_size
-	}
-	sdl.set_render_draw_color(renderer, 32, 95, 45, 255)
-	sdl.render_fill_rect(renderer, &inner_rect)
-
-	// 1. Draw Floor Tiles
+	// 1. Draw Floor Tiles & Modern Gizmos
 	for r in 0 .. grid_rows {
 		for c in 0 .. grid_cols {
 			tile := if game.mode == .editor { game.editor_level.grid[r][c] } else { game.grid[r][c] }
 			tx := grid_offset_x + c * cell_size
 			ty := grid_offset_y + r * cell_size
-			draw_tile(renderer, tx, ty, tile, r, c, ticks)
+			draw_futuristic_tile(renderer, tx, ty, tile, r, c, ticks, theme, game.active_dimension, game.gate_open)
 		}
 	}
 
-	// 2. Draw Entities
+	// 2. Draw AI Hint Path
+	if game.show_hint && game.hint_path.len > 0 {
+		for pt in game.hint_path {
+			hx := grid_offset_x + pt.x * cell_size + cell_size / 2
+			hy := grid_offset_y + pt.y * cell_size + cell_size / 2
+			pulse := int(math.sin(f64(ticks) / 80.0) * 3.0)
+			sdl.set_render_draw_color(renderer, 0, 255, 180, 200)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: hx - 4 - pulse, y: hy - 4 - pulse, w: 8 + pulse * 2, h: 8 + pulse * 2 })
+		}
+	}
+
+	// 3. Draw Entities & Blocks
 	for r in 0 .. grid_rows {
 		for c in 0 .. grid_cols {
 			ent := if game.mode == .editor { game.editor_level.entities[r][c] } else { game.entities[r][c] }
 			if ent != .none {
 				tx := grid_offset_x + c * cell_size
 				ty := grid_offset_y + r * cell_size
-				draw_entity(renderer, tx, ty, ent, game.chest_open, game.door_open, ticks)
+				// Soft entity shadow
+				draw_soft_shadow(renderer, tx, ty, cell_size - 8)
+				draw_futuristic_entity(renderer, tx, ty, ent, game.chest_open, game.door_open, ticks)
 			}
 		}
 	}
 
-	// 3. Draw Dynamic Enemies (In Play Mode)
+	// 4. Draw Dynamic Enemies
 	if game.mode == .play {
 		for enemy in game.enemies {
 			if enemy.x >= 0 && enemy.x < grid_cols && enemy.y >= 0 && enemy.y < grid_rows {
 				ex := grid_offset_x + enemy.x * cell_size
 				ey := grid_offset_y + enemy.y * cell_size
-				draw_enemy(renderer, ex, ey, enemy, ticks)
+				draw_soft_shadow(renderer, ex, ey, cell_size - 8)
+				draw_futuristic_enemy(renderer, ex, ey, enemy, ticks)
 			}
 		}
 	}
 
-	// 4. Draw Lolo
+	// 5. Draw Cyber-Lolo with Selected Skin
 	if game.mode == .play && !game.lolo.is_dead {
 		lx := grid_offset_x + game.lolo.x * cell_size
 		ly := grid_offset_y + game.lolo.y * cell_size
-		draw_lolo(renderer, lx, ly, game.lolo.dir, ticks)
+		draw_soft_shadow(renderer, lx, ly, cell_size - 8)
+		draw_cyber_lolo(renderer, lx, ly, game.lolo.dir, ticks, game.lolo.speed_boost > 0, game.skin)
 	}
 
-	// 5. Draw Magic Shot
+	// 6. Draw High-Energy Plasma Shot
 	if game.mode == .play && game.magic_shot.active {
 		sx := grid_offset_x + int(game.magic_shot.x * f64(cell_size)) + cell_size / 2
 		sy := grid_offset_y + int(game.magic_shot.y * f64(cell_size)) + cell_size / 2
-		draw_magic_shot(renderer, sx, sy, ticks)
+		draw_plasma_shot(renderer, sx, sy, ticks)
 	}
 
-	// 6. Draw Medusa Laser Beam with crackling electric arc
-	if game.medusa_laser_active {
-		x1 := grid_offset_x + game.laser_x1 * cell_size + cell_size / 2
-		y1 := grid_offset_y + game.laser_y1 * cell_size + cell_size / 2
-		x2 := grid_offset_x + game.laser_x2 * cell_size + cell_size / 2
-		y2 := grid_offset_y + game.laser_y2 * cell_size + cell_size / 2
+	// 7. Draw Multi-Bounce Laser Segments
+	for seg in game.laser_segments {
+		x1 := grid_offset_x + seg.x1 * cell_size + cell_size / 2
+		y1 := grid_offset_y + seg.y1 * cell_size + cell_size / 2
+		x2 := grid_offset_x + seg.x2 * cell_size + cell_size / 2
+		y2 := grid_offset_y + seg.y2 * cell_size + cell_size / 2
 
-		// Outer red electric corona
-		sdl.set_render_draw_color(renderer, 255, 50, 50, 255)
-		sdl.render_draw_line(renderer, x1 - 2, y1 - 2, x2 - 2, y2 - 2)
-		sdl.render_draw_line(renderer, x1 + 2, y1 + 2, x2 + 2, y2 + 2)
-		sdl.render_draw_line(renderer, x1 - 1, y1 - 1, x2 - 1, y2 - 1)
-		sdl.render_draw_line(renderer, x1 + 1, y1 + 1, x2 + 1, y2 + 1)
-
-		// Intense white lightning core
+		// Wide Outer Bloom Halo
+		sdl.set_render_draw_blend_mode(renderer, .blend)
+		sdl.set_render_draw_color(renderer, 255, 30, 80, 85)
+		for off := -3; off <= 3; off++ {
+			sdl.render_draw_line(renderer, x1 + off, y1 + off, x2 + off, y2 + off)
+		}
+		// Medium Crimson Laser Beam
+		sdl.set_render_draw_color(renderer, 255, 60, 100, 220)
+		for off := -1; off <= 1; off++ {
+			sdl.render_draw_line(renderer, x1 + off, y1 + off, x2 + off, y2 + off)
+		}
+		// White-Hot Core Laser
+		sdl.set_render_draw_blend_mode(renderer, .none)
 		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
 		sdl.render_draw_line(renderer, x1, y1, x2, y2)
+
+		// Impact Sparks at termination point
+		for i in 0 .. 4 {
+			sp_x := x2 + ((i * 3) % 7 - 3)
+			sp_y := y2 + ((i * 5) % 7 - 3)
+			sdl.set_render_draw_color(renderer, 255, 220, 100, 255)
+			sdl.render_draw_point(renderer, sp_x, sp_y)
+		}
+	}
+
+	// 8. Draw Holographic Editor Reticle
+	if game.mode == .editor {
+		hc := (mx - grid_offset_x) / cell_size
+		hr := (my - grid_offset_y) / cell_size
+		if hc >= 0 && hc < grid_cols && hr >= 0 && hr < grid_rows {
+			hx := grid_offset_x + hc * cell_size
+			hy := grid_offset_y + hr * cell_size
+			sdl.set_render_draw_color(renderer, 0, 240, 255, 220)
+			sdl.render_draw_rect(renderer, &sdl.Rect{ x: hx, y: hy, w: cell_size, h: cell_size })
+			sdl.set_render_draw_color(renderer, 255, 220, 0, 255)
+			sdl.render_draw_line(renderer, hx, hy, hx + 8, hy)
+			sdl.render_draw_line(renderer, hx, hy, hx, hy + 8)
+			sdl.render_draw_line(renderer, hx + cell_size - 8, hy, hx + cell_size, hy)
+			sdl.render_draw_line(renderer, hx + cell_size, hy, hx + cell_size, hy + 8)
+		}
 	}
 }
 
-fn draw_tile(renderer &sdl.Renderer, x int, y int, tile TileType, r int, c int, ticks u32) {
+fn draw_soft_shadow(renderer &sdl.Renderer, x int, y int, w int) {
+	sdl.set_render_draw_blend_mode(renderer, .blend)
+	sdl.set_render_draw_color(renderer, 0, 0, 0, 75)
+	sh_rect := sdl.Rect{ x: x + 4, y: y + cell_size - 6, w: w, h: 5 }
+	sdl.render_fill_rect(renderer, &sh_rect)
+	sdl.set_render_draw_blend_mode(renderer, .none)
+}
+
+fn draw_futuristic_tile(renderer &sdl.Renderer, x int, y int, tile TileType, r int, c int, ticks u32, theme LevelTheme, dim Dimension, gate_open bool) {
 	rect := sdl.Rect{ x: x, y: y, w: cell_size, h: cell_size }
 
 	match tile {
 		.grass {
-			// Subtle checkerboard flagstone pattern
-			bg_col := if (r + c) % 2 == 0 {
-				Color{ r: 42, g: 125, b: 55, a: 255 }
-			} else {
-				Color{ r: 48, g: 140, b: 62, a: 255 }
+			bg_col := match theme {
+				.castle { if (r + c) % 2 == 0 { Color{ r: 14, g: 32, b: 58 } } else { Color{ r: 18, g: 40, b: 72 } } }
+				.forest { if (r + c) % 2 == 0 { Color{ r: 12, g: 46, b: 28 } } else { Color{ r: 16, g: 60, b: 36 } } }
+				.desert { if (r + c) % 2 == 0 { Color{ r: 72, g: 48, b: 22 } } else { Color{ r: 88, g: 60, b: 28 } } }
+				.ice { if (r + c) % 2 == 0 { Color{ r: 32, g: 72, b: 114 } } else { Color{ r: 42, g: 88, b: 135 } } }
+				.volcanic { if (r + c) % 2 == 0 { Color{ r: 48, g: 18, b: 20 } } else { Color{ r: 58, g: 24, b: 28 } } }
+				.haunted { if (r + c) % 2 == 0 { Color{ r: 36, g: 18, b: 52 } } else { Color{ r: 48, g: 25, b: 68 } } }
 			}
 			sdl.set_render_draw_color(renderer, bg_col.r, bg_col.g, bg_col.b, 255)
 			sdl.render_fill_rect(renderer, &rect)
 
-			// Subtle cobblestone mortar dots
-			sdl.set_render_draw_color(renderer, 32, 95, 42, 255)
-			sdl.render_draw_point(renderer, x + 12, y + 12)
-			sdl.render_draw_point(renderer, x + 36, y + 36)
+			// Subtle micro-circuit node
+			sdl.set_render_draw_color(renderer, u8(math_min(int(bg_col.r) + 25, 255)), u8(math_min(int(bg_col.g) + 25, 255)), u8(math_min(int(bg_col.b) + 25, 255)), 255)
+			sdl.render_draw_point(renderer, x + 4, y + 4)
+			sdl.render_draw_point(renderer, x + cell_size - 5, y + cell_size - 5)
+		}
+		.laser_prism_slash, .laser_prism_backslash {
+			// Optical Diamond Refraction Prism
+			sdl.set_render_draw_color(renderer, 24, 42, 75, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+			sdl.render_draw_rect(renderer, &rect)
+
+			// Chrome Bevel
+			sdl.set_render_draw_color(renderer, 80, 160, 240, 255)
+			sdl.render_draw_rect(renderer, &sdl.Rect{ x: x + 2, y: y + 2, w: cell_size - 4, h: cell_size - 4 })
+
+			// Glowing Optical Reflector Core
+			sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+			if tile == .laser_prism_slash {
+				sdl.render_draw_line(renderer, x + 6, y + cell_size - 6, x + cell_size - 6, y + 6)
+				sdl.render_draw_line(renderer, x + 7, y + cell_size - 6, x + cell_size - 6, y + 7)
+			} else {
+				sdl.render_draw_line(renderer, x + 6, y + 6, x + cell_size - 6, y + cell_size - 6)
+				sdl.render_draw_line(renderer, x + 7, y + 6, x + cell_size - 6, y + cell_size - 7)
+			}
+		}
+		.pressure_plate {
+			// Conductive Pressure Sensor Plate
+			sdl.set_render_draw_color(renderer, 28, 36, 54, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, 60, 75, 105, 255)
+			sdl.render_draw_rect(renderer, &rect)
+
+			plate_col := if gate_open { Color{ r: 0, g: 255, b: 180 } } else { Color{ r: 255, g: 180, b: 30 } }
+			sdl.set_render_draw_color(renderer, plate_col.r, plate_col.g, plate_col.b, 255)
+			inner := sdl.Rect{ x: x + 8, y: y + 8, w: cell_size - 16, h: cell_size - 16 }
+			sdl.render_fill_rect(renderer, &inner)
+
+			// Center Sensor Stud
+			sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + cell_size / 2 - 3, y: y + cell_size / 2 - 3, w: 6, h: 6 })
+		}
+		.toggle_laser_gate {
+			// Heavy Emitter Pylons
+			sdl.set_render_draw_color(renderer, 32, 40, 56, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, 80, 100, 130, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 2, y: y + 4, w: 6, h: cell_size - 8 })
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + cell_size - 8, y: y + 4, w: 6, h: cell_size - 8 })
+
+			if !gate_open {
+				// Lethal Red Forcefield Barrier
+				sdl.set_render_draw_color(renderer, 255, 30, 60, 255)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 8, y: y + cell_size / 2 - 3, w: cell_size - 16, h: 6 })
+				sdl.set_render_draw_color(renderer, 255, 220, 230, 255)
+				sdl.render_draw_line(renderer, x + 8, y + cell_size / 2, x + cell_size - 8, y + cell_size / 2)
+			} else {
+				// Deactivated Green Indicator
+				sdl.set_render_draw_color(renderer, 0, 255, 180, 255)
+				sdl.render_draw_line(renderer, x + 8, y + cell_size / 2, x + cell_size - 8, y + cell_size / 2)
+			}
+		}
+		.conveyor_up, .conveyor_down, .conveyor_left, .conveyor_right {
+			// Kinetic Conveyor Belt Track
+			sdl.set_render_draw_color(renderer, 32, 42, 60, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, 20, 28, 42, 255)
+			sdl.render_draw_rect(renderer, &rect)
+
+			// Hazard Yellow/Black Edges
+			for i in 0 .. 4 {
+				sdl.set_render_draw_color(renderer, 255, 200, 40, 255)
+				sdl.render_draw_line(renderer, x + i * 12, y + 1, x + i * 12 + 4, y + 1)
+				sdl.render_draw_line(renderer, x + i * 12, y + cell_size - 2, x + i * 12 + 4, y + cell_size - 2)
+			}
+
+			ch := match tile {
+				.conveyor_up { `^` }
+				.conveyor_down { `v` }
+				.conveyor_left { `<` }
+				else { `>` }
+			}
+			draw_char(renderer, x + 18, y + 16, ch, 2, Color{ r: 0, g: 240, b: 255 })
+		}
+		.phase_block_alpha {
+			if dim == .alpha {
+				sdl.set_render_draw_color(renderer, 0, 160, 235, 255)
+				sdl.render_fill_rect(renderer, &rect)
+				sdl.set_render_draw_color(renderer, 140, 220, 255, 255)
+				sdl.render_draw_rect(renderer, &rect)
+				draw_char(renderer, x + 18, y + 16, `A`, 2, Color{ r: 255, g: 255, b: 255 })
+			} else {
+				sdl.set_render_draw_color(renderer, 0, 180, 240, 120)
+				sdl.render_draw_rect(renderer, &rect)
+				draw_char(renderer, x + 18, y + 16, `A`, 1, Color{ r: 0, g: 180, b: 240 })
+			}
+		}
+		.phase_block_beta {
+			if dim == .beta {
+				sdl.set_render_draw_color(renderer, 215, 35, 215, 255)
+				sdl.render_fill_rect(renderer, &rect)
+				sdl.set_render_draw_color(renderer, 255, 140, 255, 255)
+				sdl.render_draw_rect(renderer, &rect)
+				draw_char(renderer, x + 18, y + 16, `B`, 2, Color{ r: 255, g: 255, b: 255 })
+			} else {
+				sdl.set_render_draw_color(renderer, 220, 40, 220, 120)
+				sdl.render_draw_rect(renderer, &rect)
+				draw_char(renderer, x + 18, y + 16, `B`, 1, Color{ r: 220, g: 40, b: 220 })
+			}
 		}
 		.wall {
-			// 3D Stone Castle Block
-			sdl.set_render_draw_color(renderer, 105, 90, 80, 255)
+			// Heavy Steel Wall Armor with 3D Bevel & Rivets
+			sdl.set_render_draw_color(renderer, 48, 58, 74, 255)
 			sdl.render_fill_rect(renderer, &rect)
 
-			// Top and Left light bevel
-			sdl.set_render_draw_color(renderer, 150, 135, 125, 255)
+			// Top / Left Specular Highlight
+			sdl.set_render_draw_color(renderer, 95, 145, 205, 255)
 			sdl.render_draw_line(renderer, x + 1, y + 1, x + cell_size - 2, y + 1)
 			sdl.render_draw_line(renderer, x + 1, y + 1, x + 1, y + cell_size - 2)
 
-			// Brick division lines & mortar
-			sdl.set_render_draw_color(renderer, 55, 45, 40, 255)
-			sdl.render_draw_rect(renderer, &rect)
-			sdl.render_draw_line(renderer, x, y + cell_size / 2, x + cell_size, y + cell_size / 2)
-			sdl.render_draw_line(renderer, x + cell_size / 2, y, x + cell_size / 2, y + cell_size / 2)
+			// Dark Under Shadow
+			sdl.set_render_draw_color(renderer, 22, 28, 38, 255)
+			sdl.render_draw_line(renderer, x + 1, y + cell_size - 2, x + cell_size - 2, y + cell_size - 2)
+			sdl.render_draw_line(renderer, x + cell_size - 2, y + 1, x + cell_size - 2, y + cell_size - 2)
+
+			// Inner Plate & Cyan Corner Hex Bolts
+			sdl.set_render_draw_color(renderer, 32, 40, 52, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 6, w: cell_size - 12, h: cell_size - 12 })
+			sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
+			sdl.render_draw_point(renderer, x + 4, y + 4)
+			sdl.render_draw_point(renderer, x + cell_size - 5, y + 4)
+			sdl.render_draw_point(renderer, x + 4, y + cell_size - 5)
+			sdl.render_draw_point(renderer, x + cell_size - 5, y + cell_size - 5)
 		}
 		.rock {
-			// Faceted Boulder
-			sdl.set_render_draw_color(renderer, 125, 130, 140, 255)
+			sdl.set_render_draw_color(renderer, 65, 70, 85, 255)
 			sdl.render_fill_rect(renderer, &rect)
-
-			// Rock facets & specular bevel
-			sdl.set_render_draw_color(renderer, 175, 180, 195, 255)
-			f_top := sdl.Rect{ x: x + 6, y: y + 6, w: cell_size - 16, h: 10 }
-			sdl.render_fill_rect(renderer, &f_top)
-
-			sdl.set_render_draw_color(renderer, 70, 75, 85, 255)
-			f_bot := sdl.Rect{ x: x + 14, y: y + cell_size - 14, w: cell_size - 20, h: 8 }
-			sdl.render_fill_rect(renderer, &f_bot)
-			sdl.render_draw_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, 105, 120, 145, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 6, w: cell_size - 16, h: 10 })
+			sdl.set_render_draw_color(renderer, 0, 230, 255, 200)
+			sdl.render_draw_line(renderer, x + 10, y + 20, x + cell_size - 12, y + 24)
 		}
 		.tree {
-			// Woody trunk base
-			sdl.set_render_draw_color(renderer, 95, 55, 20, 255)
-			trunk := sdl.Rect{ x: x + 18, y: y + 28, w: 12, h: 16 }
-			sdl.render_fill_rect(renderer, &trunk)
-
-			// Multi-tiered Lush Green Tree Foliage Canopy
-			sdl.set_render_draw_color(renderer, 18, 90, 32, 255)
-			canopy_b := sdl.Rect{ x: x + 4, y: y + 12, w: cell_size - 8, h: 22 }
-			sdl.render_fill_rect(renderer, &canopy_b)
-
-			sdl.set_render_draw_color(renderer, 32, 145, 50, 255)
-			canopy_m := sdl.Rect{ x: x + 8, y: y + 6, w: cell_size - 16, h: 20 }
-			sdl.render_fill_rect(renderer, &canopy_m)
-
-			sdl.set_render_draw_color(renderer, 70, 200, 85, 255)
-			canopy_t := sdl.Rect{ x: x + 14, y: y + 4, w: cell_size - 28, h: 8 }
-			sdl.render_fill_rect(renderer, &canopy_t)
+			// Data Spire
+			sdl.set_render_draw_color(renderer, 28, 42, 58, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 18, y: y + 26, w: 12, h: 18 })
+			sdl.set_render_draw_color(renderer, 0, 180, 100, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 14, w: cell_size - 12, h: 16 })
+			sdl.set_render_draw_color(renderer, 0, 255, 150, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 12, y: y + 6, w: cell_size - 24, h: 12 })
+			sdl.set_render_draw_color(renderer, 210, 255, 235, 255)
+			sdl.render_draw_point(renderer, x + cell_size / 2, y + 4)
 		}
 		.water {
-			// Procedural Shimmering Water with animated sine-wave ripples
-			sdl.set_render_draw_color(renderer, 24, 75, 175, 255)
+			// Shimmering Flowing Coolant Stream
+			sdl.set_render_draw_color(renderer, 12, 55, 125, 255)
 			sdl.render_fill_rect(renderer, &rect)
-
-			wave_off1 := int(math.sin(f64(ticks) / 200.0 + f64(c * 2)) * 4.0)
-			wave_off2 := int(math.cos(f64(ticks) / 250.0 + f64(r * 2)) * 4.0)
-
-			// Azure wave highlights
-			sdl.set_render_draw_color(renderer, 50, 140, 245, 255)
-			sdl.render_draw_line(renderer, x + 4, y + 14 + wave_off1, x + cell_size - 4, y + 14 + wave_off1)
-			sdl.render_draw_line(renderer, x + 8, y + 32 + wave_off2, x + cell_size - 8, y + 32 + wave_off2)
-
-			// Bright specular glint
-			sdl.set_render_draw_color(renderer, 160, 220, 255, 255)
-			sdl.render_draw_point(renderer, x + 16 + wave_off1, y + 13 + wave_off1)
-			sdl.render_draw_point(renderer, x + 32 + wave_off2, y + 31 + wave_off2)
+			wave := int(math.sin(f64(ticks) / 150.0 + f64(c * 2)) * 4.0)
+			sdl.set_render_draw_color(renderer, 0, 190, 255, 255)
+			sdl.render_draw_line(renderer, x + 4, y + 14 + wave, x + cell_size - 4, y + 14 + wave)
+			sdl.set_render_draw_color(renderer, 180, 240, 255, 255)
+			sdl.render_draw_point(renderer, x + 8, y + 13 + wave)
+		}
+		.lava {
+			// Superheated Molten Plasma
+			sdl.set_render_draw_color(renderer, 165, 22, 22, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			b_off := int(math.sin(f64(ticks) / 90.0 + f64(c * 3)) * 4.0)
+			sdl.set_render_draw_color(renderer, 255, 130, 0, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 10, y: y + 14 + b_off, w: 14, h: 10 })
+			sdl.set_render_draw_color(renderer, 255, 220, 80, 255)
+			sdl.render_draw_point(renderer, x + 14, y + 16 + b_off)
+		}
+		.ice {
+			// Crystalline Frosted Ice Glass
+			sdl.set_render_draw_color(renderer, 105, 185, 245, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, 230, 250, 255, 255)
+			sdl.render_draw_line(renderer, x + 4, y + 8, x + cell_size - 8, y + 8)
+			sdl.set_render_draw_color(renderer, 0, 145, 225, 255)
+			sdl.render_draw_rect(renderer, &rect)
+		}
+		.warp_a, .warp_b {
+			p_col := if tile == .warp_a { Color{ r: 0, g: 240, b: 255 } } else { Color{ r: 255, g: 40, b: 200 } }
+			sdl.set_render_draw_color(renderer, 10, 15, 30, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			pulse := int((math.sin(f64(ticks) / 80.0) + 1.0) * 3.0)
+			sdl.set_render_draw_color(renderer, p_col.r, p_col.g, p_col.b, 255)
+			sdl.render_draw_rect(renderer, &sdl.Rect{ x: x + 6 - pulse, y: y + 6 - pulse, w: cell_size - 12 + pulse * 2, h: cell_size - 12 + pulse * 2 })
+			tag := if tile == .warp_a { `A` } else { `B` }
+			draw_char(renderer, x + 18, y + 16, tag, 2, Color{ r: 255, g: 255, b: 255 })
+		}
+		.locked_gate {
+			sdl.set_render_draw_color(renderer, 42, 48, 58, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, 255, 45, 65, 255)
+			for b := 0; b < 3; b++ {
+				bx := x + 12 + b * 10
+				sdl.render_draw_line(renderer, bx, y + 4, bx, y + cell_size - 4)
+			}
+			sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 16, y: y + 16, w: 16, h: 16 })
 		}
 		.bridge {
-			// Wooden Plank Bridge over water
-			sdl.set_render_draw_color(renderer, 140, 85, 30, 255)
+			sdl.set_render_draw_color(renderer, 100, 112, 128, 255)
 			sdl.render_fill_rect(renderer, &rect)
-
-			sdl.set_render_draw_color(renderer, 85, 45, 15, 255)
-			sdl.render_draw_rect(renderer, &rect)
-			sdl.render_draw_line(renderer, x, y + 12, x + cell_size, y + 12)
-			sdl.render_draw_line(renderer, x, y + 24, x + cell_size, y + 24)
-			sdl.render_draw_line(renderer, x, y + 36, x + cell_size, y + 36)
-
-			// Metal nails
-			sdl.set_render_draw_color(renderer, 220, 220, 220, 255)
-			sdl.render_draw_point(renderer, x + 4, y + 6)
-			sdl.render_draw_point(renderer, x + cell_size - 5, y + 6)
-			sdl.render_draw_point(renderer, x + 4, y + 18)
-			sdl.render_draw_point(renderer, x + cell_size - 5, y + 18)
+			sdl.set_render_draw_color(renderer, 0, 205, 255, 180)
+			sdl.render_draw_line(renderer, x + 4, y + 16, x + cell_size - 4, y + 16)
+			sdl.render_draw_line(renderer, x + 4, y + 32, x + cell_size - 4, y + 32)
 		}
-		.arrow_up {
-			draw_arrow_tile(renderer, x, y, `^`)
-		}
-		.arrow_down {
-			draw_arrow_tile(renderer, x, y, `v`)
-		}
-		.arrow_left {
-			draw_arrow_tile(renderer, x, y, `<`)
-		}
-		.arrow_right {
-			draw_arrow_tile(renderer, x, y, `>`)
-		}
+		.arrow_up { draw_arrow_tile(renderer, x, y, `^`) }
+		.arrow_down { draw_arrow_tile(renderer, x, y, `v`) }
+		.arrow_left { draw_arrow_tile(renderer, x, y, `<`) }
+		.arrow_right { draw_arrow_tile(renderer, x, y, `>`) }
 	}
 }
 
 fn draw_arrow_tile(renderer &sdl.Renderer, x int, y int, ch u8) {
 	rect := sdl.Rect{ x: x, y: y, w: cell_size, h: cell_size }
-	sdl.set_render_draw_color(renderer, 50, 130, 70, 255)
+	sdl.set_render_draw_color(renderer, 20, 60, 50, 255)
 	sdl.render_fill_rect(renderer, &rect)
-
-	sdl.set_render_draw_color(renderer, 25, 75, 40, 255)
+	sdl.set_render_draw_color(renderer, 0, 255, 180, 255)
 	sdl.render_draw_rect(renderer, &rect)
-
-	draw_char(renderer, x + 16, y + 16, ch, 2, Color{ r: 255, g: 255, b: 255 })
+	draw_char(renderer, x + 16, y + 16, ch, 2, Color{ r: 0, g: 255, b: 200 })
 }
 
-fn draw_entity(renderer &sdl.Renderer, x int, y int, ent EntityType, chest_open bool, door_open bool, ticks u32) {
+fn draw_futuristic_entity(renderer &sdl.Renderer, x int, y int, ent EntityType, chest_open bool, door_open bool, ticks u32) {
 	cx := x + cell_size / 2
 	cy := y + cell_size / 2
 
 	match ent {
 		.emerald_frame {
-			// Faceted cut emerald jewel with 3D octagonal bevels & gold brackets
-			sdl.set_render_draw_color(renderer, 0, 150, 65, 255)
+			// Energy Block with 3D Bevel, Emerald Crystal & Rivets
+			sdl.set_render_draw_color(renderer, 0, 180, 95, 255)
 			body := sdl.Rect{ x: x + 4, y: y + 4, w: cell_size - 8, h: cell_size - 8 }
 			sdl.render_fill_rect(renderer, &body)
 
-			// Bright crystal highlights
-			sdl.set_render_draw_color(renderer, 60, 230, 130, 255)
-			top_facet := sdl.Rect{ x: x + 8, y: y + 8, w: cell_size - 16, h: cell_size - 16 }
-			sdl.render_fill_rect(renderer, &top_facet)
+			// Metallic Emerald Core
+			sdl.set_render_draw_color(renderer, 80, 255, 175, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 8, y: y + 8, w: cell_size - 16, h: cell_size - 16 })
 
-			sdl.set_render_draw_color(renderer, 180, 255, 210, 255)
-			glint := sdl.Rect{ x: cx - 6, y: cy - 6, w: 12, h: 12 }
-			sdl.render_fill_rect(renderer, &glint)
+			pulse := int(math.sin(f64(ticks) / 100.0) * 2.0)
+			sdl.set_render_draw_color(renderer, 220, 255, 240, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 4 - pulse, y: cy - 4 - pulse, w: 8 + pulse * 2, h: 8 + pulse * 2 })
 
-			// Gold Corner Brackets
-			sdl.set_render_draw_color(renderer, 240, 195, 20, 255)
+			// Gold Corner Frame Clamps
+			sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
 			sdl.render_draw_rect(renderer, &body)
 		}
 		.heart_frame {
-			// Ornate Gold Frame with pulsating Ruby Heart
-			pulse := int((math.sin(f64(ticks) / 180.0) + 1.0) * 15.0)
+			// Antimatter Power Core (Pulsing Ruby Heart in Gold Chassis)
+			pulse := int((math.sin(f64(ticks) / 140.0) + 1.0) * 15.0)
+			sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+			sdl.render_draw_rect(renderer, &sdl.Rect{ x: x + 4, y: y + 4, w: cell_size - 8, h: cell_size - 8 })
 
-			sdl.set_render_draw_color(renderer, 235, 190, 20, 255)
-			f_rect := sdl.Rect{ x: x + 4, y: y + 4, w: cell_size - 8, h: cell_size - 8 }
-			sdl.render_fill_rect(renderer, &f_rect)
+			sdl.set_render_draw_color(renderer, 22, 12, 18, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 6, w: cell_size - 12, h: cell_size - 12 })
 
-			sdl.set_render_draw_color(renderer, 50, 20, 20, 255)
-			inner := sdl.Rect{ x: x + 7, y: y + 7, w: cell_size - 14, h: cell_size - 14 }
-			sdl.render_fill_rect(renderer, &inner)
+			// Pulsing Heart Geometry
+			sdl.set_render_draw_color(renderer, u8(220 + pulse), 20, 60, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 10, y: cy - 8, w: 9, h: 9 })
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 1, y: cy - 8, w: 9, h: 9 })
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 8, y: cy + 1, w: 16, h: 8 })
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 4, y: cy + 9, w: 8, h: 4 })
 
-			// Radiant Ruby Heart Shape
-			sdl.set_render_draw_color(renderer, u8(220 + pulse), 20, 50, 255)
-			h1 := sdl.Rect{ x: cx - 11, y: cy - 9, w: 10, h: 10 }
-			h2 := sdl.Rect{ x: cx + 1, y: cy - 9, w: 10, h: 10 }
-			h3 := sdl.Rect{ x: cx - 9, y: cy + 1, w: 18, h: 9 }
-			h4 := sdl.Rect{ x: cx - 4, y: cy + 10, w: 8, h: 4 }
-			sdl.render_fill_rect(renderer, &h1)
-			sdl.render_fill_rect(renderer, &h2)
-			sdl.render_fill_rect(renderer, &h3)
-			sdl.render_fill_rect(renderer, &h4)
-
-			// White sparkle glint
+			// Specular Diamond Glint
 			sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-			sdl.render_draw_point(renderer, cx - 7, cy - 6)
-			sdl.render_draw_point(renderer, cx - 6, cy - 6)
+			sdl.render_draw_point(renderer, cx - 6, cy - 5)
 		}
 		.chest {
 			rect := sdl.Rect{ x: x + 4, y: y + 8, w: cell_size - 8, h: cell_size - 12 }
 			if chest_open {
-				// Royal Open Chest with floating Eden Jewel
-				sdl.set_render_draw_color(renderer, 150, 90, 20, 255)
+				sdl.set_render_draw_color(renderer, 32, 48, 78, 255)
 				sdl.render_fill_rect(renderer, &rect)
-
-				// Golden interior glow
-				sdl.set_render_draw_color(renderer, 255, 220, 50, 255)
-				inner := sdl.Rect{ x: cx - 12, y: cy - 8, w: 24, h: 14 }
-				sdl.render_fill_rect(renderer, &inner)
-
-				// Floating Eden Jewel
-				float_y := int(math.sin(f64(ticks) / 160.0) * 4.0)
-				sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
-				gem := sdl.Rect{ x: cx - 6, y: cy - 14 + float_y, w: 12, h: 12 }
-				sdl.render_fill_rect(renderer, &gem)
-
+				float_y := int(math.sin(f64(ticks) / 140.0) * 4.0)
+				sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 6, y: cy - 14 + float_y, w: 12, h: 12 })
 				sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-				gem_c := sdl.Rect{ x: cx - 2, y: cy - 10 + float_y, w: 4, h: 4 }
-				sdl.render_fill_rect(renderer, &gem_c)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 2, y: cy - 10 + float_y, w: 4, h: 4 })
 			} else {
-				// Heavy Sealed Royal Treasure Chest with Golden Bands
-				sdl.set_render_draw_color(renderer, 135, 75, 18, 255)
+				sdl.set_render_draw_color(renderer, 48, 62, 92, 255)
 				sdl.render_fill_rect(renderer, &rect)
-
-				// Gold Bands & Filigree
-				sdl.set_render_draw_color(renderer, 245, 195, 25, 255)
-				b1 := sdl.Rect{ x: x + 10, y: y + 8, w: 5, h: cell_size - 12 }
-				b2 := sdl.Rect{ x: x + cell_size - 15, y: y + 8, w: 5, h: cell_size - 12 }
-				sdl.render_fill_rect(renderer, &b1)
-				sdl.render_fill_rect(renderer, &b2)
-
-				// Ruby Lock Latch
-				sdl.set_render_draw_color(renderer, 220, 30, 30, 255)
-				latch_rect := sdl.Rect{ x: cx - 4, y: cy + 2, w: 8, h: 8 }
-				sdl.render_fill_rect(renderer, &latch_rect)
+				sdl.set_render_draw_color(renderer, 0, 230, 255, 255)
+				sdl.render_draw_rect(renderer, &rect)
+				sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 4, y: cy + 2, w: 8, h: 6 })
 			}
 		}
 		.door {
 			rect := sdl.Rect{ x: x + 4, y: y + 2, w: cell_size - 8, h: cell_size - 2 }
 			if door_open {
-				// Magical Swirling Portal Exit
-				sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+				// Pulsing Subspace Vortex
+				sdl.set_render_draw_color(renderer, 0, 230, 255, 255)
 				sdl.render_fill_rect(renderer, &rect)
-
-				// Glowing mystical portal center
-				sdl.set_render_draw_color(renderer, 10, 180, 240, 255)
-				portal := sdl.Rect{ x: x + 8, y: y + 6, w: cell_size - 16, h: cell_size - 6 }
-				sdl.render_fill_rect(renderer, &portal)
-
-				// Swirling white core
 				sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
 				core := sdl.Rect{ x: cx - 6, y: cy - 2, w: 12, h: 16 }
 				sdl.render_fill_rect(renderer, &core)
 			} else {
-				// Sealed Dungeon Portcullis Gate
-				sdl.set_render_draw_color(renderer, 85, 75, 70, 255)
+				// Heavy Red Blast Gate
+				sdl.set_render_draw_color(renderer, 32, 38, 48, 255)
 				sdl.render_fill_rect(renderer, &rect)
-
-				// Iron bars
-				sdl.set_render_draw_color(renderer, 35, 30, 30, 255)
-				for bar := 0; bar < 4; bar++ {
-					bx := x + 10 + bar * 8
-					sdl.render_draw_line(renderer, bx, y + 4, bx, y + cell_size - 4)
-				}
+				sdl.set_render_draw_color(renderer, 255, 60, 60, 255)
+				sdl.render_draw_line(renderer, x + 6, y + cell_size / 2, x + cell_size - 6, y + cell_size / 2)
 			}
 		}
 		.lolo_spawn {
-			draw_char(renderer, x + 16, y + 16, `L`, 2, Color{ r: 90, g: 190, b: 255 })
+			draw_char(renderer, x + 16, y + 16, `L`, 2, Color{ r: 0, g: 240, b: 255 })
 		}
 		.hammer {
-			// Steel Warhammer
-			sdl.set_render_draw_color(renderer, 130, 80, 25, 255)
-			handle := sdl.Rect{ x: cx - 2, y: cy - 6, w: 4, h: 18 }
-			sdl.render_fill_rect(renderer, &handle)
-
-			sdl.set_render_draw_color(renderer, 200, 210, 225, 255)
-			head := sdl.Rect{ x: cx - 10, y: cy - 12, w: 20, h: 8 }
-			sdl.render_fill_rect(renderer, &head)
+			sdl.set_render_draw_color(renderer, 72, 88, 114, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 2, y: cy - 6, w: 4, h: 18 })
+			sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 10, y: cy - 12, w: 20, h: 8 })
 		}
-		.snakey { draw_enemy_icon(renderer, x, y, .snakey, ticks) }
-		.alma { draw_enemy_icon(renderer, x, y, .alma, ticks) }
-		.leeper { draw_enemy_icon(renderer, x, y, .leeper, ticks) }
-		.skull { draw_enemy_icon(renderer, x, y, .skull, ticks) }
-		.medusa { draw_enemy_icon(renderer, x, y, .medusa, ticks) }
-		.don_medusa_h { draw_enemy_icon(renderer, x, y, .don_medusa_h, ticks) }
-		.don_medusa_v { draw_enemy_icon(renderer, x, y, .don_medusa_v, ticks) }
-		.gol { draw_enemy_icon(renderer, x, y, .gol, ticks) }
-		.king_egger { draw_enemy_icon(renderer, x, y, .king_egger, ticks) }
+		.key_item {
+			sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 8, y: cy - 8, w: 16, h: 16 })
+			sdl.set_render_draw_color(renderer, 0, 0, 0, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 6, y: cy - 6, w: 12, h: 4 })
+			sdl.set_render_draw_color(renderer, 0, 255, 200, 255)
+			sdl.render_draw_point(renderer, cx + 2, cy + 2)
+		}
+		.speed_boots {
+			sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 10, y: cy - 2, w: 20, h: 10 })
+			sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 12, y: cy - 8, w: 8, h: 6 })
+		}
+		.snakey, .alma, .leeper, .skull, .medusa, .don_medusa_h, .don_medusa_v, .gol, .king_egger, .gobby, .rocky, .moby, .wisp, .spike_trap {
+			dummy := Enemy{ kind: ent, x: 0, y: 0, trap_active: true }
+			draw_futuristic_enemy(renderer, x, y, dummy, ticks)
+		}
 		else {}
 	}
 }
 
-fn draw_enemy_icon(renderer &sdl.Renderer, x int, y int, kind EntityType, ticks u32) {
-	dummy := Enemy{ kind: kind, x: 0, y: 0 }
-	draw_enemy(renderer, x, y, dummy, ticks)
-}
-
-fn draw_enemy(renderer &sdl.Renderer, x int, y int, enemy Enemy, ticks u32) {
+fn draw_futuristic_enemy(renderer &sdl.Renderer, x int, y int, enemy Enemy, ticks u32) {
 	cx := x + cell_size / 2
 	cy := y + cell_size / 2
 	rect := sdl.Rect{ x: x + 4, y: y + 4, w: cell_size - 8, h: cell_size - 8 }
 
 	if enemy.is_egg {
-		// Speckled Dinosaur Egg with cute wobble
-		wobble := int(math.sin(f64(ticks) / 120.0) * 2.0)
-		sdl.set_render_draw_color(renderer, 250, 245, 235, 255)
-		egg_rect := sdl.Rect{ x: x + 6 + wobble, y: y + 4, w: cell_size - 12, h: cell_size - 8 }
-		sdl.render_fill_rect(renderer, &egg_rect)
-
-		// Purple spots
-		sdl.set_render_draw_color(renderer, 160, 60, 185, 255)
-		sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 6 + wobble, y: cy - 8, w: 6, h: 6 })
-		sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 2 + wobble, y: cy + 2, w: 5, h: 5 })
+		// Translucent Stasis Capsule with wobble
+		wobble := int(math.sin(f64(ticks) / 100.0) * 2.0)
+		sdl.set_render_draw_blend_mode(renderer, .blend)
+		sdl.set_render_draw_color(renderer, 0, 200, 255, 210)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6 + wobble, y: y + 4, w: cell_size - 12, h: cell_size - 8 })
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: x + 6 + wobble, y: y + 4, w: cell_size - 12, h: cell_size - 8 })
+		sdl.set_render_draw_blend_mode(renderer, .none)
 		return
 	}
 
 	match enemy.kind {
 		.snakey {
-			// Coiled Green Scales & Flickering Tongue
-			sdl.set_render_draw_color(renderer, 25, 175, 55, 255)
+			// Segmented Cyber Serpent with Yellow Underbelly
+			sdl.set_render_draw_color(renderer, 20, 160, 70, 255)
 			sdl.render_fill_rect(renderer, &rect)
-
-			// Yellow belly scales
-			sdl.set_render_draw_color(renderer, 245, 225, 45, 255)
-			belly := sdl.Rect{ x: x + 10, y: y + 22, w: cell_size - 20, h: 14 }
-			sdl.render_fill_rect(renderer, &belly)
-
-			// Eyes
-			sdl.set_render_draw_color(renderer, 20, 20, 20, 255)
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 8, y: cy - 8, w: 5, h: 6 })
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 3, y: cy - 8, w: 5, h: 6 })
-
-			// Animated red forked tongue
-			if (ticks / 250) % 2 == 0 {
-				sdl.set_render_draw_color(renderer, 255, 40, 40, 255)
-				sdl.render_draw_line(renderer, cx, y + cell_size - 6, cx, y + cell_size - 1)
-				sdl.render_draw_line(renderer, cx, y + cell_size - 1, cx - 2, y + cell_size + 1)
-				sdl.render_draw_line(renderer, cx, y + cell_size - 1, cx + 2, y + cell_size + 1)
-			}
+			sdl.set_render_draw_color(renderer, 255, 230, 40, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 10, y: y + 22, w: cell_size - 20, h: 14 })
+			sdl.set_render_draw_color(renderer, 255, 30, 30, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 8, y: cy - 8, w: 5, h: 5 })
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 3, y: cy - 8, w: 5, h: 5 })
 		}
 		.alma {
-			// Spiked Armadillo Beast
-			sdl.set_render_draw_color(renderer, 225, 45, 40, 255)
+			// Crimson Mech Sphere with Rotating Siren Beacon
+			sdl.set_render_draw_color(renderer, 220, 40, 40, 255)
 			sdl.render_fill_rect(renderer, &rect)
-
-			// Armored shell bands
 			sdl.set_render_draw_color(renderer, 255, 240, 220, 255)
 			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 6, w: cell_size - 12, h: 6 })
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 16, w: cell_size - 12, h: 6 })
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 26, w: cell_size - 12, h: 6 })
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 18, w: cell_size - 12, h: 6 })
+			siren := if (ticks / 180) % 2 == 0 { Color{ r: 255, g: 255, b: 0 } } else { Color{ r: 255, g: 50, b: 50 } }
+			sdl.set_render_draw_color(renderer, siren.r, siren.g, siren.b, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 3, y: y + 2, w: 6, h: 4 })
 		}
 		.leeper {
-			// Bouncy bunny-eared imp
-			sdl.set_render_draw_color(renderer, 120, 225, 80, 255)
+			// Green Hopper with Sleep State
+			sdl.set_render_draw_color(renderer, 80, 210, 110, 255)
 			sdl.render_fill_rect(renderer, &rect)
-
-			// Pink Inner Ears
-			ear1 := sdl.Rect{ x: x + 8, y: y + 1, w: 6, h: 10 }
-			ear2 := sdl.Rect{ x: x + cell_size - 14, y: y + 1, w: 6, h: 10 }
-			sdl.set_render_draw_color(renderer, 255, 175, 200, 255)
-			sdl.render_fill_rect(renderer, &ear1)
-			sdl.render_fill_rect(renderer, &ear2)
-
 			if enemy.is_asleep {
-				// Closed sleepy eyes & floating Zzz
-				sdl.set_render_draw_color(renderer, 20, 20, 20, 255)
-				sdl.render_draw_line(renderer, cx - 8, cy - 2, cx - 3, cy - 2)
-				sdl.render_draw_line(renderer, cx + 3, cy - 2, cx + 8, cy - 2)
-
-				// Floating Zzz animation
-				z_off := int(math.sin(f64(ticks) / 200.0) * 3.0)
-				draw_text(renderer, x + 6, y + 14 + z_off, 'Zzz', 1, Color{ r: 255, g: 255, b: 255 })
+				draw_text(renderer, x + 6, y + 14, 'SLEEP', 1, Color{ r: 0, g: 240, b: 255 })
 			} else {
-				// Wide curious eyes
-				sdl.set_render_draw_color(renderer, 20, 20, 20, 255)
-				sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 7, y: cy - 4, w: 4, h: 5 })
-				sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 3, y: cy - 4, w: 4, h: 5 })
+				sdl.set_render_draw_color(renderer, 0, 255, 240, 255)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 6, y: cy - 4, w: 4, h: 5 })
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 2, y: cy - 4, w: 4, h: 5 })
 			}
 		}
 		.skull {
-			// Polished Bone Skull with glowing sockets
-			sdl.set_render_draw_color(renderer, 235, 230, 215, 255)
+			// Cyber-Skull Drone with Plasma Thrusters
+			sdl.set_render_draw_color(renderer, 220, 230, 245, 255)
 			sdl.render_fill_rect(renderer, &rect)
-
-			// Dark menacing eye sockets
-			sdl.set_render_draw_color(renderer, 20, 20, 25, 255)
+			sdl.set_render_draw_color(renderer, 20, 20, 30, 255)
 			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 8, y: cy - 6, w: 5, h: 7 })
 			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 3, y: cy - 6, w: 5, h: 7 })
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 6, y: cy + 8, w: 12, h: 5 })
-
-			// Glowing red soul flame
-			sdl.set_render_draw_color(renderer, 255, 30, 30, 255)
+			sdl.set_render_draw_color(renderer, 255, 30, 80, 255)
 			sdl.render_draw_point(renderer, cx - 6, cy - 3)
 			sdl.render_draw_point(renderer, cx + 5, cy - 3)
 		}
 		.medusa {
-			// Writhing stone snake hair & glowing red gaze
-			sdl.set_render_draw_color(renderer, 135, 130, 150, 255)
+			// Laser Sentinel Turret with Gorgon Optics
+			sdl.set_render_draw_color(renderer, 80, 95, 120, 255)
 			sdl.render_fill_rect(renderer, &rect)
-
-			// Snake crown
-			sdl.set_render_draw_color(renderer, 40, 185, 75, 255)
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 4, w: cell_size - 12, h: 8 })
-
-			// Sinister glowing ruby eyes
-			sdl.set_render_draw_color(renderer, 255, 30, 30, 255)
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 7, y: cy + 2, w: 4, h: 4 })
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 3, y: cy + 2, w: 4, h: 4 })
+			sdl.set_render_draw_color(renderer, 0, 255, 180, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 4, w: cell_size - 12, h: 6 })
+			sdl.set_render_draw_color(renderer, 255, 20, 50, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 4, y: cy, w: 8, h: 8 })
 		}
 		.don_medusa_h, .don_medusa_v {
-			// Armored demon visage with gold horned helm
-			sdl.set_render_draw_color(renderer, 225, 55, 35, 255)
+			// Heavy Hover Dreadnought with Gold Crown
+			sdl.set_render_draw_color(renderer, 210, 45, 55, 255)
 			sdl.render_fill_rect(renderer, &rect)
-
-			// Golden Horned Crown
-			sdl.set_render_draw_color(renderer, 255, 215, 40, 255)
+			sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
 			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 2, w: cell_size - 12, h: 8 })
-
-			// Intimidating white/red eyes
-			sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 7, y: cy + 3, w: 4, h: 4 })
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 3, y: cy + 3, w: 4, h: 4 })
+			sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 8, y: y + cell_size - 6, w: 4, h: 4 })
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + cell_size - 12, y: y + cell_size - 6, w: 4, h: 4 })
 		}
 		.gol {
-			// Blue Fire Dragon
-			sdl.set_render_draw_color(renderer, 45, 115, 230, 255)
+			// Dragon Tank with Horns & Cannon
+			sdl.set_render_draw_color(renderer, 35, 100, 220, 255)
 			sdl.render_fill_rect(renderer, &rect)
-
-			// Horns
-			sdl.set_render_draw_color(renderer, 255, 210, 45, 255)
+			sdl.set_render_draw_color(renderer, 255, 200, 40, 255)
 			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y + 2, w: 5, h: 8 })
 			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + cell_size - 11, y: y + 2, w: 5, h: 8 })
-
-			// Glowing dragon eyes
-			sdl.set_render_draw_color(renderer, 255, 60, 30, 255)
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 7, y: cy, w: 4, h: 5 })
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 3, y: cy, w: 4, h: 5 })
+			sdl.set_render_draw_color(renderer, 255, 50, 50, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 6, y: cy, w: 4, h: 5 })
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 2, y: cy, w: 4, h: 5 })
 		}
 		.king_egger {
-			// Grand Devil King Egger Boss
-			sdl.set_render_draw_color(renderer, 125, 35, 160, 255)
+			// Mecha King Egger Boss
+			sdl.set_render_draw_color(renderer, 120, 30, 160, 255)
 			sdl.render_fill_rect(renderer, &rect)
-
-			// Massive Golden Crown with Ruby Gems
 			sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
 			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 6, y: y, w: cell_size - 12, h: 10 })
-
-			sdl.set_render_draw_color(renderer, 255, 40, 40, 255)
-			sdl.render_draw_point(renderer, cx - 6, y + 4)
-			sdl.render_draw_point(renderer, cx, y + 4)
-			sdl.render_draw_point(renderer, cx + 6, y + 4)
-
-			// Boss Cape & Glowing Eyes
-			sdl.set_render_draw_color(renderer, 255, 240, 240, 255)
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 7, y: cy + 2, w: 4, h: 5 })
-			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 3, y: cy + 2, w: 4, h: 5 })
+			sdl.set_render_draw_color(renderer, 255, 30, 30, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 6, y: cy + 2, w: 12, h: 4 })
+		}
+		.gobby {
+			// Aero Drone with Flapping Energy Wings
+			sdl.set_render_draw_color(renderer, 70, 40, 120, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			flap := int(math.sin(f64(ticks) / 80.0) * 4.0)
+			sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 1, y: y + 10 + flap, w: 8, h: 16 })
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + cell_size - 9, y: y + 10 + flap, w: 8, h: 16 })
+		}
+		.rocky {
+			// Titan Golem Crusher
+			sdl.set_render_draw_color(renderer, 85, 75, 70, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, 255, 140, 20, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 8, y: cy - 4, w: 5, h: 5 })
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 3, y: cy - 4, w: 5, h: 5 })
+		}
+		.moby {
+			// Turbine Whale
+			sdl.set_render_draw_color(renderer, 15, 120, 210, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+			sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 4, y: y + 1, w: 8, h: 5 })
+		}
+		.wisp {
+			// Phantom Wisp Boo
+			sdl.set_render_draw_blend_mode(renderer, .blend)
+			sdl.set_render_draw_color(renderer, 220, 240, 255, 220)
+			sdl.render_fill_rect(renderer, &rect)
+			sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
+			sdl.render_draw_rect(renderer, &rect)
+			sdl.set_render_draw_blend_mode(renderer, .none)
+		}
+		.spike_trap {
+			// Tesla Floor Trap
+			sdl.set_render_draw_color(renderer, 60, 65, 80, 255)
+			sdl.render_fill_rect(renderer, &rect)
+			if enemy.trap_active {
+				sdl.set_render_draw_color(renderer, 0, 255, 230, 255)
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 8, y: y + 6, w: 6, h: 14 })
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + cell_size - 14, y: y + 6, w: 6, h: 14 })
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 8, y: y + cell_size - 20, w: 6, h: 14 })
+				sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + cell_size - 14, y: y + cell_size - 20, w: 6, h: 14 })
+			}
 		}
 		else {}
 	}
 }
 
-fn draw_lolo(renderer &sdl.Renderer, x int, y int, dir Direction, ticks u32) {
+fn draw_cyber_lolo(renderer &sdl.Renderer, x int, y int, dir Direction, ticks u32, is_boosted bool, skin CyberSkin) {
 	cx := x + cell_size / 2
 	cy := y + cell_size / 2
 
-	// Glossy Cobalt Blue Round Body
-	sdl.set_render_draw_color(renderer, 30, 110, 235, 255)
+	if is_boosted {
+		// Blazing Golden Thruster Boost Aura
+		pulse := int((math.sin(f64(ticks) / 60.0) + 1.0) * 3.0)
+		sdl.set_render_draw_blend_mode(renderer, .blend)
+		sdl.set_render_draw_color(renderer, 255, 220, 0, 180)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: x + 2 - pulse, y: y + 2 - pulse, w: cell_size - 4 + pulse * 2, h: cell_size - 4 + pulse * 2 })
+		sdl.set_render_draw_blend_mode(renderer, .none)
+	}
+
+	body_col := match skin {
+		.neon_blue { Color{ r: 24, g: 105, b: 230 } }
+		.cyber_magenta { Color{ r: 230, g: 30, b: 125 } }
+		.obsidian_gold { Color{ r: 36, g: 36, b: 42 } }
+		.toxic_lime { Color{ r: 42, g: 205, b: 62 } }
+		.dark_matter { Color{ r: 72, g: 22, b: 105 } }
+	}
+
+	// Main Spherical Body
+	sdl.set_render_draw_color(renderer, body_col.r, body_col.g, body_col.b, 255)
 	body := sdl.Rect{ x: x + 6, y: y + 6, w: cell_size - 12, h: cell_size - 12 }
 	sdl.render_fill_rect(renderer, &body)
 
-	// Top spherical light sheen
-	sdl.set_render_draw_color(renderer, 90, 180, 255, 255)
-	sheen := sdl.Rect{ x: x + 10, y: y + 8, w: cell_size - 20, h: 7 }
-	sdl.render_fill_rect(renderer, &sheen)
+	// Top Specular Highlight
+	sdl.set_render_draw_color(renderer, 110, 195, 255, 255)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 10, y: y + 8, w: cell_size - 20, h: 6 })
 
-	// Blinking & Expressive Directional Eyes
-	is_blinking := (ticks / 2200) % 15 == 0
-
-	if !is_blinking {
-		eye_off_x := match dir {
-			.left { -3 }
-			.right { 3 }
-			else { 0 }
-		}
-		eye_off_y := match dir {
-			.up { -3 }
-			.down { 2 }
-			else { 0 }
-		}
-
-		// White sclera
-		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-		e1 := sdl.Rect{ x: cx - 8 + eye_off_x, y: cy - 7 + eye_off_y, w: 6, h: 8 }
-		e2 := sdl.Rect{ x: cx + 2 + eye_off_x, y: cy - 7 + eye_off_y, w: 6, h: 8 }
-		sdl.render_fill_rect(renderer, &e1)
-		sdl.render_fill_rect(renderer, &e2)
-
-		// Dark blue pupils looking in movement direction
-		sdl.set_render_draw_color(renderer, 10, 40, 120, 255)
-		p1 := sdl.Rect{ x: cx - 6 + eye_off_x, y: cy - 5 + eye_off_y, w: 3, h: 5 }
-		p2 := sdl.Rect{ x: cx + 4 + eye_off_x, y: cy - 5 + eye_off_y, w: 3, h: 5 }
-		sdl.render_fill_rect(renderer, &p1)
-		sdl.render_fill_rect(renderer, &p2)
+	eye_off_x := match dir {
+		.left { -3 }
+		.right { 3 }
+		else { 0 }
+	}
+	eye_off_y := match dir {
+		.up { -3 }
+		.down { 2 }
+		else { 0 }
 	}
 
-	// Cute Rosy Blushing Cheeks
-	sdl.set_render_draw_color(renderer, 255, 140, 170, 255)
-	c1 := sdl.Rect{ x: cx - 12, y: cy + 4, w: 4, h: 3 }
-	c2 := sdl.Rect{ x: cx + 8, y: cy + 4, w: 4, h: 3 }
-	sdl.render_fill_rect(renderer, &c1)
-	sdl.render_fill_rect(renderer, &c2)
+	visor_col := match skin {
+		.obsidian_gold { Color{ r: 255, g: 215, b: 0 } }
+		.toxic_lime { Color{ r: 255, g: 240, b: 40 } }
+		.dark_matter { Color{ r: 220, g: 100, b: 255 } }
+		else { Color{ r: 0, g: 240, b: 255 } }
+	}
 
-	// Step Bobbing Feet
-	sdl.set_render_draw_color(renderer, 20, 80, 190, 255)
-	f1 := sdl.Rect{ x: x + 8, y: y + cell_size - 8, w: 10, h: 5 }
-	f2 := sdl.Rect{ x: x + cell_size - 18, y: y + cell_size - 8, w: 10, h: 5 }
-	sdl.render_fill_rect(renderer, &f1)
-	sdl.render_fill_rect(renderer, &f2)
+	is_blinking := (ticks / 2200) % 15 == 0
+	if !is_blinking {
+		// Expressive Cyber Visor / Eyes
+		sdl.set_render_draw_color(renderer, visor_col.r, visor_col.g, visor_col.b, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 10 + eye_off_x, y: cy - 6 + eye_off_y, w: 20, h: 7 })
+		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
+		sdl.render_draw_line(renderer, cx - 8 + eye_off_x, cy - 4 + eye_off_y, cx + 8 + eye_off_x, cy - 4 + eye_off_y)
+	}
+
+	// Walking Flipper Feet
+	sdl.set_render_draw_color(renderer, 0, 180, 255, 255)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + 10, y: y + cell_size - 6, w: 6, h: 4 })
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: x + cell_size - 16, y: y + cell_size - 6, w: 6, h: 4 })
 }
 
-fn draw_magic_shot(renderer &sdl.Renderer, sx int, sy int, ticks u32) {
-	// Glowing Azure Magic Shot Orb
-	pulse := int(math.sin(f64(ticks) / 80.0) * 3.0)
-
-	sdl.set_render_draw_color(renderer, 50, 180, 255, 255)
-	outer := sdl.Rect{ x: sx - 8 - pulse / 2, y: sy - 8 - pulse / 2, w: 16 + pulse, h: 16 + pulse }
-	sdl.render_fill_rect(renderer, &outer)
-
+fn draw_plasma_shot(renderer &sdl.Renderer, sx int, sy int, ticks u32) {
+	pulse := int(math.sin(f64(ticks) / 50.0) * 3.0)
+	sdl.set_render_draw_blend_mode(renderer, .blend)
+	sdl.set_render_draw_color(renderer, 0, 200, 255, 130)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: sx - 10 - pulse, y: sy - 10 - pulse, w: 20 + pulse * 2, h: 20 + pulse * 2 })
+	sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: sx - 6, y: sy - 6, w: 12, h: 12 })
 	sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-	core := sdl.Rect{ x: sx - 4, y: sy - 4, w: 8, h: 8 }
-	sdl.render_fill_rect(renderer, &core)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: sx - 3, y: sy - 3, w: 6, h: 6 })
+	sdl.set_render_draw_blend_mode(renderer, .none)
+}
+
+// --------------------------------------------------
+// Mario Maker Cyberpunk Sidebar & Palette Layout
+// --------------------------------------------------
+
+fn draw_mario_maker_editor(renderer &sdl.Renderer, game Game, mx int, my int, btn_test Button, btn_clear Button) {
+	panel_x := 580
+	panel_y := 75
+	panel_w := 365
+	panel_h := 590
+
+	sdl.set_render_draw_color(renderer, 16, 20, 34, 255)
+	card := sdl.Rect{ x: panel_x, y: panel_y, w: panel_w, h: panel_h }
+	sdl.render_fill_rect(renderer, &card)
+
+	sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
+	sdl.render_draw_rect(renderer, &card)
+
+	// Top Category Tabs: [TILES] [ITEMS] [ENEMIES] [SETTINGS]
+	tabs := ['TILES', 'ITEMS', 'ENEMIES', 'SETTINGS']
+	for i, t_name in tabs {
+		tx := panel_x + 10 + i * 86
+		ty := panel_y + 10
+		is_active := int(game.editor_tab) == i
+		t_col := if is_active { Color{ r: 0, g: 140, b: 220 } } else { Color{ r: 25, g: 35, b: 55 } }
+		sdl.set_render_draw_color(renderer, t_col.r, t_col.g, t_col.b, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: tx, y: ty, w: 82, h: 28 })
+		sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: tx, y: ty, w: 82, h: 28 })
+		draw_text_centered(renderer, tx + 41, ty + 6, t_name, 1, Color{ r: 255, g: 255, b: 255 })
+	}
+
+	// Tool Selector: [PENCIL] [ERASER] [FILL] [RECT]
+	tools := ['PENCIL', 'ERASER', 'FILL', 'RECT']
+	for i, tool_name in tools {
+		bx := panel_x + 10 + i * 86
+		by := panel_y + 44
+		is_tool_active := int(game.editor_tool) == i
+		b_col := if is_tool_active { Color{ r: 220, g: 150, b: 20 } } else { Color{ r: 35, g: 45, b: 65 } }
+		sdl.set_render_draw_color(renderer, b_col.r, b_col.g, b_col.b, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: bx, y: by, w: 82, h: 26 })
+		sdl.set_render_draw_color(renderer, 150, 150, 150, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: bx, y: by, w: 82, h: 26 })
+		draw_text_centered(renderer, bx + 41, by + 5, tool_name, 1, Color{ r: 255, g: 255, b: 255 })
+	}
+
+	// Palette Content
+	match game.editor_tab {
+		.tiles { draw_tiles_palette(renderer, game, panel_x, panel_y + 78) }
+		.items { draw_items_palette(renderer, game, panel_x, panel_y + 78) }
+		.enemies { draw_enemies_palette(renderer, game, panel_x, panel_y + 78) }
+		.themes { draw_themes_and_slots_palette(renderer, game, panel_x, panel_y + 78) }
+		else { draw_tiles_palette(renderer, game, panel_x, panel_y + 78) }
+	}
+
+	// Live Mario Maker Checklist HUD
+	draw_level_checklist(renderer, game, panel_x + 12, panel_y + 375)
+
+	btn_test.draw(renderer, mx, my)
+	btn_clear.draw(renderer, mx, my)
+}
+
+fn draw_tiles_palette(renderer &sdl.Renderer, game Game, px int, py int) {
+	tiles := [
+		TileType.grass,
+		TileType.wall,
+		TileType.rock,
+		TileType.tree,
+		TileType.water,
+		TileType.bridge,
+		TileType.lava,
+		TileType.ice,
+		TileType.warp_a,
+		TileType.warp_b,
+		TileType.locked_gate,
+		TileType.laser_prism_slash,
+		TileType.laser_prism_backslash,
+		TileType.pressure_plate,
+		TileType.toggle_laser_gate,
+		TileType.conveyor_up,
+		TileType.conveyor_down,
+		TileType.conveyor_left,
+		TileType.conveyor_right,
+		TileType.phase_block_alpha,
+		TileType.phase_block_beta,
+	]
+	tile_names := [
+		'GRASS',
+		'WALL',
+		'ROCK',
+		'SPIRE',
+		'COOLANT',
+		'SCAFFOLD',
+		'PLASMA',
+		'CRYO ICE',
+		'WARP A',
+		'WARP B',
+		'LOCK GATE',
+		'PRISM /',
+		'PRISM \\',
+		'PLATE',
+		'LASER GATE',
+		'CONV ^',
+		'CONV v',
+		'CONV <',
+		'CONV >',
+		'PHASE A',
+		'PHASE B',
+	]
+
+	for i in 0 .. tiles.len {
+		col := i % 3
+		row := i / 3
+		ix := px + 12 + col * 114
+		iy := py + row * 28
+
+		is_sel := !game.is_entity_selected && game.selected_tile == tiles[i]
+		bg := if is_sel { Color{ r: 0, g: 140, b: 220 } } else { Color{ r: 25, g: 35, b: 55 } }
+		sdl.set_render_draw_color(renderer, bg.r, bg.g, bg.b, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 108, h: 25 })
+		sdl.set_render_draw_color(renderer, 0, 200, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 108, h: 25 })
+		draw_text_centered(renderer, ix + 54, iy + 5, tile_names[i], 1, Color{ r: 255, g: 255, b: 255 })
+	}
+}
+
+fn draw_items_palette(renderer &sdl.Renderer, game Game, px int, py int) {
+	items := [
+		EntityType.lolo_spawn,
+		EntityType.door,
+		EntityType.chest,
+		EntityType.heart_frame,
+		EntityType.emerald_frame,
+		EntityType.hammer,
+		EntityType.key_item,
+		EntityType.speed_boots,
+	]
+	item_names := [
+		'LOLO SPAWN',
+		'WARP EXIT',
+		'DATA VAULT',
+		'ANTIMATTER',
+		'ENERGY BLOCK',
+		'WRENCH',
+		'KEYCARD',
+		'JET BOOTS',
+	]
+
+	for i in 0 .. items.len {
+		col := i % 2
+		row := i / 2
+		ix := px + 12 + col * 172
+		iy := py + row * 46
+
+		is_sel := game.is_entity_selected && game.selected_entity == items[i]
+		bg := if is_sel { Color{ r: 0, g: 140, b: 220 } } else { Color{ r: 25, g: 35, b: 55 } }
+		sdl.set_render_draw_color(renderer, bg.r, bg.g, bg.b, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 164, h: 40 })
+		sdl.set_render_draw_color(renderer, 0, 200, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 164, h: 40 })
+		draw_text_centered(renderer, ix + 82, iy + 12, item_names[i], 1, Color{ r: 255, g: 255, b: 255 })
+	}
+}
+
+fn draw_enemies_palette(renderer &sdl.Renderer, game Game, px int, py int) {
+	enemies := [
+		EntityType.snakey,
+		EntityType.alma,
+		EntityType.leeper,
+		EntityType.skull,
+		EntityType.medusa,
+		EntityType.don_medusa_h,
+		EntityType.don_medusa_v,
+		EntityType.gol,
+		EntityType.king_egger,
+		EntityType.gobby,
+		EntityType.rocky,
+		EntityType.moby,
+		EntityType.wisp,
+		EntityType.spike_trap,
+	]
+	enemy_names := [
+		'SNAKEY BOT',
+		'ALMA MECH',
+		'LEEPER SCOUT',
+		'PLASMA SKULL',
+		'LASER TURRET',
+		'DREADNOUGHT H',
+		'DREADNOUGHT V',
+		'GOL TANK',
+		'KING EGGER',
+		'GOBBY DRONE',
+		'TITAN GOLEM',
+		'TURBINE MOBY',
+		'PHANTOM WISP',
+		'TESLA TRAP',
+	]
+
+	for i in 0 .. enemies.len {
+		col := i % 2
+		row := i / 2
+		ix := px + 12 + col * 172
+		iy := py + row * 40
+
+		is_sel := game.is_entity_selected && game.selected_entity == enemies[i]
+		bg := if is_sel { Color{ r: 0, g: 140, b: 220 } } else { Color{ r: 25, g: 35, b: 55 } }
+		sdl.set_render_draw_color(renderer, bg.r, bg.g, bg.b, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 164, h: 34 })
+		sdl.set_render_draw_color(renderer, 0, 200, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 164, h: 34 })
+		draw_text_centered(renderer, ix + 82, iy + 9, enemy_names[i], 1, Color{ r: 255, g: 255, b: 255 })
+	}
+}
+
+fn draw_themes_and_slots_palette(renderer &sdl.Renderer, game Game, px int, py int) {
+	draw_text(renderer, px + 12, py, 'CYBER BIOMES:', 1, Color{ r: 255, g: 215, b: 0 })
+	themes := [
+		LevelTheme.castle,
+		LevelTheme.forest,
+		LevelTheme.desert,
+		LevelTheme.ice,
+		LevelTheme.volcanic,
+		LevelTheme.haunted,
+	]
+	theme_names := ['CYBER-CORE', 'QUANTUM BIO', 'SOLAR POST', 'CRYO-STASIS', 'PLASMA CORE', 'VOID NETHER']
+
+	for i in 0 .. themes.len {
+		col := i % 3
+		row := i / 3
+		ix := px + 12 + col * 114
+		iy := py + 18 + row * 30
+
+		is_active := game.editor_level.theme == themes[i]
+		bg := if is_active { Color{ r: 220, g: 150, b: 20 } } else { Color{ r: 25, g: 35, b: 55 } }
+		sdl.set_render_draw_color(renderer, bg.r, bg.g, bg.b, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 108, h: 26 })
+		sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 108, h: 26 })
+		draw_text_centered(renderer, ix + 54, iy + 5, theme_names[i], 1, Color{ r: 255, g: 255, b: 255 })
+	}
+
+	draw_text(renderer, px + 12, py + 86, 'BLUEPRINT TEMPLATES:', 1, Color{ r: 255, g: 215, b: 0 })
+	templates := ['BLANK', 'ISLAND', 'LABYRINTH', 'ICE CHAMBER', 'FORTRESS']
+	for i, t_name in templates {
+		col := i % 3
+		row := i / 3
+		ix := px + 12 + col * 114
+		iy := py + 104 + row * 30
+		sdl.set_render_draw_color(renderer, 35, 50, 75, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 108, h: 26 })
+		sdl.set_render_draw_color(renderer, 0, 200, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 108, h: 26 })
+		draw_text_centered(renderer, ix + 54, iy + 5, t_name, 1, Color{ r: 220, g: 240, b: 255 })
+	}
+
+	draw_text(renderer, px + 12, py + 172, 'COMMUNITY & CODE SHARING [K]:', 1, Color{ r: 255, g: 215, b: 0 })
+	sdl.set_render_draw_color(renderer, 0, 120, 220, 255)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: px + 12, y: py + 190, w: 338, h: 32 })
+	sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+	sdl.render_draw_rect(renderer, &sdl.Rect{ x: px + 12, y: py + 190, w: 338, h: 32 })
+	draw_text_centered(renderer, px + 181, py + 198, 'OPEN CYBER-CODE SHARING [K]', 1, Color{ r: 255, g: 255, b: 255 })
+
+	draw_text(renderer, px + 12, py + 230, 'SAVE / LOAD SLOTS:', 1, Color{ r: 255, g: 215, b: 0 })
+	for i in 0 .. 5 {
+		ix := px + 12 + i * 68
+		iy := py + 248
+		sdl.set_render_draw_color(renderer, 0, 100, 180, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 62, h: 24 })
+		sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 62, h: 24 })
+		draw_text_centered(renderer, ix + 31, iy + 4, 'S${i + 1}', 1, Color{ r: 255, g: 255, b: 255 })
+	}
+	for i in 0 .. 5 {
+		ix := px + 12 + i * 68
+		iy := py + 276
+		sdl.set_render_draw_color(renderer, 100, 40, 140, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 62, h: 24 })
+		sdl.set_render_draw_color(renderer, 220, 100, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: ix, y: iy, w: 62, h: 24 })
+		draw_text_centered(renderer, ix + 31, iy + 4, 'L${i + 1}', 1, Color{ r: 255, g: 255, b: 255 })
+	}
+}
+
+fn draw_level_checklist(renderer &sdl.Renderer, game Game, x int, y int) {
+	mut lolo_count := 0
+	mut chest_count := 0
+	mut door_count := 0
+	mut heart_count := 0
+
+	for r in 0 .. grid_rows {
+		for c in 0 .. grid_cols {
+			ent := game.editor_level.entities[r][c]
+			match ent {
+				.lolo_spawn { lolo_count++ }
+				.chest { chest_count++ }
+				.door { door_count++ }
+				.heart_frame { heart_count++ }
+				else {}
+			}
+		}
+	}
+
+	draw_text(renderer, x, y, 'CYBER SYSTEM CHECKLIST:', 1, Color{ r: 255, g: 215, b: 0 })
+
+	l_col := if lolo_count == 1 { Color{ r: 0, g: 255, b: 180 } } else { Color{ r: 255, g: 70, b: 70 } }
+	draw_text(renderer, x, y + 18, 'SPAWN: ${lolo_count}/1', 1, l_col)
+
+	d_col := if door_count == 1 { Color{ r: 0, g: 255, b: 180 } } else { Color{ r: 255, g: 70, b: 70 } }
+	draw_text(renderer, x + 160, y + 18, 'GATE: ${door_count}/1', 1, d_col)
+
+	c_col := if chest_count == 1 { Color{ r: 0, g: 255, b: 180 } } else { Color{ r: 255, g: 70, b: 70 } }
+	draw_text(renderer, x, y + 36, 'VAULT: ${chest_count}/1', 1, c_col)
+
+	h_col := if heart_count >= 1 { Color{ r: 0, g: 255, b: 180 } } else { Color{ r: 255, g: 70, b: 70 } }
+	draw_text(renderer, x + 160, y + 36, 'CORES: ${heart_count}', 1, h_col)
+
+	// AI Solvability Status
+	is_solvable := game.verify_level_solvability()
+	solv_str := if is_solvable { 'AI SOLVER: SOLVABLE [PASS]' } else { 'AI SOLVER: UNREACHABLE [!]' }
+	solv_col := if is_solvable { Color{ r: 0, g: 255, b: 180 } } else { Color{ r: 255, g: 80, b: 80 } }
+	draw_text(renderer, x, y + 54, solv_str, 1, solv_col)
+
+	if game.validation_msg != '' {
+		draw_text(renderer, x, y + 70, game.validation_msg, 1, Color{ r: 255, g: 220, b: 80 })
+	}
 }
 
 fn draw_hud_panel(renderer &sdl.Renderer, game Game, mx int, my int, btn_prev Button, btn_next Button, btn_restart Button, btn_undo Button, btn_level_select Button) {
 	panel_x := 580
-	panel_y := 80
-	panel_w := 360
-	panel_h := 580
+	panel_y := 75
+	panel_w := 365
+	panel_h := 590
 
-	// Sidebar Card Container
-	sdl.set_render_draw_color(renderer, 24, 30, 44, 255)
+	sdl.set_render_draw_color(renderer, 16, 20, 34, 255)
 	card := sdl.Rect{ x: panel_x, y: panel_y, w: panel_w, h: panel_h }
 	sdl.render_fill_rect(renderer, &card)
 
-	sdl.set_render_draw_color(renderer, 60, 75, 105, 255)
+	sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
 	sdl.render_draw_rect(renderer, &card)
 
-	// Section 1: Objective & Level Info
-	draw_text(renderer, panel_x + 20, panel_y + 16, 'STAGE GOALS', 2, Color{ r: 255, g: 215, b: 0 })
+	draw_text(renderer, panel_x + 18, panel_y + 14, 'MISSION TELEMETRY', 2, Color{ r: 255, g: 215, b: 0 })
 
-	h_left_str := 'HEARTS REMAINING: ${game.hearts_remaining}'
-	draw_text(renderer, panel_x + 20, panel_y + 44, h_left_str, 2, Color{ r: 255, g: 120, b: 120 })
+	// Cores Remaining
+	draw_text(renderer, panel_x + 18, panel_y + 44, 'POWER CORES: ${game.hearts_remaining} / ${game.total_hearts}', 2, Color{ r: 255, g: 100, b: 140 })
 
-	shots_str := 'MAGIC SHOTS: ${game.lolo.shots}'
-	draw_text(renderer, panel_x + 20, panel_y + 70, shots_str, 2, Color{ r: 120, g: 220, b: 255 })
+	// Plasma Shots & Keys
+	draw_text(renderer, panel_x + 18, panel_y + 70, 'PLASMA: ${game.lolo.shots}   KEYS: ${game.lolo.keys}', 2, Color{ r: 0, g: 240, b: 255 })
 
-	chest_state := if game.chest_open { 'OPEN! COLLECT JEWEL' } else { 'LOCKED (GET HEARTS)' }
-	chest_col := if game.chest_open { Color{ r: 100, g: 255, b: 120 } } else { Color{ r: 240, g: 180, b: 60 } }
-	draw_text(renderer, panel_x + 20, panel_y + 96, 'CHEST: ${chest_state}', 2, chest_col)
+	// Wrench & Overdrive
+	ham_str := if game.lolo.speed_boost > 0 { 'WRENCH: ${game.lolo.hammers}  OVERDRIVE: ${int(game.lolo.speed_boost)}s' } else { 'WRENCH: ${game.lolo.hammers}' }
+	draw_text(renderer, panel_x + 18, panel_y + 96, ham_str, 2, Color{ r: 255, g: 200, b: 80 })
 
-	// Section 2: Instructions & Key Guide
-	draw_text(renderer, panel_x + 20, panel_y + 140, 'HOW TO PLAY', 2, Color{ r: 255, g: 215, b: 0 })
-	draw_text(renderer, panel_x + 20, panel_y + 166, 'ARROWS / WASD : MOVE LOLO', 1, Color{ r: 220, g: 230, b: 245 })
-	draw_text(renderer, panel_x + 20, panel_y + 186, 'SPACE / ENTER : MAGIC SHOT', 1, Color{ r: 220, g: 230, b: 245 })
-	draw_text(renderer, panel_x + 20, panel_y + 206, 'U / Z : UNDO MOVE', 1, Color{ r: 220, g: 230, b: 245 })
-	draw_text(renderer, panel_x + 20, panel_y + 226, 'P : LEVEL SELECTOR', 1, Color{ r: 220, g: 230, b: 245 })
-	draw_text(renderer, panel_x + 20, panel_y + 246, 'F11 : FULLSCREEN TOGGLE', 1, Color{ r: 220, g: 230, b: 245 })
+	// Personal Best Telemetry
+	pb_time := game.pb_times[game.current_level_idx]
+	pb_str := if pb_time > 0 {
+		sec := int(pb_time / 1000)
+		ms := int((pb_time % 1000) / 10)
+		'RECORD PB: ${sec:02d}.${ms:02d}s (${game.pb_moves[game.current_level_idx]} steps)'
+	} else {
+		'RECORD PB: --.--s'
+	}
+	draw_text(renderer, panel_x + 18, panel_y + 124, pb_str, 1, Color{ r: 255, g: 215, b: 0 })
 
-	// Draw Action Buttons
+	// Goal Instructions
+	goal_str := if game.hearts_remaining > 0 {
+		'1. Extract all Power Cores'
+	} else if !game.door_open {
+		'2. Access the Central Matrix Vault'
+	} else {
+		'3. Warp through the Subspace Gateway!'
+	}
+	draw_text(renderer, panel_x + 18, panel_y + 148, 'DIRECTIVE:', 1, Color{ r: 255, g: 255, b: 255 })
+	draw_text(renderer, panel_x + 18, panel_y + 166, goal_str, 1, Color{ r: 0, g: 255, b: 180 })
+
+	// Controls list
+	draw_text(renderer, panel_x + 18, panel_y + 192, 'CYBER CONTROLS:', 1, Color{ r: 255, g: 215, b: 0 })
+	draw_text(renderer, panel_x + 18, panel_y + 210, 'WASD/ARROWS: Move  SPACE: Fire Shot', 1, Color{ r: 180, g: 220, b: 255 })
+	draw_text(renderer, panel_x + 18, panel_y + 226, 'Q: Phase Dimension  C: Cycle Skins', 1, Color{ r: 180, g: 220, b: 255 })
+	draw_text(renderer, panel_x + 18, panel_y + 242, 'H: Toggle AI Hints  V: Instant Replay', 1, Color{ r: 180, g: 220, b: 255 })
+	draw_text(renderer, panel_x + 18, panel_y + 258, 'TAB: Designer Mode  K: Share Codes', 1, Color{ r: 180, g: 220, b: 255 })
+	draw_text(renderer, panel_x + 18, panel_y + 274, 'U/Z: Undo Step     P: Warp Sectors', 1, Color{ r: 180, g: 220, b: 255 })
+
 	btn_undo.draw(renderer, mx, my)
 	btn_level_select.draw(renderer, mx, my)
 	btn_prev.draw(renderer, mx, my)
@@ -800,195 +1448,229 @@ fn draw_hud_panel(renderer &sdl.Renderer, game Game, mx int, my int, btn_prev Bu
 	btn_restart.draw(renderer, mx, my)
 }
 
-fn draw_editor_palette(renderer &sdl.Renderer, game Game, mx int, my int, btn_test Button, btn_clear Button) {
-	panel_x := 580
-	panel_y := 80
-	panel_w := 360
-	panel_h := 580
+fn draw_achievement_toast(renderer &sdl.Renderer, text string, ticks u32) {
+	toast_w := 480
+	toast_h := 46
+	tx := (win_w - toast_w) / 2
+	ty := 75
 
-	sdl.set_render_draw_color(renderer, 24, 30, 44, 255)
-	card := sdl.Rect{ x: panel_x, y: panel_y, w: panel_w, h: panel_h }
+	sdl.set_render_draw_color(renderer, 20, 25, 45, 240)
+	card := sdl.Rect{ x: tx, y: ty, w: toast_w, h: toast_h }
 	sdl.render_fill_rect(renderer, &card)
 
-	sdl.set_render_draw_color(renderer, 60, 75, 105, 255)
+	pulse := int((math.sin(f64(ticks) / 80.0) + 1.0) * 15.0)
+	sdl.set_render_draw_color(renderer, 255, u8(215 + pulse), 0, 255)
 	sdl.render_draw_rect(renderer, &card)
-
-	draw_text(renderer, panel_x + 20, panel_y + 16, 'PALETTE SELECTION', 2, Color{ r: 255, g: 215, b: 0 })
-
-	for idx in 0 .. 18 {
-		ix := panel_x + 20 + (idx % 3) * 110
-		iy := panel_y + 50 + (idx / 3) * 38
-
-		is_sel := if idx < 6 {
-			!game.is_entity_selected && int(game.selected_tile) == idx
-		} else {
-			game.is_entity_selected && game.selected_entity == get_entity_from_palette_index(idx)
-		}
-
-		bg := if is_sel { Color{ r: 60, g: 120, b: 190 } } else { Color{ r: 40, g: 50, b: 70 } }
-		sdl.set_render_draw_color(renderer, bg.r, bg.g, bg.b, 255)
-		b_rect := sdl.Rect{ x: ix, y: iy, w: 100, h: 32 }
-		sdl.render_fill_rect(renderer, &b_rect)
-
-		sdl.set_render_draw_color(renderer, 90, 115, 155, 255)
-		sdl.render_draw_rect(renderer, &b_rect)
-
-		p_name := get_palette_name(idx)
-		draw_text_centered(renderer, ix + 50, iy + 8, p_name, 1, Color{ r: 255, g: 255, b: 255 })
-	}
-
-	btn_test.draw(renderer, mx, my)
-	btn_clear.draw(renderer, mx, my)
+	draw_text_centered(renderer, win_w / 2, ty + 15, text, 2, Color{ r: 255, g: 215, b: 0 })
 }
 
-fn get_palette_name(idx int) string {
-	match idx {
-		0 { return 'GRASS' }
-		1 { return 'WALL' }
-		2 { return 'ROCK' }
-		3 { return 'TREE' }
-		4 { return 'WATER' }
-		5 { return 'BRIDGE' }
-		6 { return 'EMERALD' }
-		7 { return 'HEART' }
-		8 { return 'CHEST' }
-		9 { return 'DOOR' }
-		10 { return 'HAMMER' }
-		11 { return 'LOLO' }
-		12 { return 'SNAKEY' }
-		13 { return 'ALMA' }
-		14 { return 'LEEPER' }
-		15 { return 'SKULL' }
-		16 { return 'MEDUSA' }
-		17 { return 'DON MEDUSA' }
-		else { return '' }
-	}
+fn draw_replay_overlay(renderer &sdl.Renderer, ticks u32) {
+	pulse := int(math.sin(f64(ticks) / 100.0) * 40.0)
+	sdl.set_render_draw_color(renderer, 255, 40, 80, 200)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: 20, y: 75, w: 536, h: 36 })
+	draw_text_centered(renderer, 20 + 268, 85, 'GHOST REPLAY RUNNING [PRESS V TO EXIT]', 2, Color{ r: 255, g: u8(200 + pulse), b: 255 })
 }
 
 fn draw_status_overlay(renderer &sdl.Renderer, game Game) {
 	sdl.set_render_draw_blend_mode(renderer, .blend)
-	sdl.set_render_draw_color(renderer, 0, 0, 0, 180)
+	sdl.set_render_draw_color(renderer, 6, 10, 20, 200)
 	sdl.render_fill_rect(renderer, &sdl.Rect{ x: 0, y: 0, w: win_w, h: win_h })
 
-	col := if game.status == .level_clear { Color{ r: 100, g: 255, b: 120 } } else { Color{ r: 255, g: 80, b: 80 } }
+	col := if game.status == .level_clear { Color{ r: 0, g: 255, b: 200 } } else { Color{ r: 255, g: 60, b: 80 } }
 	draw_text_centered(renderer, win_w / 2, win_h / 2 - 30, game.status_msg, 3, col)
-	draw_text_centered(renderer, win_w / 2, win_h / 2 + 20, 'PRESS SPACE / ENTER TO CONTINUE', 2, Color{ r: 255, g: 255, b: 255 })
+	draw_text_centered(renderer, win_w / 2, win_h / 2 + 20, 'PRESS SPACE / ENTER TO PROCEED', 2, Color{ r: 255, g: 255, b: 255 })
 }
 
 fn draw_victory_ending(renderer &sdl.Renderer, game Game, ticks u32) {
 	sdl.set_render_draw_blend_mode(renderer, .blend)
-	sdl.set_render_draw_color(renderer, 10, 12, 25, 235)
+	sdl.set_render_draw_color(renderer, 8, 12, 28, 240)
 	sdl.render_fill_rect(renderer, &sdl.Rect{ x: 0, y: 0, w: win_w, h: win_h })
 
-	// Animated Victory Confetti Sparkles
-	for i in 0 .. 40 {
+	for i in 0 .. 45 {
 		cx := (i * 37 + int(ticks / 10)) % win_w
 		cy := (i * 29 + int(ticks / 15)) % win_h
-		sdl.set_render_draw_color(renderer, u8((i * 45) % 255), u8((i * 75) % 255), u8((i * 125) % 255), 255)
+		sdl.set_render_draw_color(renderer, u8((i * 55) % 255), 240, 255, 255)
 		sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx, y: cy, w: 4, h: 4 })
 	}
 
-	draw_text_centered(renderer, win_w / 2, 90, 'VICTORY! PRINCESS LALA IS RESCUED!', 3, Color{ r: 255, g: 215, b: 0 })
-	draw_text_centered(renderer, win_w / 2, 130, 'KING EGGER HAS BEEN BANISHED FROM THE REALM!', 2, Color{ r: 180, g: 220, b: 255 })
+	draw_text_centered(renderer, win_w / 2, 90, 'VICTORY! PRINCESS LALA RESCUED!', 3, Color{ r: 255, g: 215, b: 0 })
+	draw_text_centered(renderer, win_w / 2, 130, 'KING EGGER HAS BEEN PURGED FROM CYBERSPACE!', 2, Color{ r: 0, g: 240, b: 255 })
 
-	// Draw Lolo and Princess Lala Side by Side with Heart
-	draw_lolo(renderer, win_w / 2 - 60, 200, .right, ticks)
+	draw_cyber_lolo(renderer, win_w / 2 - 60, 200, .right, ticks, true, game.skin)
 	draw_princess_lala(renderer, win_w / 2 + 20, 200, ticks)
 
-	// Floating Giant Heart between them
 	heart_y := 170 + int(math.sin(f64(ticks) / 160.0) * 8.0)
-	draw_char(renderer, win_w / 2 - 8, heart_y, `*`, 3, Color{ r: 255, g: 80, b: 120 })
+	draw_char(renderer, win_w / 2 - 8, heart_y, `*`, 3, Color{ r: 255, g: 40, b: 120 })
 
-	// Stats Summary Card
 	card_x := win_w / 2 - 200
 	card_y := 280
-	sdl.set_render_draw_color(renderer, 24, 30, 50, 255)
+	sdl.set_render_draw_color(renderer, 16, 22, 40, 255)
 	card := sdl.Rect{ x: card_x, y: card_y, w: 400, h: 180 }
 	sdl.render_fill_rect(renderer, &card)
-	sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+	sdl.set_render_draw_color(renderer, 0, 230, 255, 255)
 	sdl.render_draw_rect(renderer, &card)
 
-	draw_text_centered(renderer, win_w / 2, card_y + 20, 'HERO STATISTICS', 2, Color{ r: 255, g: 215, b: 0 })
+	draw_text_centered(renderer, win_w / 2, card_y + 20, 'MISSION REPORT', 2, Color{ r: 255, g: 215, b: 0 })
 	draw_text(renderer, card_x + 40, card_y + 60, 'FINAL SCORE: ${game.score}', 2, Color{ r: 255, g: 255, b: 255 })
-	draw_text(renderer, card_x + 40, card_y + 90, 'TOTAL MOVES: ${game.moves_count}', 2, Color{ r: 140, g: 220, b: 255 })
-	draw_text(renderer, card_x + 40, card_y + 120, 'ROOMS CLEARED: 20 / 20', 2, Color{ r: 100, g: 255, b: 120 })
+	draw_text(renderer, card_x + 40, card_y + 90, 'TOTAL STEPS: ${game.moves_count}', 2, Color{ r: 0, g: 240, b: 255 })
+	draw_text(renderer, card_x + 40, card_y + 120, 'SECTORS CLEARED: 20 / 20', 2, Color{ r: 0, g: 255, b: 180 })
 
-	draw_text_centered(renderer, win_w / 2, 500, 'PRESS SPACE / ENTER TO PLAY AGAIN', 2, Color{ r: 255, g: 255, b: 255 })
+	draw_text_centered(renderer, win_w / 2, 500, 'PRESS SPACE / ENTER TO REBOOT MISSION', 2, Color{ r: 255, g: 255, b: 255 })
 }
 
 fn draw_princess_lala(renderer &sdl.Renderer, x int, y int, ticks u32) {
 	cx := x + cell_size / 2
 	cy := y + cell_size / 2
 
-	// Glossy Pink Lala Body
-	sdl.set_render_draw_color(renderer, 245, 110, 180, 255)
+	sdl.set_render_draw_color(renderer, 245, 100, 190, 255)
 	body := sdl.Rect{ x: x + 6, y: y + 6, w: cell_size - 12, h: cell_size - 12 }
 	sdl.render_fill_rect(renderer, &body)
 
-	// Crown / Bow with gentle bounce
 	bow_y := y + 2 + int(math.sin(f64(ticks) / 180.0) * 2.0)
-	sdl.set_render_draw_color(renderer, 255, 60, 120, 255)
-	bow1 := sdl.Rect{ x: cx - 12, y: bow_y, w: 10, h: 8 }
-	bow2 := sdl.Rect{ x: cx + 2, y: bow_y, w: 10, h: 8 }
-	sdl.render_fill_rect(renderer, &bow1)
-	sdl.render_fill_rect(renderer, &bow2)
+	sdl.set_render_draw_color(renderer, 255, 40, 140, 255)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 12, y: bow_y, w: 10, h: 8 })
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 2, y: bow_y, w: 10, h: 8 })
 
-	// Eyes with Eyelashes and Blinking
 	is_blinking := (ticks / 2400) % 12 == 0
 	if !is_blinking {
-		sdl.set_render_draw_color(renderer, 255, 255, 255, 255)
-		e1 := sdl.Rect{ x: cx - 8, y: cy - 6, w: 6, h: 8 }
-		e2 := sdl.Rect{ x: cx + 2, y: cy - 6, w: 6, h: 8 }
-		sdl.render_fill_rect(renderer, &e1)
-		sdl.render_fill_rect(renderer, &e2)
+		sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx - 8, y: cy - 6, w: 6, h: 8 })
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: cx + 2, y: cy - 6, w: 6, h: 8 })
+	}
+}
 
-		sdl.set_render_draw_color(renderer, 140, 20, 90, 255)
-		p1 := sdl.Rect{ x: cx - 7, y: cy - 4, w: 3, h: 5 }
-		p2 := sdl.Rect{ x: cx + 3, y: cy - 4, w: 3, h: 5 }
-		sdl.render_fill_rect(renderer, &p1)
-		sdl.render_fill_rect(renderer, &p2)
+fn draw_share_and_community_modal(renderer &sdl.Renderer, game Game, mx int, my int) {
+	sdl.set_render_draw_blend_mode(renderer, .blend)
+	sdl.set_render_draw_color(renderer, 6, 10, 22, 230)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: 0, y: 0, w: win_w, h: win_h })
+
+	modal_x := 80
+	modal_y := 50
+	modal_w := 800
+	modal_h := 580
+
+	sdl.set_render_draw_color(renderer, 14, 20, 36, 255)
+	modal := sdl.Rect{ x: modal_x, y: modal_y, w: modal_w, h: modal_h }
+	sdl.render_fill_rect(renderer, &modal)
+	sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
+	sdl.render_draw_rect(renderer, &modal)
+
+	draw_text_centered(renderer, win_w / 2, modal_y + 16, 'CYBER LEVEL SHARING & COMMUNITY PACKS', 2, Color{ r: 255, g: 215, b: 0 })
+	draw_text_centered(renderer, win_w / 2, modal_y + 42, '[PRESS K / ESC TO RETURN TO CONSOLE]', 1, Color{ r: 0, g: 230, b: 255 })
+
+	// Export Code Box
+	code := game.export_cyber_code()
+	draw_text(renderer, modal_x + 30, modal_y + 70, 'CURRENT LEVEL SHARING CODE (SHARE ON DISCORD / REDDIT):', 1, Color{ r: 255, g: 215, b: 0 })
+	sdl.set_render_draw_color(renderer, 25, 35, 55, 255)
+	sdl.render_fill_rect(renderer, &sdl.Rect{ x: modal_x + 30, y: modal_y + 90, w: modal_w - 60, h: 36 })
+	sdl.set_render_draw_color(renderer, 0, 200, 255, 255)
+	sdl.render_draw_rect(renderer, &sdl.Rect{ x: modal_x + 30, y: modal_y + 90, w: modal_w - 60, h: 36 })
+	draw_text(renderer, modal_x + 40, modal_y + 102, code[..math_min(code.len, 70)] + '...', 1, Color{ r: 0, g: 255, b: 180 })
+
+	// Featured Community Challenge Packs
+	draw_text(renderer, modal_x + 30, modal_y + 145, 'FEATURED COMMUNITY CHALLENGE PACKS (CLICK TO PLAY):', 1, Color{ r: 255, g: 215, b: 0 })
+	for i in 0 .. game.community_levels.len {
+		by := modal_y + 170 + i * 72
+		lvl := game.community_levels[i]
+
+		is_hover := mx >= modal_x + 30 && mx <= modal_x + modal_w - 30 && my >= by && my <= by + 60
+		bg := if is_hover { Color{ r: 0, g: 120, b: 200 } } else { Color{ r: 22, g: 30, b: 52 } }
+
+		sdl.set_render_draw_color(renderer, bg.r, bg.g, bg.b, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: modal_x + 30, y: by, w: modal_w - 60, h: 60 })
+		sdl.set_render_draw_color(renderer, 0, 200, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: modal_x + 30, y: by, w: modal_w - 60, h: 60 })
+
+		draw_text(renderer, modal_x + 45, by + 12, 'PACK ${i + 1}: ${lvl.name}', 2, Color{ r: 255, g: 215, b: 0 })
+		draw_text(renderer, modal_x + 45, by + 36, 'PAR TIME: 30.00s   DIFFICULTY: EXPERT', 1, Color{ r: 0, g: 230, b: 255 })
 	}
 }
 
 fn draw_level_select_modal(renderer &sdl.Renderer, game Game, mx int, my int) {
 	sdl.set_render_draw_blend_mode(renderer, .blend)
-	sdl.set_render_draw_color(renderer, 0, 0, 0, 190)
+	sdl.set_render_draw_color(renderer, 6, 10, 22, 230)
 	sdl.render_fill_rect(renderer, &sdl.Rect{ x: 0, y: 0, w: win_w, h: win_h })
 
-	modal_x := 100
-	modal_y := 60
-	modal_w := 760
-	modal_h := 560
+	modal_x := 80
+	modal_y := 45
+	modal_w := 800
+	modal_h := 590
 
-	sdl.set_render_draw_color(renderer, 22, 28, 42, 255)
+	sdl.set_render_draw_color(renderer, 14, 20, 36, 255)
 	modal := sdl.Rect{ x: modal_x, y: modal_y, w: modal_w, h: modal_h }
 	sdl.render_fill_rect(renderer, &modal)
 
-	sdl.set_render_draw_color(renderer, 255, 215, 0, 255)
+	sdl.set_render_draw_color(renderer, 0, 240, 255, 255)
 	sdl.render_draw_rect(renderer, &modal)
 
-	draw_text_centered(renderer, win_w / 2, modal_y + 20, 'CHAPTER SELECT - ALL 20 PUZZLE ROOMS', 2, Color{ r: 255, g: 215, b: 0 })
-	draw_text_centered(renderer, win_w / 2, modal_y + 48, 'CLICK ANY ROOM TO WARP INSTANTLY [PRESS ESC / P TO CLOSE]', 1, Color{ r: 180, g: 220, b: 255 })
+	draw_text_centered(renderer, win_w / 2, modal_y + 12, 'MASTER CAMPAIGN & ARCADE WORLDS - 65 SECTORS', 2, Color{ r: 255, g: 215, b: 0 })
 
-	for i in 0 .. game.campaign_levels.len {
+	// 4 Game & Bonus Worlds Selection Tabs
+	tabs := [
+		'LOLO 1 (1-20)',
+		'LOLO 2 (21-35)',
+		'LOLO 3 (36-50)',
+		'ARCADE BONUS (51-65)',
+	]
+	tab_w := 180
+	for t_idx, t_name in tabs {
+		tx := modal_x + 25 + t_idx * 190
+		ty := modal_y + 38
+		is_active := game.level_select_tab == t_idx
+		is_hover := mx >= tx && mx <= tx + tab_w && my >= ty && my <= ty + 28
+		t_col := if is_active {
+			Color{ r: 0, g: 140, b: 220 }
+		} else if is_hover {
+			Color{ r: 40, g: 60, b: 90 }
+		} else {
+			Color{ r: 22, g: 30, b: 50 }
+		}
+
+		sdl.set_render_draw_color(renderer, t_col.r, t_col.g, t_col.b, 255)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: tx, y: ty, w: tab_w, h: 28 })
+		sdl.set_render_draw_color(renderer, 0, 220, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: tx, y: ty, w: tab_w, h: 28 })
+		draw_text_centered(renderer, tx + tab_w / 2, ty + 6, t_name, 1, Color{ r: 255, g: 255, b: 255 })
+	}
+
+	start_idx, count := match game.level_select_tab {
+		0 { 0, 20 }
+		1 { 20, 15 }
+		2 { 35, 15 }
+		else { 50, 15 }
+	}
+
+	for i in 0 .. count {
+		idx := start_idx + i
+		if idx >= game.campaign_levels.len {
+			break
+		}
 		col := i / 5
 		row := i % 5
-		bx := modal_x + 30 + col * 175
-		by := modal_y + 80 + row * 82
+		bx := modal_x + 30 + col * 185
+		by := modal_y + 78 + row * 98
 
-		is_hover := mx >= bx && mx <= bx + 165 && my >= by && my <= by + 72
-		bg_c := if is_hover { Color{ r: 60, g: 90, b: 150 } } else { Color{ r: 35, g: 45, b: 70 } }
+		is_hover := mx >= bx && mx <= bx + 175 && my >= by && my <= by + 88
+		bg_c := if is_hover { Color{ r: 0, g: 120, b: 200 } } else { Color{ r: 22, g: 30, b: 50 } }
 
 		sdl.set_render_draw_color(renderer, bg_c.r, bg_c.g, bg_c.b, 255)
-		b_rect := sdl.Rect{ x: bx, y: by, w: 165, h: 72 }
-		sdl.render_fill_rect(renderer, &b_rect)
+		sdl.render_fill_rect(renderer, &sdl.Rect{ x: bx, y: by, w: 175, h: 88 })
 
-		sdl.set_render_draw_color(renderer, 90, 120, 175, 255)
-		sdl.render_draw_rect(renderer, &b_rect)
+		sdl.set_render_draw_color(renderer, 0, 200, 255, 255)
+		sdl.render_draw_rect(renderer, &sdl.Rect{ x: bx, y: by, w: 175, h: 88 })
 
-		lvl := game.campaign_levels[i]
-		draw_text(renderer, bx + 8, by + 8, 'ROOM ${i + 1}', 2, Color{ r: 255, g: 215, b: 0 })
-		draw_text(renderer, bx + 8, by + 30, 'F${lvl.floor}: ${lvl.name}', 1, Color{ r: 255, g: 255, b: 255 })
-		draw_text(renderer, bx + 8, by + 48, 'PASS: ${lvl.password}', 1, Color{ r: 120, g: 230, b: 255 })
+		lvl := game.campaign_levels[idx]
+		draw_text(renderer, bx + 8, by + 8, 'ROOM ${idx + 1}', 2, Color{ r: 255, g: 215, b: 0 })
+		draw_text(renderer, bx + 8, by + 32, 'F${lvl.floor}: ${lvl.name}', 1, Color{ r: 255, g: 255, b: 255 })
+		draw_text(renderer, bx + 8, by + 50, 'PASS: ${lvl.password}', 1, Color{ r: 0, g: 240, b: 255 })
+
+		pb := game.pb_times[idx]
+		if pb > 0 {
+			sec := int(pb / 1000)
+			ms := int((pb % 1000) / 10)
+			draw_text(renderer, bx + 8, by + 68, 'PB: ${sec:02d}.${ms:02d}s', 1, Color{ r: 255, g: 200, b: 80 })
+		} else {
+			draw_text(renderer, bx + 8, by + 68, 'PB: --.--s', 1, Color{ r: 120, g: 140, b: 160 })
+		}
 	}
 }
