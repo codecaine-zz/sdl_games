@@ -121,6 +121,9 @@ v run mariobros
 | **86** | [Yie Ar Kung-Fu](#86-yie-ar-kung-fu-yiearkungfu) | `yiearkungfu/` | 1985 Konami 1v1 Fighting | `WASD move/jump/crouch, J punch, K kick, deflect weapons` | [Guide](#86-yie-ar-kung-fu-yiearkungfu) |
 | **87** | [Yoshi's Cookie](#87-yoshis-cookie-yoshicookie) | `yoshicookie/` | 1992 Line-Sliding Bakery Match-3 | `WASD/Arrows move, Hold Space/J + Move slide row/col` | [Guide](#87-yoshis-cookie-yoshicookie) |
 | **88** | [Zuma: Temple of the Stone Idol](#88-zuma-temple-of-the-stone-idol-zuma) | `zuma/` | Track Marble Shooter | `Mouse Aim, Left Click/Space shoot, Right Click/Tab swap` | [Guide](#88-zuma-temple-of-the-stone-idol-zuma) |
+| **89** | [Marble Madness NES](#89-marble-madness-nes-marblemadness) | `marblemadness/` | 3D Isometric Marble Platformer | `Arrows/WASD steer, Space/J turbo boost, 1-6 levels` | [Guide](#89-marble-madness-nes-marblemadness) |
+| **90** | [Contra NES](#90-contra-nes-contra) | `contra/` | 8-Directional Run-and-Gun Action | `WASD move/aim, J/Z fire, K/X jump, Konami code` | [Guide](#90-contra-nes-contra) |
+| **91** | [3D WorldRunner](#91-3d-worldrunner-worldrunner) | `worldrunner/` | Forward 3D Cosmic Rail Runner | `A/D strafe, Space jump, J/L-Click laser, W boost` | [Guide](#91-3d-worldrunner-worldrunner) |
 
 ---
 
@@ -2432,6 +2435,93 @@ v run zuma
   - Power-Up Balls: Bomb (explodes surrounding balls), Slow (slows chain track), Reverse (rolls chain backwards), and Accuracy (laser sight).
   - Clear all balls on the track to complete the temple level.
 - **Pro Tip**: Shoot through gaps in the front track to hit matching balls on the rear track to trigger double-chain pullbacks!
+
+---
+
+<a id="89-marble-madness-nes-marblemadness"></a>
+### 89. Marble Madness NES (`marblemadness/`)
+
+```bash
+v run marblemadness
+```
+![Marble Madness NES](screenshots/marblemadness.png)
+
+- **Objective**: Guide your marble downhill through 6 treacherous isometric courses (Practice, Beginner, Intermediate, Aerial, Silly, and Ultimate Races) to reach the goal line before the timer runs out! Carry over spare seconds to subsequent races for bonus points.
+- **Controls**:
+  - `Arrows` / `WASD`: Steer marble (continuous 8-way screen-relative or diagonal).
+  - `Space` / `J` / `Z`: Turbo speed boost.
+  - `T`: Toggle between Screen-Relative and Classic NES Diagonal Trackball control modes.
+  - `1` - `6`: Quick Practice Race select.
+  - `P`: Pause game.
+  - `M`: Toggle 8-bit sound effects.
+  - `R`: Restart current race.
+- **Hazards & Mechanics**:
+  - **Green Marble Munchers**: Acid pit predators that snap open and swallow passing marbles.
+  - **Black Steel Rival Marble**: Aggressive heavy marble AI that attempts to ram you off cliffs.
+  - **Vacuum Tubes**: Rapid transit chutes that catapult your marble across deep chasms.
+  - **Dynamic Wave Terrain**: Undulating rolling surfaces requiring careful speed control.
+  - **Pterodactyl Birds & Floor Sweepers**: Aerial predators and moving broom barriers pushing marbles into the abyss.
+  - **Shatter Physics**: High falls shatter the marble into shards, requiring a time penalty to reassemble.
+- **Pro Tip**: Use Turbo Boost just before ramps and jumps to clear wide chasms, but brake early on narrow ice catwalks!
+
+---
+
+<a id="90-contra-nes-contra"></a>
+### 90. Contra NES (`contra/`)
+
+```bash
+v run contra
+```
+![Contra NES](screenshots/contra.png)
+
+- **Objective**: Lead commandos Bill Rizer and Lance Bean on a high-octane infiltration mission against the alien Red Falcon Army across 4 intense multi-perspective stages (Jungle, 3D Base Corridor, Vertical Waterfall, and the Alien Lair)!
+- **Controls**:
+  - `WASD` / `Arrows`: Move commando & aim weapon in 8 directions (including crouch / prone crawling).
+  - `J` / `Z` / `Left Click`: Fire weapon (hold for rapid auto-fire).
+  - `K` / `X` / `Space`: Somersault jump.
+  - `S + K` / `Down + Jump`: Drop down through pass-through platforms.
+  - `1` - `4`: Stage Select (1: Jungle, 2: 3D Base, 3: Waterfall, 4: Alien Lair).
+  - `C`: Toggle 1-Player vs 2-Player Co-op mode.
+  - `P`: Pause game.
+  - `M`: Toggle procedural 8-bit sound effects.
+  - `R`: Restart mission.
+  - **Konami 30 Lives Code**: On the Title screen, press `Up, Up, Down, Down, Left, Right, Left, Right, J, K` (or `B, A`) for 30 Lives!
+- **Arsenal & Power-Ups**:
+  - **Rifle (Normal)**: Standard single-shot rapid fire.
+  - **Machine Gun (M)**: High-speed automatic bullet stream.
+  - **Spread Gun (S)**: The legendary 5-way expanding red pellet shotgun blast!
+  - **Laser Gun (L)**: Piercing high-damage energy beam.
+  - **Fire Gun (F)**: Rotating corkscrew fireball shells.
+  - **Rapid Fire (R)**: Increased bullet velocity and firing rate.
+  - **Barrier (B)**: Temporary rainbow invulnerability shield.
+- **Pro Tip**: Use prone firing (`Down` + `Shoot`) to duck underneath enemy sniper fire while taking out ground pillbox turrets!
+
+---
+
+<a id="91-3d-worldrunner-worldrunner"></a>
+### 91. 3D WorldRunner (`worldrunner/`)
+
+```bash
+v run worldrunner
+```
+![3D WorldRunner](screenshots/worldrunner.png)
+
+- **Objective**: Pilot your cyber commando across 5 cosmic worlds at speeds exceeding 320 KM/H! Leap across bottomless pits, shatter stone monoliths and brick walls with dual laser cannons, and destroy the legendary 14-segment Serpent Dragon Boss!
+- **Controls**:
+  - `A` / `D` / `Left` / `Right` / `Mouse`: 3D Lateral strafe with dynamic banking tilt & reticle aim.
+  - `Space` / `K` / `X`: High jetpack jump with apex float.
+  - `J` / `Z` / `Left Click`: Fire dual forward laser cannons.
+  - `W` / `Up` / `Shift`: Turbo Boost (accelerate to 320+ KM/H).
+  - `S` / `Down`: Active Air Brake (decelerate to 80 KM/H).
+  - `Tab`: Toggle relative mouse lock.
+  - `1` - `5`: Select World (1: Solar Plains, 2: Crystal Caverns, 3: Magma Wasteland, 4: Cyber Matrix, 5: Cosmic Abyss).
+  - `P`: Pause | `M`: Toggle audio | `R`: Restart race | `F11`: Fullscreen toggle.
+- **Power-Ups & Objects**:
+  - **Energy Rings**: Pass through for instantaneous 3-second Turbo Boost surges.
+  - **Invincible Shield**: Golden barrier bubble allowing you to obliterate solid stone pillars on contact.
+  - **Speed Boosters & Health Packs**: Restore life hearts and maximize warp speed.
+  - **Segmented Serpent Dragon**: Target the glowing head or blast through individual body segments to destroy the cosmic guardian.
+- **Pro Tip**: Fire dual lasers while in mid-air at the apex of a jump to clear high floating spires and blast dragon segments from above!
 
 ---
 
